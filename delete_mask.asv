@@ -1,0 +1,26 @@
+function delete_mask(Im, mask, numArea)
+%{ 
+Function to delete neurons of a mask 
+Im -> Raw image
+Mask -> mask from where we want to delete neurons
+numArea -> amount of areas from where to delete
+%}
+    % display the image and mask
+    [x,y] = find_center_EY (Im, mask, false);
+    imagesc(Im), colormap bone, caxis([-0 nanmean(nanmean(Im))*4]), hold on, scatter (x,fliplr(y), 'filled', 'r'), hold off
+    
+    % select areas
+    
+    drawRois(numArea);
+    for kk = 1:(numArea+3)
+        waitforbuttonpress;
+    end
+    rois = [];
+    hF = gcf;
+    hP = findobj(hF, 'Tag', 'ROIPatch');
+    for i = 1:size(hP, 1)
+        rois(:,:,i) = getUD(hP(i), 'binroi');
+    end
+    todel = nansum(rois
+    end
+
