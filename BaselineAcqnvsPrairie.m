@@ -1,17 +1,19 @@
-function BMI_acqnvs_prairie(animal, day, neuronMask, E1, E2, T1, frameRate)
-    %{
-    Function to acquire the BMI in a prairie scope
-    animal -> animal for the experiment
-    day -> day for the experiment
-    neuronMask -> matrix with units*px*py with 1 where there was a neuron
-    and nan otherwise
-    E2 = [1 2 3 4]; index in neuronMask for the ensembles. E2 being the one
-    that has to increase
-    E1 = [5 6 7 8]; 
-    T1 = target for reward
+function BaselineAcqnvsPrairie(animal, day, neuronMask, E1, E2, T1, frameRate)
+ %{
+Function to acquire the BMI in a prairie scope
+animal -> animal for the experiment
+day -> day for the experiment
+neuronMask -> matrix with units*px*py with 1 where there was a neuron
+and nan otherwise
+E2 = [1 2 3 4]; index in neuronMask for the ensembles. E2 being the one
+that has to increase
+E1 = [5 6 7 8]; 
+T1 = target for reward
+
+TODO we want to remove all neurons but the ensemble neurons from the
+neuronMask
 
 %}
-
 
     %%
     %**********************************************************
@@ -20,11 +22,11 @@ function BMI_acqnvs_prairie(animal, day, neuronMask, E1, E2, T1, frameRate)
     % BMI parameters 
     %frameRate = 30; % TODO check if it can be obtained from prairie
     units = length(E1)+length(E2); 
-    ensThresh = 0.75; % essentially top fraction (%) of what each cell can contribute to the BMI
-    relaxationTime = 5;  % there can't be another hit in this many sec
-    durationTrial = 30; % maximum time (in sec) that mice have for a trial
-    movingAverage = 1; % Moving average of frames to calculate BMI (in sec)
-    timeout = 5; %seconds of timeout if no hit in duration trial (sec)
+    ensThresh = 0.95; % essentially top fraction (%) of what each cell can contribute to the BMI
+    relaxationTime = 3;  % there can't be another hit in this many sec
+    % TODO Remove durationTrial = 30; % maximum time (in sec) that mice have for a trial
+    movingAverage = 0.1; % Moving average of frames to calculate BMI (in sec)
+    % TODO remove timeout = 5; %seconds of timeout if no hit in duration trial (sec)
     expectedLengthExperiment = 1*60*60*frameRate; % in frames
     baseLength = 2*60; % Period at the begginig without BMI to establish BL 
 

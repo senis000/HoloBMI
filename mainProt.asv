@@ -1,0 +1,22 @@
+% Main protocol for the experiment
+
+% Select area of interest with the 2p
+
+% find neurons
+[mask, Im, px, py] = makeMasksPrairie(channel);
+
+% delete neurons that we don't want by position on image
+mask = deleteMask(Im, mask, numArea);
+
+% obtain A from onacid and bring it to matlab
+fname = [folder , 'redcom.mat'];
+
+load(fname)
+numberNeurons = size(AComp,2);
+AFull = reshape(full(AComp), px, py, numberNeurons);
+neuronMask = zeros(numberNeurons, px, py);
+for i = 1:numberNeurons
+    neuronMask(i,:,:) = mask==i;
+end
+
+%TODO do we want to remove neurons here? 
