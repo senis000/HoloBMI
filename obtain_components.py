@@ -163,7 +163,8 @@ def obtain_components(folder, A_comp, dims, cnn_tol=0.75):
     dict = {
         'redLabel' : redlabel,
         'indRed' : ind_red,
-        'AComp' : A_comp
+        'AComp' : A_comp[:, redlabel],   #do not save as int, matlab  does not like it
+        'com' : new_com[redlabel, :].astype('int')
         }
     
     redinfo = scipy.io.savemat(f, dict)  

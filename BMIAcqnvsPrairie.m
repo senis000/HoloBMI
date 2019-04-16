@@ -1,9 +1,9 @@
-function BMIAcqnvsPrairie(animal, day, neuronMask, E1, E2, T1, frameRate)
+function BMIAcqnvsPrairie(animal, day, E1, E2, T1, frameRate)
     %{
     Function to acquire the BMI in a prairie scope
     animal -> animal for the experiment
     day -> day for the experiment
-    neuronMask -> matrix with px*py*u with 1 where there was a neuron
+    neuronMask -> matrix for spatial filters with px*py*unit 
     and nan otherwise
     E2 = [1 2 3 4]; index in neuronMask for the ensembles. E2 being the one
     that has to increase
@@ -28,8 +28,8 @@ function BMIAcqnvsPrairie(animal, day, neuronMask, E1, E2, T1, frameRate)
     expectedLengthExperiment = 1*60*60*frameRate; % in frames
     baseLength = 2*60; % Period at the begginig without BMI to establish BL 
 
-    savePath = "F:/VivekNuria" + animal + day;
-
+    savePath = ["F:/VivekNuria/", animal, "/",  day, "/"];
+    
     % values of parameters in frames
     baseFrames = round(baseLength * frameRate);
     movingAverageFrames = round(movingAverage * frameRate);
@@ -75,7 +75,11 @@ function BMIAcqnvsPrairie(animal, day, neuronMask, E1, E2, T1, frameRate)
     %% Prepare the nidaq
     s = daq.createSession('ni');
     addDigitalChannel(s,'dev5','Port0/Line0:0','OutputOnly');
-
+    
+    %% Prepare the arduino
+    a = arduino('COM15', 'Uno');  
+    %a.writeDigitalPin("D6", 1); pause(0.005);a.writeDigitalPin("D6",0); 
+    %TODO check port, pin and pause time
 
     %% Prepare for Prairie
     % connection to Prairie
@@ -98,6 +102,13 @@ function BMIAcqnvsPrairie(animal, day, neuronMask, E1, E2, T1, frameRate)
     tslCommand = "tsl " + envPath;
     pl.SendScriptCommands(tslCommand);  %TODO check if this works
 
+    
+    %% Load Baseline variables
+    % load onacid masks
+    load([savePath, 'redcomp.mat']);
+    numberNeurons = size(AComp,2);
+    neuronMask = reshape(full(AComp), px, py, numberNeurons);
+    
     %%
     %************************************************************************
     %*************************** RUN ********************************
@@ -119,7 +130,7 @@ function BMIAcqnvsPrairie(animal, day, neuronMask, E1, E2, T1, frameRate)
             pause(syncTime)
             outputSingleScan(s,0);
 
-            unitVals = obtainRoi(units, Im, neuronMask); % function to obtain Rois values
+            unitVals = obtainRoi(Im, neuronMask, com, [E1, E2]); % function to obtain Rois values
 
             % update buffer of activity history
             expHistory(:, 1: end-1) = expHistory(:, 2:end);
@@ -163,10 +174,9 @@ function BMIAcqnvsPrairie(animal, day, neuronMask, E1, E2, T1, frameRate)
                 else
                     if cursor(frame) <= T1      %if it hit the target
                         % VTA STIM
-                        %PYCONTROL PULSE!!!
-    %                     outputSingleScan(s,1);
-    %                     pause(VTATime)  %TODO better way to do this?
-    %                     outputSingleScan(s,0);
+                        % Arduino pulse TODO
+                        % a.writeDigitalPin("D6", 1); pause(0.010);a.writeDigitalPin("D6",0);
+
                         % update rewardHistory
                         rewardHistory = rewardHistory + 1;
                         disp(['Trial: ', num2str(trialHistory), 'Rewards: ', num2str(rewardHistory)]);
@@ -208,10 +218,6 @@ function cleanMeUp(savePath, animal, day, E1, E2, T1)
     'trialStart', 'animal', 'day', 'E1', 'E2', 'T1')
 end
 
-function unitVals=obtainRoi(units, Im, neuronMask)
-    for u = 1:units
-        unitVals(u) = nanmean(nanmean(Im.*neuronMask(:,:,u)));
-    end
-end
+
 
 

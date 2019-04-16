@@ -2,21 +2,34 @@
 
 % Select area of interest with the 2p
 
-% find neurons
-[mask, Im, px, py] = makeMasksPrairie(channel);
+% find red neurons
+[holoMask, Im] = makeMasksPrairie(channel);
+% it returns the mask that will be used for the holostim
 
 % delete neurons that we don't want by position on image
-mask = deleteMask(Im, mask, numArea);
+holoMask = deleteMask(Im, holoMask, numArea);
+
+% HOLO STIM with the mask of the red components as input!!!!
+
+% run the holostim ~2min and save the images.
 
 % obtain A from onacid and bring it to matlab
-fname = [folder , 'redcom.mat'];
+% "obtain_componenents.py" -> 
+%         'redLabel' : label as True for components marked as red,
+%         'indRed' : index of such neurons,
+%         'AComp' : sparse matrix with the spatial filters,
+%         'com' : position of the neurons
+% it also saves figures for sanity check
 
-load(fname)
-numberNeurons = size(AComp,2);
-AFull = reshape(full(AComp), px, py, numberNeurons);
-neuronMask = zeros(numberNeurons, px, py);
-for i = 1:numberNeurons
-    neuronMask(i,:,:) = mask==i;
-end
+% runs the baseline acquisiton
+BaselineAcqnvsPrairie(animal, day, frameRate);
+% saves in [savePath, 'baselineActivity.dat'] the activity of all the
+% neurons of the mask (Acomp+red)
 
-%TODO do we want to remove neurons here? 
+
+
+
+
+
+
+% acquire baseline 

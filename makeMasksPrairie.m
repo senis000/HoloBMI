@@ -1,4 +1,4 @@
-function neuronMask = makeMasksPrairie()
+function [holoMask, Im] = makeMasksPrairie()
     %{ Function to obtain masks in the red channel%}
 
     channel = 1 ; %for the red channel
@@ -17,13 +17,6 @@ function neuronMask = makeMasksPrairie()
     [mask, ~] = imFindCellsTM (Im, 7, 0.7, 5, 1, 0); %parameters depend on each image
     %displays the mask to see if we agree
     find_center_EY (Im, mask);
-    bwl = bwlabel(mask);
-    %TODO be able to remove neurons!
-    numberNeurons = nanmax(nanmax(bwl));
-    %initialize
-    neuronMask = zeros(numberNeurons, px, py);
-    for i = 1:numberNeurons
-        neuronMask(i,:,:) = bwl==i;
-    end
+    holoMask = bwlabel(mask);
     pl.Disconnect();
 end
