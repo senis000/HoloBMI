@@ -120,7 +120,7 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1, E2, T1, frameRate)
     m.Writable = true;
     
     %in case matlab crashes copy some info in txt
-    fileID = fopen([savePath, 'bmiExp.txt'],'w');
+    fileID = fopen([savePath, 'bmiExp.txt'],'wt');
     fprintf(fileID,'Length %d\n',round(expectedLengthExperiment));
     fprintf(fileID,'\n%6s %12s\r\n','E1','E2');
     A = [E1; E2];

@@ -1,4 +1,4 @@
-function mask = deleteMask(Im, mask, numArea)
+function [mask] = deleteMask(Im, mask, numArea)
 %{ 
 Function to delete neurons of a mask 
 Im -> Raw image
@@ -13,8 +13,12 @@ you can select some more areas that the number defined in numArea, but not
 much more. If you select less you will have to press more times "enter" at
 the end of the selection of areas
 %}
+
+    if nargin < 3
+        numArea = 1;
+    end
     % display the image and mask
-    [x,y] = findCenter (Im, mask, false);
+    [x,y] = findCenter (mask, Im, false);
     imagesc(Im), colormap bone, caxis([-0 nanmean(nanmean(Im))*4]), hold on, scatter (x,fliplr(y), 'filled', 'r'), hold off
     
     % select areas to delete
@@ -38,6 +42,6 @@ the end of the selection of areas
     mask = bwlabel(mask);
     
     %plot for sanity check
-    findCenter (Im, mask);  
+    findCenter (mask, Im);  
 end
 

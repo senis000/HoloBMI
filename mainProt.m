@@ -10,6 +10,7 @@
 holoMask = deleteMask(Im, holoMask, numArea);
 
 % HOLO STIM with the mask of the red components as input!!!!
+% create the .gpl file with the redmask
 % TODO
 
 % run the holostim ~2min and save the images.
