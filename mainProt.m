@@ -13,7 +13,8 @@ holoMask = deleteMask(Im, holoMask, numArea);
 % TODO
 
 % run the holostim ~2min and save the images.
-% TODO
+% TODO:
+
 
 % obtain A from onacid and bring it to matlab
 % "obtain_componenents.py" -> 

@@ -21,7 +21,7 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1, E2, T1, frameRate)
     %frameRate = 30; % TODO check if it can be obtained from prairie
     ensemble = [E1, E2];
     numberNeurons = length(ensemble); 
-    ensThresh = 0.95; % essentially top fraction (%) of what each cell can contribute to the BMI
+    ensThresh = 0.75; % essentially top fraction (%) of what each cell can contribute to the BMI
     relaxationTime = 5;  % there can't be another hit in this many sec
     movingAverage = 1; % Moving average of frames to calculate BMI (in sec)
     expectedLengthExperiment = 1*60*60*frameRate; % in frames
@@ -97,11 +97,10 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1, E2, T1, frameRate)
     
     %% Load Baseline variables
     % load onacid masks
-    % TODO check if this loads inside of the function workspace
     load([savePath, 'redcomp.mat']);
     neuronMask = reshape(full(AComp(:, ensemble)), px, py, numberNeurons);
     
-    %% Create the file where to store info in case matlab crashes
+    %% Create the file where to store the baseline
     fileName = [savePath, 'bmiExp.dat'];
     % creates a file with the correct shape
     fileID = fopen(fileName,'w');
@@ -119,12 +118,11 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1, E2, T1, frameRate)
         'single',size(trialStart),'trialStart', 'repeat', 1); 
     m.Writable = true;
     
-    %in case matlab crashes copy some info in txt
     fileID = fopen([savePath, 'bmiExp.txt'],'w');
     fprintf(fileID,'Length %d\n',round(expectedLengthExperiment));
-    fprintf(fileID,'\n%6s %12s\r\n','E1','E2');
+    fprintf(fileID,'%6s %12s\r\n','E1','E2');
     A = [E1; E2];
-    fprintf(fileID,'%6d %12d\r\n',A);
+    fprintf(fileID,'%6.2f %12.8f\r\n',A);
     fclose(fileID);
     
     %initialize the values of the memmap
@@ -221,10 +219,10 @@ end
 
 % fires when main function terminates (normal, error or interruption)
 function cleanMeUp(savePath, animal, day, E1, E2, T1)
-    global cursor hits trialStart bmiAct
+    global cursor hits trialStart 
     % evalin('base','save baseVars.mat'); %do we want to save workspace?
     % saving the global variables
     save(savePath + "BMI_online.mat", 'cursor', 'hits', ...
-    'trialStart', 'bmiAct', 'animal', 'day', 'E1', 'E2', 'T1')
+    'trialStart', 'animal', 'day', 'E1', 'E2', 'T1')
 end
 

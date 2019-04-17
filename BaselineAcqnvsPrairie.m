@@ -24,9 +24,6 @@ neuronMask -> matrix for spatial filters with px*py*unit
     %******************  INITIALIZE  ***********************************
     %*********************************************************************
 
-    %pre-allocating arrays
-    tempArray = single(nan(1,expectedLengthExperiment)); 
-
     %initializing flags and counters
     frame = 1; % initialize frames
 
@@ -83,7 +80,6 @@ neuronMask -> matrix for spatial filters with px*py*unit
         Im = pl.GetImage_2(chanIdx, px, py);
         if Im ~= lastFrame   
             lastFrame = Im;   % comparison and assignment takes ~4ms
-            tempArray(frame) = datenum(clock); %TODO do we need it? do we want it?
 
             % Synchronization
             outputSingleScan(s,1);
@@ -91,7 +87,7 @@ neuronMask -> matrix for spatial filters with px*py*unit
             outputSingleScan(s,0);
 
             unitVals = obtainRoi(Im, neuronMask, com); % function to obtain Rois values 
-            m.Data.baseAct(:,1) = unitVals; % 1 ms
+            m.Data.baseAct(:,frame) = unitVals; % 1 ms
             frame = frame + 1;
         end
 

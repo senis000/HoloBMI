@@ -19,8 +19,9 @@ function BMIAcqnvsPrairie(animal, day, E1, E2, T1, frameRate)
     %**********************************************************
     % BMI parameters 
     %frameRate = 30; % TODO check if it can be obtained from prairie
-    units = length(E1)+length(E2); 
-    ensThresh = 0.75; % essentially top fraction (%) of what each cell can contribute to the BMI
+    ensemble = [E1, E2];
+    numberNeurons = length(ensemble); 
+    ensThresh = 0.95; % essentially top fraction (%) of what each cell can contribute to the BMI
     relaxationTime = 5;  % there can't be another hit in this many sec
     durationTrial = 30; % maximum time (in sec) that mice have for a trial
     movingAverage = 1; % Moving average of frames to calculate BMI (in sec)
@@ -48,16 +49,18 @@ function BMIAcqnvsPrairie(animal, day, E1, E2, T1, frameRate)
     %******************  INITIALIZE  ***********************************
     %*********************************************************************
 
-    global cursor miss hits trialEnd trialStart
+    global cursor miss hits trialEnd trialStart bmiAct
+    
+
     
     %pre-allocating arrays
-    expHistory = single(nan(units, movingAverageFrames));  %define a windows buffer
-    cursor = single(nan(1,expectedLengthExperiment));  %define a very long vector for cursor
-    tempArray = single(nan(1,expectedLengthExperiment)); 
-    miss = [];
-    hits = [];
-    trialEnd = [];
-    trialStart = [];
+    expHistory = single(nan(numberNeurons, movingAverageFrames));  %define a windows buffer
+    cursor = double(nan(1,expectedLengthExperiment));  %define a very long vector for cursor
+    hits = single(zeros(1,expectedLengthExperiment));  %define a very long vector for hits
+    miss = single(zeros(1,expectedLengthExperiment));  %define a very long vector for miss
+    trialStart = single(zeros(1,expectedLengthExperiment));  %define a very long vector trialStart
+    trialEnd = single(zeros(1,expectedLengthExperiment));  %define a very long vector trialEnd
+    bmiAct = double(nan(numberNeurons, expectedLengthExperiment));
 
 
     %initializing flags and counters
@@ -70,7 +73,6 @@ function BMIAcqnvsPrairie(animal, day, E1, E2, T1, frameRate)
 
     %% Cleaning 
     finishup = onCleanup(@() cleanMeUp(savePath, animal, day, E1, E2, T1));  %in case of ctrl-c it will lunch cleanmeup
-
 
     %% Prepare the nidaq
     s = daq.createSession('ni');
@@ -106,9 +108,43 @@ function BMIAcqnvsPrairie(animal, day, E1, E2, T1, frameRate)
     %% Load Baseline variables
     % load onacid masks
     load([savePath, 'redcomp.mat']);
-    numberNeurons = size(AComp,2);
-    neuronMask = reshape(full(AComp), px, py, numberNeurons);
+    neuronMask = reshape(full(AComp(:, ensemble)), px, py, numberNeurons);
     
+    %% Create the file where to store info in case matlab crashes
+    fileName = [savePath, 'bmiExp.dat'];
+    % creates a file with the correct shape
+    fileID = fopen(fileName,'w');
+    fwrite(fileID, bmiAct,'double');
+    fwrite(fileID, cursor ,'double');
+    fwrite(fileID, hits,'single');
+    fwrite(fileID, miss,'single');
+    fwrite(fileID, trialStart,'single');
+    fwrite(fileID, trialEnd,'single');
+    fwrite(fileID, T1,'single');
+    fwrite(fileID, ensemble,'single');
+    fclose(fileID);
+    % maps the file into memory
+    m = memmapfile(fileName, 'Format',{'double',size(bmiAct),'bmiAct'; ...
+        'double',size(cursor),'cursor'; ...
+        'single',size(hits),'hits'; ...
+        'single',size(miss),'hits'; ...
+        'single',size(trialStart),'trialStart'; ...
+        'single',size(trialEnd),'trialEnd', 'repeat', 1); 
+    m.Writable = true;
+    
+    %in case matlab crashes
+    fileID = fopen([savePath, 'bmiExp.txt'],'w');
+    fprintf(fileID,'Length %d\n',round(expectedLengthExperiment));
+    fprintf(fileID,'\n%6s %12s\r\n','E1','E2');
+    A = [E1; E2];
+    fprintf(fileID,'%6d %12d\r\n',A);
+    fclose(fileID);
+    
+    %initialize the values of the memmap
+    m.Data.trialStart = trialStart;
+    m.Data.trialEnd = trialEnd;
+    m.Data.hits = hits;
+    m.Data.miss = miss;
     %%
     %************************************************************************
     %*************************** RUN ********************************
@@ -122,15 +158,15 @@ function BMIAcqnvsPrairie(animal, day, E1, E2, T1, frameRate)
         Im = pl.GetImage_2(chanIdx, px, py);
         if Im ~= lastFrame   
             lastFrame = Im;   % comparison and assignment takes ~4ms
-            tempArray(frame) = datenum(clock);
-
 
             % Synchronization
             outputSingleScan(s,1);
             pause(syncTime)
             outputSingleScan(s,0);
 
-            unitVals = obtainRoi(Im, neuronMask, com, [E1, E2]); % function to obtain Rois values
+            unitVals = obtainRoi(Im, neuronMask, com, ensemble); % function to obtain Rois values
+            bmiAct(:,frame) = unitVals;
+            m.Data.bmiAct(:,frame) = unitVals; % 1 ms  store info
 
             % update buffer of activity history
             expHistory(:, 1: end-1) = expHistory(:, 2:end);
@@ -139,7 +175,8 @@ function BMIAcqnvsPrairie(animal, day, E1, E2, T1, frameRate)
             if counter == 0
                 % Is it a new trial?
                 if trialFlag && ~backtobaselineFlag
-                    trialStart(end+1) = frame;
+                    trialStart(frame) = 1;
+                    m.Data.trialStart(frame) = 1;
                     trialHistory = trialHistory + 1;
                     trialFlag = 0;
                     %start running the timer again
@@ -150,7 +187,7 @@ function BMIAcqnvsPrairie(animal, day, E1, E2, T1, frameRate)
 
                 signal = single(nanmean(expHistory, 2));
                 if frame == 1
-                    baseval = single(ones(units,1)).*unitVals;
+                    baseval = single(ones(numberNeurons,1)).*unitVals;
                 elseif frame <= baseFrames
                     baseval = (baseval*(frame - 1) + signal)./frame;
                 else
@@ -165,6 +202,7 @@ function BMIAcqnvsPrairie(animal, day, E1, E2, T1, frameRate)
                 dff(dff>-T1*ensThresh) = -T1*ensThresh;
 
                 cursor(frame) = nansum([nansum(dff(E1)),-nansum(dff(E2))]);
+                m.Data.cursor(frame) = cursor(frame); % saving in memmap
 
                 if backtobaselineFlag 
                     if cursor(frame) >= 1/2*T1   %TODO discuss!!!
@@ -181,8 +219,11 @@ function BMIAcqnvsPrairie(animal, day, E1, E2, T1, frameRate)
                         rewardHistory = rewardHistory + 1;
                         disp(['Trial: ', num2str(trialHistory), 'Rewards: ', num2str(rewardHistory)]);
                         % update trials and hits vector
-                        trialEnd(end+1) = frame;
-                        hits(end+1) = frame;
+                        trialEnd(frame) = 1;
+                        m.Data.trialEnd(frame) = 1;
+                        hits(frame) = 1;
+                        m.Data.hits(frame) = 1;
+
                         trialFlag = 1;
                         counter = relaxationFrames;
                         backtobaselineFlag = 1;
@@ -191,8 +232,10 @@ function BMIAcqnvsPrairie(animal, day, E1, E2, T1, frameRate)
                         % update the tone to the new cursor
                         if toc(tim) > durationTrial
                             disp('Timeout')
-                            trialEnd(end+1) = frame;
-                            miss(end+1) = frame;
+                            trialEnd(frame) = 1;
+                            m.Data.trialEnd(frame) = 1;
+                            miss(frame) = 1;
+                            m.Data.miss(frame) = 1;
                             trialFlag = 1;
                             counter = timeoutFrames;
                         end
@@ -211,11 +254,11 @@ end
 
 % fires when main function terminates (normal, error or interruption)
 function cleanMeUp(savePath, animal, day, E1, E2, T1)
-    global cursor miss hits trialEnd trialStart 
+    global cursor miss hits trialEnd trialStart bmiAct
     % evalin('base','save baseVars.mat'); %do we want to save workspace?
     % saving the global variables
     save(savePath + "BMI_online.mat", 'cursor', 'miss', 'hits', 'trialEnd', ...
-    'trialStart', 'animal', 'day', 'E1', 'E2', 'T1')
+    'trialStart', 'bmiAct', 'animal', 'day', 'E1', 'E2', 'T1')
 end
 
 
