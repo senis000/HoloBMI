@@ -19,7 +19,7 @@ sizNeur => it has to be bigger than the radio of the neuron
     end
 
     unitVals = zeros(length(units),1);
-    % TODO find maximum position instead of adding sizeneur
+    % TO
     for auxu = 1: length(units)
         u = units(auxu);
         auxMask = neuronMask;

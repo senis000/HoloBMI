@@ -25,9 +25,9 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1, E2, T1, frameRate, neuronMask
     %frameRate = 30; % TODO check if it can be obtained from prairie
     ensemble = [E1, E2];
     numberNeurons = length(ensemble); 
-    relaxationTime = 0;  % there can't be another hit in this many sec
+    relaxationTime = 5;  % there can't be another hit in this many sec
     movingAverage = 1; % Moving average of frames to calculate BMI (in sec)
-    expectedLengthExperiment = 2*60*frameRate; % in frames
+    expectedLengthExperiment = 1*60*frameRate; % in frames
     baseLength = 2*60; % Period at the begginig without BMI to establish BL 
 
     savePath = ['F:/VivekNuria/', animal, '/',  day, '/'];
@@ -44,24 +44,21 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1, E2, T1, frameRate, neuronMask
 
     % VTA parameters
     syncTime = 0.001; % duration of the TTL
-    
 
     %%
     %*********************************************************************
     %******************  INITIALIZE  ***********************************
     %*********************************************************************
     
-    global pl cursor hits trialStart bmiAct baseVector timeVector btbaseVector
+    global pl cursor hits trialStart bmiAct baseVector
     
     %pre-allocating arrays
     expHistory = single(nan(numberNeurons, movingAverageFrames));  %define a windows buffer
     cursor = double(nan(1,expectedLengthExperiment));  %define a very long vector for cursor
     hits = single(zeros(1,expectedLengthExperiment));  %define a very long vector for hits
-    btbaseVector = single(zeros(1,expectedLengthExperiment));  %define a very long vector for hits
     trialStart = single(zeros(1,expectedLengthExperiment));  %define a very long vector trialStart
     bmiAct = double(nan(numberNeurons, expectedLengthExperiment));
-    baseVector = double(nan(numberNeurons,expectedLengthExperiment));  %define a very long vector for cursor
-    timeVector = double(nan(1,expectedLengthExperiment));  %define a very long vector for cursor
+    baseVector = double(nan(1,expectedLengthExperiment));  %define a very long vector for cursor
 
     %initializing flags and counters
     rewardHistory = 0; 
@@ -128,7 +125,7 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1, E2, T1, frameRate, neuronMask
     % maps the file into memory
     m = memmapfile(fileName, 'Format',{'double',size(bmiAct),'bmiAct'; ...
         'double',size(cursor),'cursor'; ...
-        'double',size(baseVector),'baseVector'; ...
+        'double',size(baseVector),'c'; ...
         'single',size(hits),'hits'; ...
         'single',size(trialStart),'trialStart'}, 'repeat', 1); 
     m.Writable = true;
@@ -155,7 +152,6 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1, E2, T1, frameRate, neuronMask
     %start the time_series scan
 %     pl.SendScriptCommands("-ts");   % TODO check if this actually works 
 
-    tic;
 
     while frame <= expectedLengthExperiment
         Im = pl.GetImage_2(chanIdx, px, py);
@@ -186,8 +182,8 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1, E2, T1, frameRate, neuronMask
                 else
                     baseval = (baseval*(baseFrames - 1) + signal)./baseFrames;
                 end
-                baseVector(:,frame) = baseval;
-                m.Data.baseVector(:,frame) = baseval; % saving in memmap
+                baseVector(frame) = baseval;
+                m.Data.baseVector(frame) = baseval; % saving in memmap
                 
                 % calculation of DFF
                 dff = (signal - baseval) ./ baseval;
@@ -209,7 +205,6 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1, E2, T1, frameRate, neuronMask
                     if backtobaselineFlag 
                         if cursor(frame) >= 1/2*T1  %TODO discuss!!!
                             backtobaselineFlag = 0;
-                            btbaseVector(frame) = 1;
                         end
                     else
                         if cursor(frame) <= T1      %if it hit the target
@@ -238,7 +233,6 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1, E2, T1, frameRate, neuronMask
                 nonBufferUpdateCounter = nonBufferUpdateCounter - 1;
             end
             frame = frame + 1;
-            timeVector(frame) = toc;
 %         end
 
     end
@@ -248,12 +242,12 @@ end
 % 
 % % fires when main function terminates (normal, error or interruption)
 function cleanMeUp(savePath, animal, day, E1, E2, T1)
-    global pl cursor hits trialStart bmiAct baseVector timeVector btbaseVector
+    global pl cursor hits trialStart bmiAct
     disp('cleaning')
     % evalin('base','save baseVars.mat'); %do we want to save workspace?
     % saving the global variables
-    save(savePath + "BMI_online.mat", 'cursor', 'baseVector', 'hits', 'timeVector', ...
-    'trialStart', 'bmiAct', 'animal', 'btbaseVector', 'day', 'E1', 'E2', 'T1')
+    save(savePath + "BMI_online.mat", 'cursor', 'hits', ...
+    'trialStart', 'bmiAct', 'animal', 'day', 'E1', 'E2', 'T1')
     pl.Disconnect();
 end
 
