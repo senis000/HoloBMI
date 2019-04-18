@@ -11,7 +11,8 @@ holoMask = deleteMask(Im, holoMask, numArea);
 
 % HOLO STIM with the mask of the red components as input!!!!
 % create the .gpl file with the redmask
-% TODO
+% update the .gpl file in the SLM
+
 
 % run the holostim ~2min and save the images.
 % TODO:
@@ -29,6 +30,7 @@ holoMask = deleteMask(Im, holoMask, numArea);
 BaselineAcqnvsPrairie(animal, day, frameRate);
 % saves in [savePath, 'baselineActivity.dat'] the activity of all the
 % neurons of the mask (Acomp+red)
+% saves in baseOnline.mat the baseline activity
 
 % Baseline simulation
 % Vivek
@@ -36,11 +38,9 @@ BaselineAcqnvsPrairie(animal, day, frameRate);
 
 % run BMI
 % 2 versions 
-BMIAcqnvsPrairie(animal, day, E1, E2, T1, frameRate)
+BMIAcqnvsPrairie(animal, day, E1, E2, T1, frameRate)  %not updated
 BMIAcqnvsPrairienoTrials(animal, day, E1, E2, T1, frameRate)
 % should be the same function with or without trials
-% TODO : check the new version of cursor 
-% saves where? when?
 
 % VTA Stim during BMI
 % TODO check port, pin and duration of trigger
