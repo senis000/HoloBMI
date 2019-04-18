@@ -24,8 +24,13 @@ neuronMask -> matrix for spatial filters with px*py*unit
     %******************  INITIALIZE  ***********************************
     %*********************************************************************
 
+    global pl baseActivity
+    
     %initializing flags and counters
     frame = 1; % initialize frames
+    
+    %% Cleaning 
+    finishup = onCleanup(@() cleanMeUp(savePath));  %in case of ctrl-c it will lunch cleanmeup
 
     %% Prepare the nidaq
     s = daq.createSession('ni');
@@ -94,6 +99,15 @@ neuronMask -> matrix for spatial filters with px*py*unit
     end
     pl.Disconnect();
 
+end
+
+function cleanMeUp(savePath)
+    global pl baseActivity
+    disp('cleaning')
+    % evalin('base','save baseVars.mat'); %do we want to save workspace?
+    % saving the global variables
+    save(savePath + "Baseline_online.mat", 'baseActivity')
+    pl.Disconnect();
 end
 
 

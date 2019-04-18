@@ -13,6 +13,7 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1, E2, T1, frameRate, neuronMask
 %TODO remove neuronMask
 %TODO shutter!!!!!
 %TODO save the value of baseline
+%TODO relaxation time?
 
 %}
 
@@ -51,17 +52,15 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1, E2, T1, frameRate, neuronMask
     %******************  INITIALIZE  ***********************************
     %*********************************************************************
     
-    global pl cursor hits trialStart bmiAct baseVector timeVector btbaseVector
+    global pl cursor hits trialStart bmiAct baseVector
     
     %pre-allocating arrays
     expHistory = single(nan(numberNeurons, movingAverageFrames));  %define a windows buffer
     cursor = double(nan(1,expectedLengthExperiment));  %define a very long vector for cursor
     hits = single(zeros(1,expectedLengthExperiment));  %define a very long vector for hits
-    btbaseVector = single(zeros(1,expectedLengthExperiment));  %define a very long vector for hits
     trialStart = single(zeros(1,expectedLengthExperiment));  %define a very long vector trialStart
     bmiAct = double(nan(numberNeurons, expectedLengthExperiment));
     baseVector = double(nan(numberNeurons,expectedLengthExperiment));  %define a very long vector for cursor
-    timeVector = double(nan(1,expectedLengthExperiment));  %define a very long vector for cursor
 
     %initializing flags and counters
     rewardHistory = 0; 
@@ -78,14 +77,14 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1, E2, T1, frameRate, neuronMask
     %% Cleaning 
     finishup = onCleanup(@() cleanMeUp(savePath, animal, day, E1, E2, T1));  %in case of ctrl-c it will lunch cleanmeup
 
-%     %% Prepare the nidaq
-%     s = daq.createSession('ni');
-%     addDigitalChannel(s,'dev5','Port0/Line0:0','OutputOnly');
+    %% Prepare the nidaq
+    s = daq.createSession('ni');
+    addDigitalChannel(s,'dev5','Port0/Line0:0','OutputOnly');
     
-%     %% Prepare the arduino
-%     a = arduino('COM15', 'Uno');  
-%     %a.writeDigitalPin("D6", 1); pause(0.005);a.writeDigitalPin("D6",0); 
-%     %TODO check port, pin and pause time
+    %% Prepare the arduino
+    a = arduino('COM15', 'Uno');  
+    %a.writeDigitalPin("D6", 1); pause(0.005);a.writeDigitalPin("D6",0); 
+    %TODO check port, pin and pause time
 
     %% Prepare for Prairie
     % connection to Prairie
@@ -102,16 +101,16 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1, E2, T1, frameRate, neuronMask
 
     lastFrame = zeros(px, py); % to compare with new incoming frames
 
-%     % set the environment for the Time Series in PrairieView
-%     tslCommand = "tsl " + envPath;
-%     pl.SendScriptCommands(tslCommand);  %TODO check if this works
+    % set the environment for the Time Series in PrairieView
+    tslCommand = "tsl " + envPath;
+    pl.SendScriptCommands(tslCommand);  %TODO check if this works
     
     
-%     %% Load Baseline variables
-%     % load onacid masks
-%     % TODO check if this loads inside of the function workspace
-%     load([savePath, 'redcomp.mat']);
-%     neuronMask = reshape(full(AComp(:, ensemble)), px, py, numberNeurons);
+    %% Load Baseline variables
+    % load onacid masks
+    % TODO check if this loads inside of the function workspace
+    load([savePath, 'redcomp.mat'], 'AComp', 'com');
+    neuronMask = reshape(full(AComp(:, ensemble)), px, py, numberNeurons);
     
     %% Create the file where to store info in case matlab crashes
     fileName = [savePath, 'bmiExp.dat'];
@@ -146,8 +145,8 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1, E2, T1, frameRate, neuronMask
     m.Data.hits = hits;
 
     %%TODO REMOVE AFTER DEBUGGING
-    [x,y] = findCenter(neuronMask);
-    com = [x,y];
+%     [x,y] = findCenter(neuronMask);
+%     com = [x,y];
     %************************************************************************
     %*************************** RUN ********************************
     %************************************************************************
@@ -159,19 +158,18 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1, E2, T1, frameRate, neuronMask
 
     while frame <= expectedLengthExperiment
         Im = pl.GetImage_2(chanIdx, px, py);
-%         if Im ~= lastFrame   
+        if Im ~= lastFrame   
             lastFrame = Im;   % comparison and assignment takes ~4ms
-% 
-%             % Synchronization
-%             outputSingleScan(s,1);
-%             pause(syncTime)
-%             outputSingleScan(s,0);
+
+            % Synchronization
+            outputSingleScan(s,1);
+            pause(syncTime)
+            outputSingleScan(s,0);
             
             unitVals = obtainRoi(Im, neuronMask, com, ensemble); % function to obtain Rois values
             bmiAct(:,frame) = unitVals;
             m.Data.bmiAct(:,frame) = unitVals; % 1 ms  store info
-            % update buffer of activity history
-
+            
             if nonBufferUpdateCounter == 0
                 % update buffer and baseval
                 expHistory(:, 1: end-1) = expHistory(:, 2:end);
@@ -239,7 +237,7 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1, E2, T1, frameRate, neuronMask
             end
             frame = frame + 1;
             timeVector(frame) = toc;
-%         end
+        end
 
     end
     pl.Disconnect();

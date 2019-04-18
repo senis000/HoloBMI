@@ -1,35 +1,26 @@
-function unitVals=obtainRoi(Im, neuronMask, com, units, sizNeur)
+function unitVals=obtainRoi(Im, strcMask, units)
 %{
 Function to obtain the activity of each neuron, given a spatial filter
 units -> unit which units to return
 Im => Image 
-neuronMask -> matrix for spatial filters with px*py*unit
-com => position of the neurons
+strcMask -> structurmatrix for spatial filters with px*py*unit
 units => index of the neurons in the neuronMask
-sizNeur => it has to be bigger than the radio of the neuron
 %}
 
-%TODO do this only once 
-
-    if nargin < 5
-        sizNeur = 20;
-    end
-    if nargin < 4
+    if nargin < 3
         units = 1:size(neuronMask,3);
     end
 
     unitVals = zeros(length(units),1);
-    % TO
+    % TODO find maximum position instead of adding sizeneur
     for auxu = 1: length(units)
         u = units(auxu);
-        auxMask = neuronMask;
-        posmaxx = min([(com(u,1)+sizNeur), size(neuronMask,1)]);
-        posminx = max([(com(u,1)-sizNeur), 1]);
-        posmaxy = min([(com(u,2)+sizNeur), size(neuronMask,2)]);
-        posminy = max([(com(u,2)-sizNeur), 1]);
+        auxMask = strcMask.neuronMask(auxu,:,:);
+        posmaxx = strcMask.maxx(auxu);
+        posminx = strcMask.minx(auxu);
+        posmaxy = strcMask.maxy(auxu);
+        posminy = strcMask.mainy(auxu);
         Imd = double(Im(posminy:posmaxy,posminx:posmaxx));
-        auxMask(auxMask~=u) = 0;
-        auxMask = auxMask(posminy:posmaxy,posminx:posmaxx);
-        unitVals(auxu) = nansum(nansum(Imd.* auxMask/sum(auxMask)));
+        unitVals(auxu) = nansum(nansum(Imd.* auxMask/nansum(auxMask)));
     end
 end
