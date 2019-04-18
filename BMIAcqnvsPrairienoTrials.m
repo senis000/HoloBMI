@@ -20,11 +20,14 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1Base, E2Base, T1, frameRate)
     %****************  PARAMETERS  ****************************
     %**********************************************************
     
-    %
+    %% experiment FLAGS
+    flagVTA = true;
+    flagHolo = true;
     
-    % BMI parameters 
+    %% BMI parameters 
     %frameRate = 30; % TODO check if it can be obtained from prairie 
     relaxationTime = 0;  % there can't be another hit in this many sec
+    back2Base = 1/2*T1;
 
     savePath = ['F:/VivekNuria/', animal, '/',  day, '/'];
     if ~exist(savePath, 'dir')
@@ -37,20 +40,20 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1Base, E2Base, T1, frameRate)
     movingAverageFrames = 2;
     relaxationFrames = round(relaxationTime * frameRate);
 
-    %prairie view parameters
+    %% prairie view parameters
     chanIdx = 2; % green channel
     envPath = 'F:/VivekNuria/utils/'  ;%TODO set environment 
 
-    % VTA parameters
-    syncTime = 0.001; % duration of the TTL
-    
+    %% VTA parameters
+    shutterVTA = round(2*frameRate);
+    syncVTA = 0.001; % duration of the TTL
 
     %%
     %*********************************************************************
     %******************  INITIALIZE  ***********************************
     %*********************************************************************
     
-    global pl cursor hits trialStart bmiAct baseVector
+    global pl cursor hits trialStart bmiAct baseVector timeVector %TODO remove timeVector
     
     %obtain new E1, E2
     [E1, E2] = fromBaseline2Bmi(E1Base, E2Base);
@@ -65,7 +68,10 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1Base, E2Base, T1, frameRate)
     bmiAct = double(nan(numberNeurons, expectedLengthExperiment));
     baseVector = double(nan(numberNeurons,expectedLengthExperiment));  %define a very long vector for cursor
 
-    %initializing flags and counters
+    %to debug!!! TODO REMOVE after debugging
+    timeVector = double(nan(1,expectedLengthExperiment));  %define a very long vector for cursor
+
+    %initializing general flags and counters 
     rewardHistory = 0; 
     trialHistory = 0;
     trialFlag = 1;
@@ -80,14 +86,14 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1Base, E2Base, T1, frameRate)
     %% Cleaning 
     finishup = onCleanup(@() cleanMeUp(savePath, animal, day, E1, E2, T1, E1Base, E2Base));  %in case of ctrl-c it will lunch cleanmeup
 
-    %% Prepare the nidaq
-    s = daq.createSession('ni');
-    addDigitalChannel(s,'dev5','Port0/Line0:0','OutputOnly');
+%     %% Prepare the nidaq
+%     s = daq.createSession('ni');
+%     addDigitalChannel(s,'dev5','Port0/Line0:0','OutputOnly');
     
-    %% Prepare the arduino
-    a = arduino('COM15', 'Uno');  
-    %a.writeDigitalPin("D6", 1); pause(0.005);a.writeDigitalPin("D6",0); 
-    %TODO check port, pin and pause time
+%     %% Prepare the arduino
+%     a = arduino('COM15', 'Uno');  
+%     %a.writeDigitalPin("D6", 1); pause(0.005);a.writeDigitalPin("D6",0); 
+%     %TODO check port, pin and pause time
 
     %% Prepare for Prairie
     % connection to Prairie
@@ -104,9 +110,9 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1Base, E2Base, T1, frameRate)
 
     lastFrame = zeros(px, py); % to compare with new incoming frames
 
-    % set the environment for the Time Series in PrairieView
-    tslCommand = "tsl " + envPath;
-    pl.SendScriptCommands(tslCommand);  %TODO check if this works
+%     % set the environment for the Time Series in PrairieView
+%     tslCommand = "tsl " + envPath;
+%     pl.SendScriptCommands(tslCommand);  %TODO check if this works
     
     
     %% Load Baseline variables
@@ -147,9 +153,6 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1Base, E2Base, T1, frameRate)
     m.Data.trialStart = trialStart;
     m.Data.hits = hits;
 
-    %%TODO REMOVE AFTER DEBUGGING
-%     [x,y] = findCenter(neuronMask);
-%     com = [x,y];
     %************************************************************************
     %*************************** RUN ********************************
     %************************************************************************
@@ -158,22 +161,22 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1Base, E2Base, T1, frameRate)
 %     pl.SendScriptCommands("-ts");   % TODO check if this actually works 
 
     tic;
-
     while frame <= expectedLengthExperiment
         Im = pl.GetImage_2(chanIdx, px, py);
-        if Im ~= lastFrame   
-            lastFrame = Im;   % comparison and assignment takes ~4ms
-
-            % Synchronization
-            outputSingleScan(s,1);
-            pause(syncTime)
-            outputSingleScan(s,0);
+%         if Im ~= lastFrame   
+%             lastFrame = Im;   % comparison and assignment takes ~4ms
             
-            unitVals = obtainRoi(Im, strcMask); % function to obtain Rois values
-            bmiAct(:,frame) = unitVals;
-            m.Data.bmiAct(:,frame) = unitVals; % 1 ms  store info
+%             % Synchronization
+%             outputSingleScan(s,1);
+%             pause(syncTime)
+%             outputSingleScan(s,0);
             
             if nonBufferUpdateCounter == 0
+                % obtain value of the neurons fluorescene
+                unitVals = obtainRoi(Im, strcMask); % function to obtain Rois values
+                bmiAct(:,frame) = unitVals;
+                m.Data.bmiAct(:,frame) = unitVals; % 1 ms  store info
+                
                 % update buffer and baseval
                 expHistory(:, 1: end-1) = expHistory(:, 2:end);
                 expHistory(:,end) = unitVals;
@@ -208,15 +211,17 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1Base, E2Base, T1, frameRate)
                     end
 
                     if backtobaselineFlag 
-                        if cursor(frame) <= 1/2*T1  %TODO discuss!!!
+                        if cursor(frame) <= back2Base 
                             backtobaselineFlag = 0;
                         end
                     else
                         if cursor(frame) >= T1      %if it hit the target
                             % VTA STIM
-                            % Arduino pulse TODO
-                            % a.writeDigitalPin("D6", 1); pause(0.010);a.writeDigitalPin("D6",0);
-
+                            if flagVTA
+                                % Arduino pulse TODO
+                                a.writeDigitalPin("D6", 1); pause(syncVTA);a.writeDigitalPin("D6",0);
+                                nonBufferUpdateCounter = shutterVTA;
+                            end
                             % update rewardHistory
                             rewardHistory = rewardHistory + 1;
                             disp(['Trial: ', num2str(trialHistory), 'Rewards: ', num2str(rewardHistory)]);
@@ -238,7 +243,8 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1Base, E2Base, T1, frameRate)
                 nonBufferUpdateCounter = nonBufferUpdateCounter - 1;
             end
             frame = frame + 1;
-        end
+            timeVector(frame) = toc;
+%         end
 
     end
     pl.Disconnect();
