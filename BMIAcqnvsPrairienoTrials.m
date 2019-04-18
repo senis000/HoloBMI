@@ -1,4 +1,4 @@
-function BMIAcqnvsPrairienoTrials(animal, day, E1Base, E2Base, T1, frameRate)
+function BMIAcqnvsPrairienoTrials(animal, day, E1Base, E2Base, T1, frameRate, vectorHolo)
     %{
     Function to acquire the BMI in a prairie scope
     animal -> animal for the experiment
@@ -10,10 +10,12 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1Base, E2Base, T1, frameRate)
     E1Base = [54 6 17 28]; 
     They will change to a new 
     T1 = target for reward (positive)
-
-%TODO shutter!!!!!
+    vectorHolo -> vector of scheduled holo stims
 %}
 
+    if nargin < 7
+        vectorHolo = [];
+    end
 
     %%
     %**********************************************************
@@ -27,7 +29,7 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1Base, E2Base, T1, frameRate)
     %% BMI parameters 
     %frameRate = 30; % TODO check if it can be obtained from prairie 
     relaxationTime = 0;  % there can't be another hit in this many sec
-    back2Base = 1/2*T1;
+    back2Base = 1/2*T1; % cursor must be under this value to be able to hit again
 
     savePath = ['F:/VivekNuria/', animal, '/',  day, '/'];
     if ~exist(savePath, 'dir')
@@ -55,7 +57,7 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1Base, E2Base, T1, frameRate)
     
     global pl cursor hits trialStart bmiAct baseVector timeVector %TODO remove timeVector
     
-    %obtain new E1, E2
+    %obtain new E1, E2 and save AComp
     [E1, E2] = fromBaseline2Bmi(E1Base, E2Base);
     ensemble = [E1, E2];
     numberNeurons = length(ensemble);
@@ -193,7 +195,7 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1Base, E2Base, T1, frameRate)
                 baseVector(:,frame) = baseval;
                 m.Data.baseVector(:,frame) = baseval; % saving in memmap
                 
-                % calculation of DFF
+                % calculate of DFF
                 dff = (signal - baseval) ./ baseval;
                 cursor(frame) = nansum([-nansum(dff(E1)), nansum(dff(E2))]);
                 disp (cursor(frame));
@@ -234,6 +236,10 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1Base, E2Base, T1, frameRate)
                             %counters
                             % relaxationtime = length of the signal buffer
                             backtobaselineFlag = 1;
+                        elseif flagHolo
+                            if ismember(frame, vectorHolo)
+                                % holo STIM trigger goes here TODO
+                            end
                         end
                     end
                 else
