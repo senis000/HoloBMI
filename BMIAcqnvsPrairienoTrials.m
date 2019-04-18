@@ -1,20 +1,17 @@
-function BMIAcqnvsPrairienoTrials(animal, day, E1, E2, T1, frameRate, neuronMask)
+function BMIAcqnvsPrairienoTrials(animal, day, E1Base, E2Base, T1, frameRate)
     %{
     Function to acquire the BMI in a prairie scope
     animal -> animal for the experiment
     day -> day for the experiment
     neuronMask -> matrix for spatial filters with px*py*unit 
     and nan otherwise
-    E2 = [1 2 3 4]; index in neuronMask for the ensembles. E2 being the one
+    E2base = [10 2 13 24]; index in neuronMask for the ensembles. E2 being the one
     that has to increase
-    E1 = [5 6 7 8]; 
-    T1 = target for reward
+    E1Base = [54 6 17 28]; 
+    They will change to a new 
+    T1 = target for reward (positive)
 
-%TODO remove neuronMask
 %TODO shutter!!!!!
-%TODO save the value of baseline
-%TODO relaxation time?
-
 %}
 
 
@@ -22,21 +19,22 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1, E2, T1, frameRate, neuronMask
     %**********************************************************
     %****************  PARAMETERS  ****************************
     %**********************************************************
+    
+    %
+    
     % BMI parameters 
-    %frameRate = 30; % TODO check if it can be obtained from prairie
-    ensemble = [E1, E2];
-    numberNeurons = length(ensemble); 
+    %frameRate = 30; % TODO check if it can be obtained from prairie 
     relaxationTime = 0;  % there can't be another hit in this many sec
-    movingAverage = 1; % Moving average of frames to calculate BMI (in sec)
-    expectedLengthExperiment = 2*60*frameRate; % in frames
-    baseLength = 2*60; % Period at the begginig without BMI to establish BL 
 
     savePath = ['F:/VivekNuria/', animal, '/',  day, '/'];
-    mkdir(savePath);
+    if ~exist(savePath, 'dir')
+        mkdir(savePath);
+    end
 
     % values of parameters in frames
-    baseFrames = round(baseLength * frameRate);
-    movingAverageFrames = round(movingAverage * frameRate);
+    expectedLengthExperiment = 2*60*frameRate; % in frames
+    baseFrames = round(2*60 * frameRate); % Period at the begginig without BMI to establish BL
+    movingAverageFrames = 2;
     relaxationFrames = round(relaxationTime * frameRate);
 
     %prairie view parameters
@@ -53,6 +51,11 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1, E2, T1, frameRate, neuronMask
     %*********************************************************************
     
     global pl cursor hits trialStart bmiAct baseVector
+    
+    %obtain new E1, E2
+    [E1, E2] = fromBaseline2Bmi(E1Base, E2Base);
+    ensemble = [E1, E2];
+    numberNeurons = length(ensemble);
     
     %pre-allocating arrays
     expHistory = single(nan(numberNeurons, movingAverageFrames));  %define a windows buffer
@@ -75,7 +78,7 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1, E2, T1, frameRate, neuronMask
     frame = 1; % initialize frames
     
     %% Cleaning 
-    finishup = onCleanup(@() cleanMeUp(savePath, animal, day, E1, E2, T1));  %in case of ctrl-c it will lunch cleanmeup
+    finishup = onCleanup(@() cleanMeUp(savePath, animal, day, E1, E2, T1, E1Base, E2Base));  %in case of ctrl-c it will lunch cleanmeup
 
     %% Prepare the nidaq
     s = daq.createSession('ni');
@@ -109,8 +112,8 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1, E2, T1, frameRate, neuronMask
     %% Load Baseline variables
     % load onacid masks
     % TODO check if this loads inside of the function workspace
-    load([savePath, 'redcomp.mat'], 'AComp', 'com');
-    neuronMask = reshape(full(AComp(:, ensemble)), px, py, numberNeurons);
+    load([savePath, 'redcompBMI.mat'], 'AComp');
+    strcMask = obtainStrcMask(AComp, px, py);
     
     %% Create the file where to store info in case matlab crashes
     fileName = [savePath, 'bmiExp.dat'];
@@ -166,7 +169,7 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1, E2, T1, frameRate, neuronMask
             pause(syncTime)
             outputSingleScan(s,0);
             
-            unitVals = obtainRoi(Im, neuronMask, com, ensemble); % function to obtain Rois values
+            unitVals = obtainRoi(Im, strcMask); % function to obtain Rois values
             bmiAct(:,frame) = unitVals;
             m.Data.bmiAct(:,frame) = unitVals; % 1 ms  store info
             
@@ -189,7 +192,7 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1, E2, T1, frameRate, neuronMask
                 
                 % calculation of DFF
                 dff = (signal - baseval) ./ baseval;
-                cursor(frame) = nansum([nansum(dff(E1)),-nansum(dff(E2))]);
+                cursor(frame) = nansum([-nansum(dff(E1)), nansum(dff(E2))]);
                 disp (cursor(frame));
                 m.Data.cursor(frame) = cursor(frame); % saving in memmap
                 
@@ -205,12 +208,11 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1, E2, T1, frameRate, neuronMask
                     end
 
                     if backtobaselineFlag 
-                        if cursor(frame) >= 1/2*T1  %TODO discuss!!!
+                        if cursor(frame) <= 1/2*T1  %TODO discuss!!!
                             backtobaselineFlag = 0;
-                            btbaseVector(frame) = 1;
                         end
                     else
-                        if cursor(frame) <= T1      %if it hit the target
+                        if cursor(frame) >= T1      %if it hit the target
                             % VTA STIM
                             % Arduino pulse TODO
                             % a.writeDigitalPin("D6", 1); pause(0.010);a.writeDigitalPin("D6",0);
@@ -236,7 +238,6 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1, E2, T1, frameRate, neuronMask
                 nonBufferUpdateCounter = nonBufferUpdateCounter - 1;
             end
             frame = frame + 1;
-            timeVector(frame) = toc;
         end
 
     end
@@ -245,13 +246,14 @@ function BMIAcqnvsPrairienoTrials(animal, day, E1, E2, T1, frameRate, neuronMask
 end
 % 
 % % fires when main function terminates (normal, error or interruption)
-function cleanMeUp(savePath, animal, day, E1, E2, T1)
+function cleanMeUp(savePath, animal, day, E1, E2, T1, E1Base, E2Base)
     global pl cursor hits trialStart bmiAct baseVector timeVector btbaseVector
     disp('cleaning')
     % evalin('base','save baseVars.mat'); %do we want to save workspace?
     % saving the global variables
     save(savePath + "BMI_online.mat", 'cursor', 'baseVector', 'hits', 'timeVector', ...
-    'trialStart', 'bmiAct', 'animal', 'btbaseVector', 'day', 'E1', 'E2', 'T1')
+    'trialStart', 'bmiAct', 'animal', 'btbaseVector', 'day', 'E1', 'E2', 'T1', ...
+    'E1Base', 'E2Base')
     pl.Disconnect();
 end
 

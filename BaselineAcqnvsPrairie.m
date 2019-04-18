@@ -58,9 +58,10 @@ neuronMask -> matrix for spatial filters with px*py*unit
     
     %% Load Baseline variables
     % load onacid masks
-    load([savePath, 'redcomp.mat']);
+    load([savePath, 'redcomp.mat'], 'AComp');
     numberNeurons = size(AComp,2);
-    neuronMask = reshape(full(AComp), px, py, numberNeurons);
+    % create smaller versions of the spatial filter
+    strcMask = obtainStrcMask(AComp, px, py);
     
     %% Create the file where to store the baseline
     baseActivity = zeros(numberNeurons, expectedLengthExperiment) + nan;
@@ -91,7 +92,7 @@ neuronMask -> matrix for spatial filters with px*py*unit
             pause(syncTime)
             outputSingleScan(s,0);
 
-            unitVals = obtainRoi(Im, neuronMask, com); % function to obtain Rois values 
+            unitVals = obtainRoi(Im, strcMask); % function to obtain Rois values 
             m.Data.baseAct(:,frame) = unitVals; % 1 ms
             frame = frame + 1;
         end
@@ -106,7 +107,7 @@ function cleanMeUp(savePath)
     disp('cleaning')
     % evalin('base','save baseVars.mat'); %do we want to save workspace?
     % saving the global variables
-    save(savePath + "Baseline_online.mat", 'baseActivity')
+    save(savePath + "BaselineOnline.mat", 'baseActivity')
     pl.Disconnect();
 end
 
