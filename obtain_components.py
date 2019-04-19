@@ -12,16 +12,15 @@ import os
 from caiman.components_evaluation import evaluate_components_CNN
 from caiman.motion_correction import motion_correct_iteration
 
-
+from matplotlib import interactive
 interactive(True)
 
 
 
-def red_channel(red, nerden, Afull, new_com, red_im, base_im, fanal, maxdist=3, toplot=True):  
+def red_channel(red, Afull, new_com, red_im, base_im, fanal, maxdist=3, toplot=True):  
     """
     Function to identify red neurons with components returned by caiman
     red(array-int): mask of red neurons position
-    nerden(array-bool): array of bool labelling as true components identified as neurons.
     new_com(array): position of the neurons
     red_im(array): matrix MxN: Image of the red channel 
     base_im(array): matrix MxN: Image of the green channel 
@@ -70,11 +69,10 @@ def red_channel(red, nerden, Afull, new_com, red_im, base_im, fanal, maxdist=3, 
     aux_redlabel = np.zeros(neur)
     iden_pairs = []  # to debug
     for nn in np.arange(neur):
-        if nerden[nn]:
-            aux_redlabel[nn] = np.sum(dists[nn,:]<maxdist)
-            redn = np.where(dists[nn,:]<maxdist)[0]
-            if len(redn):
-                iden_pairs.append([nn, redn[0]])  # to debug
+        aux_redlabel[nn] = np.sum(dists[nn,:]<maxdist)
+        redn = np.where(dists[nn,:]<maxdist)[0]
+        if len(redn):
+            iden_pairs.append([nn, redn[0]])  # to debug
     redlabel[aux_redlabel>0]=True
     auxtoplot = new_com[redlabel,:]
 
@@ -95,7 +93,7 @@ def red_channel(red, nerden, Afull, new_com, red_im, base_im, fanal, maxdist=3, 
             auxlocy = auxtoplot[ind,0].astype('int')
             imgtoplot[auxlocx-1:auxlocx+1,auxlocy-1:auxlocy+1] = np.nanmax(new_img)
         ax2.imshow(new_img + imgtoplot, vmax=np.nanmax(new_img))
-        plt.savefig(fanal + str(plane) + '/redneurmask.png', bbox_inches="tight")
+        plt.savefig(fanal + '/redneurmask.png', bbox_inches="tight")
         
         fig2 = plt.figure()
         R = new_img
@@ -107,7 +105,7 @@ def red_channel(red, nerden, Afull, new_com, red_im, base_im, fanal, maxdist=3, 
         
         RGB =  np.dstack((R,G,B))
         plt.imshow(RGB)
-        plt.savefig(fanal + str(plane) + '/redneurmask_RG.png', bbox_inches="tight")
+        plt.savefig(fanal + '/redneurmask_RG.png', bbox_inches="tight")
         plt.close("all") 
             
     return redlabel
@@ -128,13 +126,13 @@ def obtain_real_com(Afull, img_size = 20, thres=0.1):
         center_mass = scipy.ndimage.measurements.center_of_mass(Afull[:,:,neur]>thres)
         if np.nansum(center_mass)==0 :
             center_mass = scipy.ndimage.measurements.center_of_mass(Afull[:,:,neur])
-        new_com[neur,:] = [center_mass[0], center_mass[1]]
+        new_com[neur,:] = [center_mass[1], center_mass[0]]
 
                     
     return new_com
 
 
-def obtain_components(folder, A_comp, dims, cnn_tol=0.75):
+def obtain_components(folder, estimates, dims):
 
     # creates folder for plots
     fanal = folder + 'plots/'
@@ -145,18 +143,27 @@ def obtain_components(folder, A_comp, dims, cnn_tol=0.75):
     fmat = folder + 'red.mat' 
     redinfo = scipy.io.loadmat(fmat)
     red = redinfo['red']
+    
+    # obtain the cnm results
+    A_comp = estimates.A[:, estimates.idx_components]
+    C_comp = estimates.C_on[estimates.idx_components, :]
 
     # convert to normal matrix from sparse
-    Afull = np.reshape(A_comp.toarray(),dims)
-    # obtain components from dendrites
-    pred, _ = evaluate_components_CNN(A_comp, dims[:2], [4,4])
-    nerden = np.zeros(Afull.shape[2]).astype('bool')
-    nerden[np.where(pred[:,1]>cnn_tol)] = True
+    Afull = np.transpose(np.reshape(A_comp.toarray(),[dims[0], dims[1], A_comp.shape[1]]), [1,0,2])
+
     # obtain real position of somas (caiman returns center of mass of soma+dendrites)
     new_com = obtain_real_com(Afull)
+    
+    # import red image
+    fred = folder + 'red.tif'
+    red_im = tifffile.imread(fred)
+    
+    base_im = np.reshape(estimates.b, dims).T
+    
     # match red neurons with green neurons
-    redlabel = red_channel(red, nerden, Afull, new_com, red_im, base_im, fanal)  
+    redlabel = red_channel(red, Afull, new_com, red_im, base_im, fanal)  
     ind_red = np.where(redlabel)[0]
+    
     
     # create dictionary to save as .mat
     f = folder + 'redcomp'
@@ -164,6 +171,7 @@ def obtain_components(folder, A_comp, dims, cnn_tol=0.75):
         'redLabel' : redlabel,
         'indRed' : ind_red,
         'AComp' : A_comp[:, redlabel],   #do not save as int, matlab  does not like it
+        'CComp' : C_comp[redlabel, :],   #do not save as int, matlab  does not like it
         'com' : new_com[redlabel, :].astype('int')
         }
     

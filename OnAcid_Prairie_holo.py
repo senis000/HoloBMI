@@ -25,19 +25,20 @@ def obtain_spatial_filters(folder, fr, use_CNN=True):
     fnames = [folder_path + filename for filename in os.listdir(folder_path) if filename.endswith('.tiff')]  #TODO check .tif or .tiff
     
     # Parameters
+    fr = 30
     decay_time = .75  # approximate length of transient event in seconds
     gSig = [4, 4]  # expected half size of neurons
-    p = 1  # order of AR indicator dynamics
+    p = 2  # order of AR indicator dynamics
     thresh_CNN_noisy = 0.8  # CNN threshold for candidate components
-    gnb = 2  # number of background components
+    gnb = 1  # number of background components
     init_method = 'cnmf'  # initialization method
     
     # set up CNMF initialization parameters
 
-    init_batch = 400  # number of frames for initialization
-    patch_size = 96  # size of patch
-    stride = 24  # amount of overlap between patches
-    K = 25  # max number of components in each patch
+    init_batch = 200  # number of frames for initialization
+    patch_size = 48  # size of patch
+    stride = 12  # amount of overlap between patches
+    K = 10  # max number of components in each patch
     
     SNR_lowest =  2  # very minimum
     min_SNR = 2.5
@@ -47,14 +48,24 @@ def obtain_spatial_filters(folder, fr, use_CNN=True):
     min_cnn_thr = 0.9
     
     motion_correct = True # flag for motion correction
-    pw_rigid = True
-    max_shifts = (10,10)
-    max_shifts_online = 10
+    pw_rigid = False
+    max_shifts = (6,6)
+    max_shifts_online = 6
     dview = None
+    
+    #init cnmf
+    nIter = 3
+    max_iter_snmf = 100
+    expected_comps = 100
+    update_freq = 500
     
     #temporal downsamplig
     p_tsub = 5
     tsub = 5
+    
+    #spatial downsamplig
+    ds_factor = 1
+    gSig = tuple(np.ceil(np.array(gSig) / ds_factor).astype('int'))
     
     
     
@@ -68,7 +79,6 @@ def obtain_spatial_filters(folder, fr, use_CNN=True):
                    'nb': gnb,
                    'min_SNR': min_SNR,
                    'SNR_lowest': SNR_lowest,
-                   'nb': gnb,
                    'init_batch': init_batch,
                    'init_method': init_method,
                    'rf': patch_size//2,
@@ -85,7 +95,12 @@ def obtain_spatial_filters(folder, fr, use_CNN=True):
                    'max_shifts_online': max_shifts_online,
                    'max_shifts':max_shifts,
                    'p_tsub': p_tsub,
-                   'tsub': tsub
+                   'tsub': tsub,
+                   'ds_factor': ds_factor,
+                   'nIter': nIter,
+                   'max_iter_snmf': max_iter_snmf,
+                   'expected_comps': expected_comps,
+                   'update_freq': update_freq
                    }
     t = time.time()
     opts = cnmf.params.CNMFParams(params_dict=params_dict)
@@ -99,5 +114,4 @@ def obtain_spatial_filters(folder, fr, use_CNN=True):
         opts.set('quality', {'min_cnn_thr': min_cnn_thr})
         cnm.estimates.evaluate_components_CNN(opts)
     
-    
-    
+    return cnm.estimates
