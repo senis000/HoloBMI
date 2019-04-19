@@ -22,7 +22,7 @@ interactive(True)
 
 def obtain_spatial_filters(folder, fr, use_CNN=True):
     folder_path = folder + 'raw/' + animal + '/' + day + '/'
-    fnames = [filename for filename in os.listdir(folder_path) if filename.endswith('.tiff')]  #TODO check .tif or .tiff
+    fnames = [folder_path + filename for filename in os.listdir(folder_path) if filename.endswith('.tiff')]  #TODO check .tif or .tiff
     
     # Parameters
     decay_time = .75  # approximate length of transient event in seconds
@@ -48,17 +48,24 @@ def obtain_spatial_filters(folder, fr, use_CNN=True):
     
     motion_correct = True # flag for motion correction
     pw_rigid = True
+    max_shifts = (10,10)
+    max_shifts_online = 10
+    dview = None
+    
+    #temporal downsamplig
+    p_tsub = 5
+    tsub = 5
     
     
     
     only_init = True  # whether to run only the initialization
 
     params_dict = {'fr': fr,
-                   'fnames': fname,
+                   'fnames': fnames,
                    'decay_time': decay_time,
                    'gSig': gSig,
                    'p': p,
-                   'gnv': gnb,
+                   'nb': gnb,
                    'min_SNR': min_SNR,
                    'SNR_lowest': SNR_lowest,
                    'nb': gnb,
@@ -73,11 +80,19 @@ def obtain_spatial_filters(folder, fr, use_CNN=True):
                    'rval_thr': rval_thr,
                    'cnn_lowest': cnn_lowest,
                    'min_cnn_thr': min_cnn_thr,
-                   'motion_correct':motion_correct
+                   'motion_correct': motion_correct,
+                   'pw_rigid': pw_rigid,
+                   'max_shifts_online': max_shifts_online,
+                   'max_shifts':max_shifts,
+                   'p_tsub': p_tsub,
+                   'tsub': tsub
                    }
+    t = time.time()
     opts = cnmf.params.CNMFParams(params_dict=params_dict)
     cnm = cnmf.online_cnmf.OnACID(params=opts)
     cnm.fit_online()
+    time.time() - t
+
     
     if use_CNN:
         # threshold for CNN classifier
