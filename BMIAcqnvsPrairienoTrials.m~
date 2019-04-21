@@ -405,7 +405,7 @@ function cleanMeUp(savePath, animal, day, bData)
     disp('cleaning')
     % evalin('base','save baseVars.mat'); %do we want to save workspace?
     % saving the global variables
-    save(savePath + 'BMI_online.mat','animal', 'day', 'data', 'bData')
+    save(savePath + "BMI_online.mat", ...'animal', 'day', 'data', 'bData')
     pl.Disconnect();
 end
 

@@ -13,6 +13,6 @@ E1,E2 => Index in the spatial filter matrix
     AComp = AComp(:, ensemble);
     E1BMI = 1:length(E1);
     E2BMI = length(E1)+1:length(E1)+length(E2);
-    save(savePath + "redcompBMI.mat", 'AComp')
+    save(savePath + 'redcompBMI.mat', 'AComp')
         
 end
