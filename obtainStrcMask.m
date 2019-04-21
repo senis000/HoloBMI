@@ -9,7 +9,7 @@ units => index of the neurons in the neuronMask
 %}
 
     for u = 1: size(AComp,2)
-        a1 = reshape(full(AComp(:,u)),py,px);
+        a1 = reshape(full(AComp(:,u)),py,px).'; %transposed from onacid
         posx = find(sum(a1,1)~=0);
         posy = find(sum(a1,2)~=0);
         strcMask.maxx(u) = posx(end);
