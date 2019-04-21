@@ -132,15 +132,16 @@ def obtain_real_com(Afull, img_size = 20, thres=0.1):
     return new_com
 
 
-def obtain_components(folder, estimates, dims):
+def obtain_components(folder, animal, day, estimates, dims):
 
     # creates folder for plots
-    fanal = folder + 'plots/'
+    folder_path = folder + 'raw/' + animal + '/' + day + '/'
+    fanal = folder_path+ 'plots/'
     if not os.path.exists(fanal):
         os.makedirs(fanal)
 
     # load red.mat
-    fmat = folder + 'red.mat' 
+    fmat = folder_path+ 'red.mat' 
     redinfo = scipy.io.loadmat(fmat)
     red = redinfo['red']
     
@@ -155,24 +156,31 @@ def obtain_components(folder, estimates, dims):
     new_com = obtain_real_com(Afull)
     
     # import red image
-    fred = folder + 'red.tif'
+    fred = folder_path+ 'red.tif'
     red_im = tifffile.imread(fred)
-    
     base_im = np.reshape(estimates.b, dims).T
+    
+    fmat = folder_path + 'red.mat' 
+    redinfo = scipy.io.loadmat(fmat)
+    red = redinfo['red']
     
     # match red neurons with green neurons
     redlabel = red_channel(red, Afull, new_com, red_im, base_im, fanal)  
     ind_red = np.where(redlabel)[0]
     
+    # break the sparse matrix to save
+    A_comp = scipy.sparse.csr_matrix(np.reshape(Afull.astype('float'), A_comp.shape))
     
     # create dictionary to save as .mat
-    f = folder + 'redcomp'
+    f = folder_path+ 'redcomp'
+    
     dict = {
-        'redLabel' : redlabel,
-        'indRed' : ind_red,
-        'AComp' : A_comp[:, redlabel],   #do not save as int, matlab  does not like it
-        'CComp' : C_comp[redlabel, :],   #do not save as int, matlab  does not like it
-        'com' : new_com[redlabel, :].astype('int')
+        'AComp' : A_comp,
+        'CComp' : C_comp,   #do not save as int, matlab  does not like it
+        'com' : new_com.astype('int'),
+        'redlabel': redlabel,
+        'redIm' : red_im,
+        'baseIm' : base_im
         }
     
     redinfo = scipy.io.savemat(f, dict)  
