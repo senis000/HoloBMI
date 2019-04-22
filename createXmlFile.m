@@ -1,10 +1,16 @@
-function createXmlFile(savePath, numberNeurons, reps)
+function createXmlFile(savePath, numberNeurons, reps, flagRandom)
 %{
 Function to create a gpl file to be uploaded to the prairie view
 savePAth --> path where to save the .gpl file
 numberNeurons -> How many neurons to randomly activate
 reps --> amount of stim per neuron
+flagRandom --> adding randomness to the targets of stimulation
+Random only happens within repetitions
 %}
+
+    if nargin < 4
+        flagRandom = True;
+    end
 
     %% Parameters of the GUI
     Iter = 1;
@@ -21,7 +27,11 @@ reps --> amount of stim per neuron
     %% Array of random holostims 
     holovector = nan(numberNeurons,reps);
     for rr = 1:reps
-        holovector(:,rr) = randsample(numberNeurons,numberNeurons);
+        if flagRandom
+            holovector(:,rr) = randsample(numberNeurons,numberNeurons);
+        else
+            holovector(:,rr) = 1:numberNeurons;
+        end
     end
     holovector = holovector(:);
     
