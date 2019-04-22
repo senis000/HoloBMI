@@ -10,7 +10,7 @@ holoMask -> mask of the red neurons to be activated
     IterationDelay = 1000.00;
     UncagingLaser = 'fidelityHP';
     UncagingLaserPower = 0.4;
-    InitialDelay = 0.22;
+    %InitialDelay = 0.20; %% CAREFUL better not to change this
     SpiralSize = 2.1067852798579;
     SpiralRevolutions = 5; 
     
