@@ -9,7 +9,7 @@ Random only happens within repetitions
 %}
 
     if nargin < 4
-        flagRandom = True;
+        flagRandom = true;
     end
 
     %% Parameters of the GUI
@@ -55,7 +55,7 @@ Random only happens within repetitions
     for ind = 1:numberNeurons*reps
         %TODO change from pixelspace to motorspace
         content1 = [InitialDelay, InterPointDelay, Duration, SpiralRevolutions]; 
-        content2 = [holovector(ind), ind];
+        content2 = [holovector(ind), holovector(ind)];
         fprintf(fileID, formatSpec1, Repetitions, UncagingLaser, UncagingLaserPower);
         fprintf(fileID, formatSpec2, content1, AllPointsAtOnce, content2);
         fprintf(fileID, '  </PVMarkPointElement>\n');
