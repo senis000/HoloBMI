@@ -1,0 +1,11 @@
+% test_open_Acomp.m
+
+Acomp_file = fullfile('/Users/vivekathalye/Dropbox/Work/projects/holo_BMI/baseline', 'redcomp.mat'); 
+exist(Acomp_file); 
+
+d = load(Acomp_file); 
+
+%%
+
+im
+h = figure;
