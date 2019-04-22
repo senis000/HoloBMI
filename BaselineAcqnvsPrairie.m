@@ -1,4 +1,4 @@
-function BaselineAcqnvsPrairie(animal, day, frameRate)
+function BaselineAcqnvsPrairie(folder, animal, day, frameRate)
  %{
 Function to acquire the baseline in a prairie scope
 animal -> animal for the experiment
@@ -13,11 +13,11 @@ neuronMask -> matrix for spatial filters with px*py*unit
     %**********************************************************
     expectedLengthExperiment = 15*60*frameRate; % in frames
     
-    savePath = ["F:/VivekNuria/", animal, "/",  day, "/"];
+    savePath = [folder, animal, "/",  day, "/"];
 
     %prairie view parameters
     chanIdx = 2; % green channel
-    envPath = "F:/VivekNuria/"  ;%TODO set environment 
+    envPath = folder  ;%TODO set environment 
 
     %%
     %*********************************************************************

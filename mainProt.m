@@ -1,7 +1,7 @@
 % Main protocol for the experiment
 
+%% Select ChroME neurons
 % Select area of interest with the 2p
-
 % find red neurons
 [holoMask, Im] = makeMasksPrairie(channel);
 % it returns the mask that will be used for the holostim
@@ -9,41 +9,51 @@
 % delete neurons that we don't want by position on image
 holoMask = deleteMask(Im, holoMask, numArea);
 
-% HOLO STIM with the mask of the red components as input!!!!
-% create the .gpl file with the redmask
-% update the .gpl file in the SLM
+%% HOLO STIM 
+% creates holos with the mask of the red components as input
+createGplFile(savePath, holoMask, posz)
+% upload the .gpl file in the SLM
+% run tseries with holoStim one neuron at a time ~2min and save the images.
 
-
-% run the holostim ~2min and save the images.
-% TODO:
-
-
-% obtain A from onacid and bring it to matlab
+%% Obtain spatial components
+% obtain A from onacid, compare to red neurons and bring it to matlab
 % "obtain_componenents.py" -> 
-%         'redLabel' : label as True for components marked as red,
-%         'indRed' : index of such neurons,
 %         'AComp' : sparse matrix with the spatial filters,
-%         'com' : position of the neurons
+%         'CComp' : temporal filters
+%         'com' : position of neurons,
+%         'redlabel': labels with true on red neurons,
+%         'redIm' : image of the red channel,
+%         'baseIm' : background of the image given by caiman
 % it also saves figures for sanity check
 
+%% Baseline acquisition
 % runs the baseline acquisiton
 BaselineAcqnvsPrairie(animal, day, frameRate);
 % saves in [savePath, 'baselineActivity.dat'] the activity of all the
 % neurons of the mask (Acomp+red)
 % saves in baseOnline.mat the baseline activity
 
-% Baseline simulation
-% Vivek
-% obtains the value of T1 that will act as threshold
+%% Baseline simulation
+% Vivek's code for baseline simulation
+% Selection of neurons
 
-% run BMI
-% 2 versions 
-BMIAcqnvsPrairie(animal, day, E1, E2, T1, frameRate)  %not updated
-BMIAcqnvsPrairienoTrials(animal, day, E1, E2, T1, frameRate)
-% should be the same function with or without trials
 
-% VTA Stim during BMI
-% TODO check port, pin and duration of trigger
+%% Holo stim for functional connectivity
+% create the masks for holo stim the 4 ensemble neurons
+EnsembleMask=deleteNonEnsemble (AComp, E2indx, px, py);
+createGplFile(savePath, EnsembleMask, posz)
+% upload the GPL file
+% run 4 masks together
+% create randomize run for each individual neuron of the ensemple
+createXmlFile(savePath, numberNeurons, reps, flagRandom)
+% upload the XML file
+% ran each neuron independently
 
-% HOLO Stim during BMI
-% TODO
+%% run Pre-training
+BMIAcqnvsPrairienoTrials(animal, day, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA)
+
+%% run BMI
+BMIAcqnvsPrairienoTrials(animal, day, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA)
+
+%% Holo stim for functional connectivity
+% ran each neuron independently
