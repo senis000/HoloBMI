@@ -1,4 +1,4 @@
-function createGplFile(savePath, holoMask, posz, pixelSize)
+function createXplFile(savePath)
 %{
 Function to create a gpl file to be uploaded to the prairie view
 savePAth --> path where to save the .gpl file
@@ -6,21 +6,17 @@ holoMask -> mask of the red neurons to be activated
 %}
 
     %% Parameters
-    UncagingLaserPower = 0;
-    Duration = 100;
-    SpiralSize = 0.2;
+    Iterations = 1;
+    IterationDelay = 1000.00;
+    UncagingLaser = 'fidelityHP';
+    UncagingLaserPower = 0.4;
+    %InitialDelay = 0.20; %% CAREFUL better not to change this
+    SpiralSize = 2.1067852798579;
     SpiralRevolutions = 5; 
-    
-    conversionValue = 5.06666666666667;
     
     %% prepare file
     % obtain positions in the mask
     [posx, posy] = findCenter(holoMask);
-    
-    % change from pixel space to motor space
-    posx = 2*conversionValue/pixelSize*posx - conversionValue;
-    posy = -2*conversionValue/pixelSize*posy + conversionValue;
-    
     % print the first part of the text
     fileID = fopen([savePath, 'holoMask.gpl'],'wt');
     fprintf(fileID,'<?xml version="1.0" encoding="utf-8"?>\n');

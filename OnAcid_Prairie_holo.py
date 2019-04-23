@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cv2
 import os
+import time
 
 import caiman as cm
 from caiman.source_extraction import cnmf as cnmf
