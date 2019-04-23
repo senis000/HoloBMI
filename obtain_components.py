@@ -148,6 +148,7 @@ def obtain_components(folder, animal, day, estimates, dims):
     # obtain the cnm results
     A_comp = estimates.A[:, estimates.idx_components]
     C_comp = estimates.C_on[estimates.idx_components, :]
+    YrA_comp = estimates.YrA[estimates.idx_components, :]
 
     # convert to normal matrix from sparse
     Afull = np.transpose(np.reshape(A_comp.toarray(),[dims[0], dims[1], A_comp.shape[1]]), [1,0,2])
@@ -177,6 +178,7 @@ def obtain_components(folder, animal, day, estimates, dims):
     dict = {
         'AComp' : A_comp,
         'CComp' : C_comp,   #do not save as int, matlab  does not like it
+        'YrA': YrA_comp,
         'com' : new_com.astype('int'),
         'redlabel': redlabel,
         'redIm' : red_im,

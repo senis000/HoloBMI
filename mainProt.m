@@ -34,7 +34,10 @@ BaselineAcqnvsPrairie(animal, day, frameRate);
 % saves in baseOnline.mat the baseline activity
 
 %% Baseline simulation
-% Vivek's code for baseline simulation
+baseline2target(n_f_file, Acomp_file, E1_base, E2_base, frames_per_reward_range, ...
+    target_on_cov_bool, prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, save_dir)
+% frames_per_reward_range must be higher than 80seconds (to keep the
+% occurence of artificial vs natural higher than 80% 
 % Selection of neurons
 
 
