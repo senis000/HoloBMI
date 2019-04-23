@@ -38,8 +38,10 @@ baseline2target(n_f_file, Acomp_file, E1_base, E2_base, frames_per_reward_range,
     target_on_cov_bool, prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, save_dir)
 % frames_per_reward_range must be higher than 80seconds (to keep the
 % occurence of artificial vs natural higher than 80% 
-% Selection of neurons
 
+%% Selection of neurons
+% plots neurons so we can select which ones we like the most 
+plotNeuronsBaseline(baseActivity, CComp, YrA, totalNeurons)
 
 %% Holo stim for functional connectivity
 % create the masks for holo stim the 4 ensemble neurons
