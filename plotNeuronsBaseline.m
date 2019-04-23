@@ -38,13 +38,13 @@ totalNeurons -> amount of neurons to be displayed
     % plot C and Cnoise
     CNoise = CComp + YrA;
     figure()
-    sgtitle('Std')
+    sgtitle('HoloStim')
     for idx=1:totalNeurons
 		subplot(4,5,idx)
-		plot(CNoise(ind(idx), :)');
+		plot(CNoise(indm(idx), :)');
         hold on
-        plot(CComp(ind(idx), :)');
-		title(['ROI ' int2str(ind(idx))]);
+        plot(CComp(indm(idx), :)');
+		title(['ROI ' int2str(indm(idx))]);
     end
 end
     
