@@ -21,9 +21,9 @@ from matplotlib import interactive
 interactive(True)
 
 
-def obtain_spatial_filters(folder, fr, use_CNN=True):
-    folder_path = folder + 'raw/' + animal + '/' + day + '/'
-    fnames = [folder_path + filename for filename in os.listdir(folder_path) if filename.endswith('.tiff')]  #TODO check .tif or .tiff
+def obtain_spatial_filters(folder, fr, animal, day, use_CNN=True):
+    folder_path = folder + animal + '/' + day + '/'
+    fnames = [folder_path + filename for filename in os.listdir(folder_path) if filename.endswith('.tif')]  #TODO check .tif or .tiff
     
     # Parameters
     fr = 30
@@ -41,11 +41,11 @@ def obtain_spatial_filters(folder, fr, use_CNN=True):
     stride = 12  # amount of overlap between patches
     K = 10  # max number of components in each patch
     
-    SNR_lowest =  2  # very minimum
+    #SNR_lowest =  2  # very minimum
     min_SNR = 2.5
-    rval_lowest = 0.75 #minimum required space correlation.
+    #rval_lowest = 0.75 #minimum required space correlation.
     rval_thr = 0.8
-    cnn_lowest = 0.6 #minimum required CNN threshold.
+    #cnn_lowest = 0.6 #minimum required CNN threshold.
     min_cnn_thr = 0.9
     
     motion_correct = True # flag for motion correction

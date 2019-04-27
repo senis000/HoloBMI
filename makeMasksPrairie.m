@@ -1,7 +1,7 @@
-function [holoMask, Im] = makeMasksPrairie()
+function [holoMask, Im] = makeMasksPrairie(channel)
     %{ Function to obtain masks in the red channel%}
 
-    channel = 1 ; %for the red channel
+    %channel = 1 ; %for the red channel
     %% connection to Prairie
     pl = actxserver('PrairieLink.Application');
     pl.Connect();

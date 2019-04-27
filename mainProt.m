@@ -11,7 +11,7 @@ holoMask = deleteMask(Im, holoMask, numArea);
 
 %% HOLO STIM 
 % creates holos with the mask of the red components as input
-createGplFile(savePath, holoMask, posz)
+createGplFile(savePath, holoMask, posz, pixelSize)
 % upload the .gpl file in the SLM
 % run tseries with holoStim one neuron at a time ~2min and save the images.
 
