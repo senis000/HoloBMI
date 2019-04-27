@@ -108,7 +108,9 @@ function cleanMeUp(savePath)
     % evalin('base','save baseVars.mat'); %do we want to save workspace?
     % saving the global variables
     save(savePath + "BaselineOnline.mat", 'baseActivity')
-    pl.Disconnect();
+    if pl.Connected()
+        pl.Disconnect();
+    end
 end
 
 

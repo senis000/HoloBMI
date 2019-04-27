@@ -1,4 +1,4 @@
-function BMIAcqnvsPrairienoTrials(animal, day, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA)
+function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA)
     %{
     Function to acquire the BMI in a prairie scope
     animal -> animal for the experiment
@@ -26,7 +26,7 @@ function BMIAcqnvsPrairienoTrials(animal, day, baselineCalibrationFile, frameRat
     flagVTAsched: 
         determines if VTA stim is delivered on a schedule
 
-    Experiments:
+    expt_str --> Experiments:
     0) BMI
     flagBMI = true; (use self-generated hits to perform actions 
         for now actions are just to possibly send VTA stim
@@ -73,12 +73,14 @@ function BMIAcqnvsPrairienoTrials(animal, day, baselineCalibrationFile, frameRat
     flagBMI = false; flagHolosched = false;
     
 %}
-
-    if nargin < 5
+    if nargin <6
+        frameRate = 29.989;
+    end
+    if nargin < 7
         vectorHolo = [];
-        vectorVTA = []
-    elseif nargin == 5
-        vectorVTA = []
+        vectorVTA = [];
+    elseif nargin == 7
+        vectorVTA = [];
     end
 
     %%
@@ -88,12 +90,12 @@ function BMIAcqnvsPrairienoTrials(animal, day, baselineCalibrationFile, frameRat
     
     %% experiment FLAGS
     
-    expt_cell = {...
-        'BMI', ...
-        'HoloVTA_pretrain', ...
-        'Holo_pretrain', ...
-        'VTA_pretrain'};    
-    expt_str = 'BMI'; 
+%     expt_cell = {...
+%         'BMI', ...
+%         'HoloVTA_pretrain', ...
+%         'Holo_pretrain', ...
+%         'VTA_pretrain'}; 
+
     [flagBMI, flagVTAtrig, flagHolosched, flagVTAsched] = ...
         expt2bmi_flags(expt_str);
 %     flagBMI       = true;
@@ -104,9 +106,9 @@ function BMIAcqnvsPrairienoTrials(animal, day, baselineCalibrationFile, frameRat
     %% BMI parameters 
     %frameRate = 30; % TODO check if it can be obtained from prairie 
     relaxationTime = 0;  % there can't be another hit in this many sec
-    back2Base = 1/2*bData.T1; % cursor must be under this value to be able to hit again
+    %back2Base = 1/2*bData.T1; % cursor must be under this value to be able to hit again
 
-    savePath = ['F:/VivekNuria/', animal, '/',  day, '/'];
+    savePath = [folder, animal, '/',  day, '/'];
     if ~exist(savePath, 'dir')
         mkdir(savePath);
     end
@@ -118,7 +120,7 @@ function BMIAcqnvsPrairienoTrials(animal, day, baselineCalibrationFile, frameRat
 
     %% prairie view parameters
     chanIdx = 2; % green channel
-    envPath = 'F:/VivekNuria/utils/'  ;%TODO set environment 
+    envPath = [folder, 'utils/Tseries_VivekNuria.env']  ; 
 
     %% VTA parameters
     shutterVTA = round(2*frameRate);
@@ -126,6 +128,8 @@ function BMIAcqnvsPrairienoTrials(animal, day, baselineCalibrationFile, frameRat
     
     %% Load BMI parameters from baseline calibration
     bData = load(baselineCalibrationFile);
+    back2Base = 1/2*bData.T1; % cursor must be under this value to be able to hit again
+
     %Fields: 
     %'n_mean', 'n_std',
     %'AComp_BMI', 'T1', 'decoder', 'E_id', 'E1_sel_idxs', 'E2_sel_idxs', 
@@ -179,7 +183,7 @@ function BMIAcqnvsPrairienoTrials(animal, day, baselineCalibrationFile, frameRat
     data.frame = 1; % initialize frames
     
     %% Cleaning 
-    finishup = onCleanup(@() cleanMeUp(savePath, animal, day, bData);  %in case of ctrl-c it will launch cleanmeup
+    finishup = onCleanup(@() cleanMeUp(savePath, animal, day, bData));  %in case of ctrl-c it will launch cleanmeup
 
 %     %% Prepare the nidaq
 %     s = daq.createSession('ni');
@@ -194,6 +198,7 @@ function BMIAcqnvsPrairienoTrials(animal, day, baselineCalibrationFile, frameRat
     % connection to Prairie
     pl = actxserver('PrairieLink.Application');
     pl.Connect()
+    pause(2);  % pause is needed to give time to Prairie to connect
 
     % Prairie variables
     px = pl.PixelsPerLine();
@@ -205,9 +210,17 @@ function BMIAcqnvsPrairienoTrials(animal, day, baselineCalibrationFile, frameRat
 
     lastFrame = zeros(px, py); % to compare with new incoming frames
 
-%     % set the environment for the Time Series in PrairieView
-%     tslCommand = "tsl " + envPath;
-%     pl.SendScriptCommands(tslCommand);  %TODO check if this works
+    % set the environment for the Time Series in PrairieView
+    tslCommand = "-tsl " + envPath;
+    pl.SendScriptCommands(tslCommand);  
+    
+    % set the path where to store the imaging data -SetSavePath (-p) "path" ["addDateTime"]
+    savePathPrairie = savePath + "im/";
+    if ~exist(savePathPrairie, 'dir')
+        mkdir(savePath);
+    end
+    saveCommand = "-p " + savePathPrairie + expt_str + "_" + datestr(datetime('now'), 'yymmddTHHMMSS') + "/"; 
+    pl.SendScriptCommands(saveCommand);  
     
     
     %% load onacid masks
@@ -266,17 +279,14 @@ function BMIAcqnvsPrairienoTrials(animal, day, baselineCalibrationFile, frameRat
     tic;
     while data.frame <= expectedLengthExperiment
         Im = pl.GetImage_2(chanIdx, px, py);
-%         if Im ~= lastFrame   
-%             lastFrame = Im;   % comparison and assignment takes ~4ms
+        if Im ~= lastFrame   
+            lastFrame = Im;   % comparison and assignment takes ~4ms
             
 %             % Synchronization
 %             outputSingleScan(s,1);
 %             pause(syncTime)
 %             outputSingleScan(s,0);
 
-            if(HoloTargetDelayTimer > 0)
-                HoloTargetDelayTimer = HoloTargetDelayTimer-1;
-            end
             if nonBufferUpdateCounter == 0
                 % obtain value of the neurons fluorescene
                 unitVals = obtainRoi(Im, strcMask); % function to obtain Rois values
@@ -326,16 +336,20 @@ function BMIAcqnvsPrairienoTrials(animal, day, baselineCalibrationFile, frameRat
                     if backtobaselineFlag 
                         if data.cursor(data.frame) <= back2Base 
                             backtobaselineFlag = 0;
+                            disp('back to baseline')
                         end
                     else
                         if target_hit      %if it hit the target
+                            disp('target hit')
                             if(HoloTargetDelayTimer > 0)
+                                disp('holo target was happening')
                                 HoloTargetDelayTimer = 0; 
                                 data.holoTargetCounter = data.holoTargetCounter + 1;
                                 data.holoHits(data.frame) = 1;
                                 m.Data.holoHits(data.frame) = 1;
                                 
                                 if flagVTAtrig
+                                    disp('vta stim!')
                                     % Arduino pulse TODO
                                     a.writeDigitalPin("D6", 1); pause(syncVTA);a.writeDigitalPin("D6",0);
                                     nonBufferUpdateCounter = shutterVTA;   
@@ -348,9 +362,10 @@ function BMIAcqnvsPrairienoTrials(animal, day, baselineCalibrationFile, frameRat
                                 data.selfTargetCounter = data.selfTargetCounter + 1;
                                 data.selfHits(data.frame) = 1;
                                 m.Data.selfHits(data.frame) =1;
-                                
+                                disp('holo target was NOT happening')
                                 if(flagBMI && flagVTAtrig)
                                     % Arduino pulse TODO
+                                    disp('BBBMI and VTA stim')
                                     a.writeDigitalPin("D6", 1); pause(syncVTA);a.writeDigitalPin("D6",0);
                                     nonBufferUpdateCounter = shutterVTA;
                                     
@@ -360,7 +375,7 @@ function BMIAcqnvsPrairienoTrials(animal, day, baselineCalibrationFile, frameRat
                                 end                                
                             end
 
-%                             disp(['Trial: ', num2str(trialCounter), 'Rewards: ', num2str(rewardHistory)]);
+                            disp(['Trial: ', num2str(data.trialCounter), 'VTA STIMS: ', num2str(data.holoTargetVTACounter + data.selfTargetVTACounter)]);
                             % update trials and hits vector
                             trialFlag = 1;
                             BufferUpdateCounter = relaxationFrames; 
@@ -370,13 +385,15 @@ function BMIAcqnvsPrairienoTrials(animal, day, baselineCalibrationFile, frameRat
                             backtobaselineFlag = 1;
                         elseif flagHolosched
                             if ismember(data.frame, vectorHolo)
-                                HoloTargetCounter = HoloTargetWin;
+                                disp('HOLO STIM')
+                                HoloTargetDelayTimer = HoloTargetWin;
                                 data.schedHoloCounter = data.schedHoloCounter + 1;
                                 % holo STIM trigger goes here TODO
                                 %todo vector of real holo stim
                             end
                         elseif flagVTAsched
                             if ismember(data.frame, vectorVTA)
+                                disp('scheduled VTA STIM')
                                 a.writeDigitalPin("D6", 1); pause(syncVTA);a.writeDigitalPin("D6",0);
                                 nonBufferUpdateCounter = shutterVTA;                                
                                 
@@ -391,9 +408,13 @@ function BMIAcqnvsPrairienoTrials(animal, day, baselineCalibrationFile, frameRat
                 nonBufferUpdateCounter = nonBufferUpdateCounter - 1;
             end
             
+            if(HoloTargetDelayTimer > 0)
+                HoloTargetDelayTimer = HoloTargetDelayTimer-1;
+            end
+            
             data.frame = data.frame + 1;
             data.timeVector(data.frame) = toc;
-%         end
+        end
 
     end
     pl.Disconnect();
@@ -406,6 +427,8 @@ function cleanMeUp(savePath, animal, day, bData)
     % evalin('base','save baseVars.mat'); %do we want to save workspace?
     % saving the global variables
     save(savePath + 'BMI_online.mat','animal', 'day', 'data', 'bData')
-    pl.Disconnect();
+    if pl.Connected()
+        pl.Disconnect();
+    end
 end
 
