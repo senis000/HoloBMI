@@ -217,7 +217,7 @@ function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibra
     % set the path where to store the imaging data -SetSavePath (-p) "path" ["addDateTime"]
     savePathPrairie = savePath + "im/";
     if ~exist(savePathPrairie, 'dir')
-        mkdir(savePath);
+        mkdir(savePathPrairie);
     end
     saveCommand = "-p " + savePathPrairie + expt_str + "_" + datestr(datetime('now'), 'yymmddTHHMMSS') + "/"; 
     pl.SendScriptCommands(saveCommand);  
@@ -317,7 +317,7 @@ function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibra
                     dff2cursor_target(dff, bData);
                 data.cursor(data.frame) = cursor_i;
                 %nansum([-nansum(dff(E1)), nansum(dff(E2))]);
-                disp (data.cursor(data.frame));
+                %disp (data.cursor(data.frame));
                 m.Data.cursor(data.frame) = data.cursor(data.frame); % saving in memmap
                 %----------------------------------------------------------
                 

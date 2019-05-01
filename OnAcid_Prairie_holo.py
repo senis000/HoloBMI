@@ -41,11 +41,11 @@ def obtain_spatial_filters(folder, fr, animal, day, use_CNN=True):
     stride = 12  # amount of overlap between patches
     K = 10  # max number of components in each patch
     
-    #SNR_lowest =  2  # very minimum
+    SNR_lowest =  1  # very minimum
     min_SNR = 2.5
-    #rval_lowest = 0.75 #minimum required space correlation.
+    rval_lowest = 0.2 #minimum required space correlation.
     rval_thr = 0.8
-    #cnn_lowest = 0.6 #minimum required CNN threshold.
+    cnn_lowest = 0.2 #minimum required CNN threshold.
     min_cnn_thr = 0.9
     
     motion_correct = True # flag for motion correction

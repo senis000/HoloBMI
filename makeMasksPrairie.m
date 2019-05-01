@@ -14,7 +14,7 @@ function [holoMask, Im] = makeMasksPrairie(channel)
     Im = pl.GetImage_2(channel, px, py);
 
     %% extract rois
-    [mask, ~] = imFindCellsTM (Im, 7, 0.7, 5, 1, 0); %parameters depend on each image
+    [mask, ~] = imFindCellsTM (Im, 11, 0.7, 9, 1, 0); %parameters depend on each image
     %displays the mask to see if we agree
     findCenter (mask, Im);
     holoMask = bwlabel(mask);

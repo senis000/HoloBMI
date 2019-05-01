@@ -80,8 +80,9 @@ plot_cov_bool = 1;
 
 %1) Select Temporal: BMI E data from baseline 
 
-%Comment when debugging: 
 load(n_f_file); %num_samples x num_neurons_base
+f_base = baseActivity.';
+f_base = f_base(1:1000, :); %debugging input data with nans... 
 %Assume variable is called f_base
 
 %Throw out prefix frames:
@@ -100,6 +101,7 @@ E1_sel_idxs = find(E1_sel);
 E2_sel = E_id==2; 
 E2_sel_idxs = find(E2_sel); 
 
+%%
 %3) Select Spatial Components for BMI E
 % % Uncomment and test with a mosue:
 load(Acomp_file, 'AComp');

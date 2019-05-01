@@ -135,7 +135,7 @@ def obtain_real_com(Afull, img_size = 20, thres=0.1):
 def obtain_components(folder, animal, day, estimates, dims):
 
     # creates folder for plots
-    folder_path = folder + 'raw/' + animal + '/' + day + '/'
+    folder_path = folder + animal + '/' + day + '/'
     fanal = folder_path+ 'plots/'
     if not os.path.exists(fanal):
         os.makedirs(fanal)
@@ -158,7 +158,7 @@ def obtain_components(folder, animal, day, estimates, dims):
     
     # import red image
     fred = folder_path+ 'red.tif'
-    red_im = tifffile.imread(fred)
+    red_im = redinfo['Im']
     base_im = np.reshape(estimates.b, dims).T
     
     fmat = folder_path + 'red.mat' 
