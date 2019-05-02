@@ -38,13 +38,16 @@ save(filetosave,'Im', 'red')
 % creates holos with the mask of the red components as input
 createGplFile(savePath, holoMask, posz, px)
 % upload the .gpl file in the SLM
+% TODO check -LoadMarkPoints (-lmp) "filename"
+
 
 %define where to save the file
 %TODO DEFINE LENGTH OF EXPERIMENT DEPENDING ON NUMBER OF NEURONS
+%check -TSeriesLoad (-tsl) ["path"] with a saved environment
 savePrairieFilesHolo(savePath)
 
 %% Obtain spatial components
-
+% TODO MAKE A DAMN JUPYTER NOTEBOOK
 % obtain A from onacid, compare to red neurons and bring it to matlab
 % in python run OnAcid_Prairie_holo and obtain_components
 % "obtain_componenents.py" -> 
@@ -59,15 +62,23 @@ savePrairieFilesHolo(savePath)
 %% Baseline acquisition
 % runs the baseline acquisiton
 BaselineAcqnvsPrairie(folder, animal, day, frameRate);
+% TODO SYNCHRONIZATION WITH PRAIRIE
 % saves in [savePath, 'baselineActivity.dat'] the activity of all the
 % neurons of the mask (Acomp+red)
 % saves in baseOnline.mat the baseline activity
 
+%TODO LOAD THE REDCOMP
+
 %% Selection of neurons
 % plots neurons so we can select which ones we like the most 
 plotNeuronsBaseline(baseActivity, CComp, YrA, totalNeurons)
+%TODO REMOVE ONE PLOT
 
 %% Baseline simulation
+% select correct parameters on
+vivek_tb_test_baseline_to_calibration
+
+% run the simulation of baseline
 baseline2target(n_f_file, Acomp_file, E1_base, E2_base, frames_per_reward_range, ...
     target_on_cov_bool, prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, save_dir)
 % frames_per_reward_range must be higher than 80seconds (to keep the
