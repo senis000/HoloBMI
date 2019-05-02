@@ -20,7 +20,7 @@ neuronMask -> matrix for spatial filters with px*py*unit
 
     %prairie view parameters
     chanIdx = 2; % green channel
-    %envPath = folder  ;%TODO set environment 
+    %envPath = fullfile(folder, "env_VN")  ;%TODO set environment 
 
     %%
     %*********************************************************************
@@ -29,8 +29,8 @@ neuronMask -> matrix for spatial filters with px*py*unit
 
     global pl baseActivity
     
-    %% Cleaning 
-    finishup = onCleanup(@() cleanMeUp(savePath));  %in case of ctrl-c it will lunch cleanmeup
+%     %% Cleaning 
+%     finishup = onCleanup(@() cleanMeUp(savePath));  %in case of ctrl-c it will lunch cleanmeup
 
     %% Prepare the nidaq
 %     s = daq.createSession('ni');
