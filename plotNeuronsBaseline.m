@@ -11,8 +11,8 @@ totalNeurons -> amount of neurons to be displayed
     if nargin < 4
         totalNeurons = 20;
     end
-	Sm = nanstd(baseActivity(1:end,10:end),2)./nanmean(baseActivity(1:end,10:end),2);
-    S = nanstd(baseActivity(1:end,10:end),2);
+	Sm = nanstd(baseActivity(1:end,10:end),0,2)./nanmean(baseActivity(1:end,10:end),2);
+    S = nanstd(baseActivity(1:end,10:end),0,2);
 	[~, indm] = sort(Sm, 'descend');
     [~, ind] = sort(S, 'descend');
     disp('Neurons from best to worst Sm: \n');
@@ -21,7 +21,7 @@ totalNeurons -> amount of neurons to be displayed
 	ind(1:totalNeurons)
     % plot std/mean
 	figure()
-    sgtitle('Std/mean')
+    %sgtitle('Std/mean')
     for idx=1:totalNeurons
 		subplot(4,5,idx)
 		plot(baseActivity(ind(idx), :)');
@@ -29,16 +29,16 @@ totalNeurons -> amount of neurons to be displayed
     end
     % plot std
     figure()
-    sgtitle('Std')
+%    sgtitle('Std')
     for idx=1:totalNeurons
 		subplot(4,5,idx)
-		plot(baseActivity(ind(idx), :)');
-		title(['ROI ' int2str(ind(idx))]);
+		plot(baseActivity(indm(idx), :)');
+		title(['ROI ' int2str(indm(idx))]);
     end
     % plot C and Cnoise
     CNoise = CComp + YrA;
     figure()
-    sgtitle('HoloStim')
+%    sgtitle('HoloStim')
     for idx=1:totalNeurons
 		subplot(4,5,idx)
 		plot(CNoise(indm(idx), :)');

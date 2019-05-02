@@ -22,7 +22,7 @@ holoMask -> mask of the red neurons to be activated
     posy = -2*conversionValue/pixelSize*posy + conversionValue;
     
     % print the first part of the text
-    fileID = fopen([savePath, 'holoMask.gpl'],'wt');
+    fileID = fopen(fullfile(savePath, 'holoMask.gpl'),'wt');
     fprintf(fileID,'<?xml version="1.0" encoding="utf-8"?>\n');
     fprintf(fileID,'<PVGalvoPointList>\n');
     

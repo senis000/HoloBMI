@@ -21,9 +21,7 @@ from matplotlib import interactive
 interactive(True)
 
 
-def obtain_spatial_filters(folder, fr, animal, day, use_CNN=True):
-    folder_path = folder + animal + '/' + day + '/'
-    fnames = [folder_path + filename for filename in os.listdir(folder_path) if filename.endswith('.tif')]  #TODO check .tif or .tiff
+def obtain_spatial_filters(fnames, fr, use_CNN=True):
     
     # Parameters
     fr = 30
@@ -39,7 +37,7 @@ def obtain_spatial_filters(folder, fr, animal, day, use_CNN=True):
     init_batch = 200  # number of frames for initialization
     patch_size = 48  # size of patch
     stride = 12  # amount of overlap between patches
-    K = 10  # max number of components in each patch
+    K = 4  # max number of components in each patch
     
     SNR_lowest =  1  # very minimum
     min_SNR = 2.5
@@ -107,7 +105,7 @@ def obtain_spatial_filters(folder, fr, animal, day, use_CNN=True):
     opts = cnmf.params.CNMFParams(params_dict=params_dict)
     cnm = cnmf.online_cnmf.OnACID(params=opts)
     cnm.fit_online()
-    time.time() - t
+    print(time.time() - t)
 
     
     if use_CNN:

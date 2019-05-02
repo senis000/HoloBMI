@@ -82,7 +82,7 @@ plot_cov_bool = 1;
 
 load(n_f_file); %num_samples x num_neurons_base
 f_base = baseActivity.';
-f_base = f_base(1:1000, :); %debugging input data with nans... 
+% f_base = f_base(1:1000, :); %debugging input data with nans... 
 %Assume variable is called f_base
 
 %Throw out prefix frames:
@@ -340,11 +340,14 @@ E2_subord_thresh = E2_subord_mean+E2_subord_std*E2_coeff;
 E1_thresh = E1_mean + 2*E1_std; %E1_mean_max; %E1_mean;
 
 T = T0; 
-T_delta = 0.05; 
-E2_coeff_delta = 0.05; 
+T_delta = 0.05;
+E2_coeff_delta = 0.05; %0.05 
 task_complete = 0;
 T_vec = []; 
 reward_per_frame_vec = []; 
+
+max_iter = 10000;
+iter = 0;
 
 %If using data covariance:
 rand_num_samples = 500000;
@@ -410,8 +413,13 @@ while(~task_complete)
         T = T-T_delta; 
     end
     T
-    E2_coeff
-    E2_subord_thresh
+%     E2_coeff
+%     E2_subord_thresh
+    iter = iter+1;
+    if(iter == max_iter)
+        task_complete = 1;
+        disp('Max Iter reached, check reward rate / baseline data'); 
+    end
 end
 
 %%
@@ -464,7 +472,6 @@ h = figure;
 hold on; 
 hist(cursor_obs, 50); 
 vline(T); 
-disp('num baseline hits:'); 
 xlabel('Cursor'); 
 ylabel('Number of Observations'); 
 title('E2-E1 threshold plotted on E2-E1 distribution'); 
@@ -531,6 +538,7 @@ saveas(h, fullfile(save_dir, 'PSTH_locked_to_hit_baseline.png'));
 %2) Just the target parameters for running BMI
 
 %1)All the steps here
+clear h
 date_str = datestr(datetime('now'), 'yyyymmddTHHMMSS'); 
 save_path = fullfile(save_dir, ['target_calibration_ALL_' date_str '.mat']); 
 save(save_path); 

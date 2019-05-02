@@ -55,8 +55,7 @@ neuronMask -> matrix for spatial filters with px*py*unit
     if ~exist(savePathPrairie, 'dir')
         mkdir(savePathPrairie);
     end
-    saveCommand = "-p " + savePathPrairie + expt_str + "_" + datestr(datetime('now'), 'yymmddTHHMMSS') + "/"; 
-    pl.SendScriptCommands(saveCommand);
+    savePrairieFilesBaseline(savePath, pl)
 
     lastFrame = zeros(px, py); % to compare with new incoming frames
 
@@ -74,11 +73,11 @@ neuronMask -> matrix for spatial filters with px*py*unit
     %% Create the file where to store the baseline
     baseActivity = zeros(numberNeurons, expectedLengthExperiment) + nan;
     fileName = fullfile(savePath, 'baselineActivity.dat');
+    % creates a file with the correct shape
+    fileID = fopen(fileName,'w');
     if ~exist(fileName, 'file')
         disp('file does not exist. Memmap will not be saved')
     end
-    % creates a file with the correct shape
-    fileID = fopen(fileName,'w');
     fwrite(fileID, baseActivity,'double');
     fclose(fileID);
     % maps the file into memory
