@@ -47,7 +47,7 @@ createGplFile(savePath, holoMask, posz, px)
 savePrairieFilesHolo(savePath)
 
 %% Obtain spatial components
-% TODO MAKE A DAMN JUPYTER NOTEBOOK
+% run OnAcidPrairieNotebook.ipynb 
 % obtain A from onacid, compare to red neurons and bring it to matlab
 % in python run OnAcid_Prairie_holo and obtain_components
 % "obtain_componenents.py" -> 
