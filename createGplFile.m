@@ -1,9 +1,13 @@
-function createGplFile(savePath, holoMask, posz, pixelSize)
+function createGplFile(savePath, holoMask, posz, pixelSize, varName)
 %{
 Function to create a gpl file to be uploaded to the prairie view
 savePAth --> path where to save the .gpl file
 holoMask -> mask of the red neurons to be activated
 %}
+
+    if nargin <5
+        varName = '';
+    end
 
     %% Parameters
     UncagingLaserPower = 0;
@@ -22,7 +26,7 @@ holoMask -> mask of the red neurons to be activated
     posy = -2*conversionValue/pixelSize*posy + conversionValue;
     
     % print the first part of the text
-    fileID = fopen(fullfile(savePath, 'holoMask.gpl'),'wt');
+    fileID = fopen(fullfile(savePath, [varName, 'holoMask.gpl']),'wt');
     fprintf(fileID,'<?xml version="1.0" encoding="utf-8"?>\n');
     fprintf(fileID,'<PVGalvoPointList>\n');
     

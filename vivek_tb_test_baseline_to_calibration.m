@@ -4,7 +4,7 @@
 %First load: 
 % 1) BaselineOnline.mat
 % 2) redcomp.mat
-plotNeuronsBaseline(baseActivity, CComp, YrA, 20);
+% plotNeuronsBaseline(baseActivity, CComp, YrA, 20);
 %%
 %save(savePath + "BaselineOnline.mat", 'baseActivity')
 base_file = fullfile(savePath, 'BaselineOnline.mat')
@@ -19,8 +19,8 @@ n_f_file = base_file;
 exist(n_f_file)
 Acomp_file = fullfile(savePath, 'redcomp.mat');
 exist(Acomp_file)
-E1_base = [27 23];
-E2_base = [21 8]; %Needs to have chrome!
+E1_base = [1 2];
+E2_base = [3 4]; %Needs to have chrome!
 frames_per_reward_range = [1.5 0.1]*60*frameRate %[1 1.5]*60*frameRate
 
 target_on_cov_bool = 0

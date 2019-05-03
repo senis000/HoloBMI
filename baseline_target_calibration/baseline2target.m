@@ -430,15 +430,15 @@ ylabel('target');
 title('Target Value over Calibration'); 
 saveas(h, fullfile(save_dir, 'target_val_over_calibration.png')); 
 
-h = figure;
-hold on; 
-plot(reward_per_frame_vec, '.-', 'MarkerSize', 7); 
-hline(reward_per_frame_range(1)); 
-hline(reward_per_frame_range(2)); 
-xlabel('alg iteration'); 
-ylabel('reward per Frame'); 
-title('Reward Per Frame over Calibration'); 
-saveas(h, fullfile(save_dir, 'reward_per_frame_over_calibration.png')); 
+% h = figure;
+% hold on; 
+% plot(reward_per_frame_vec, '.-', 'MarkerSize', 7); 
+% hline(reward_per_frame_range(1)); 
+% hline(reward_per_frame_range(2)); 
+% xlabel('alg iteration'); 
+% ylabel('reward per Frame'); 
+% title('Reward Per Frame over Calibration'); 
+% saveas(h, fullfile(save_dir, 'reward_per_frame_over_calibration.png')); 
 
 %%
 %Plot the hits on actual data: 
@@ -471,7 +471,7 @@ cursor_obs = n_analyze*decoder;
 h = figure;
 hold on; 
 hist(cursor_obs, 50); 
-vline(T); 
+% vline(T); 
 xlabel('Cursor'); 
 ylabel('Number of Observations'); 
 title('E2-E1 threshold plotted on E2-E1 distribution'); 
@@ -486,21 +486,21 @@ offset = 5;
 %c1:
 c1_offset = offset_vec(end)+offset;
 plot(1:length(cursor_obs), cursor_obs-c1_offset);
-hline(T-c1_offset)
+% hline(T-c1_offset)
 
 %c2:
 c2_offset = offset_vec(end)+2*offset;
 plot(1:length(E1_mean_analyze), E1_mean_analyze-c2_offset);
-hline(E1_thresh-c2_offset)
+% hline(E1_thresh-c2_offset)
 
 %c3:
 c3_offset = offset_vec(end)+3*offset;
 plot(E2_subord_mean_analyze-c3_offset); 
 plot(E2_subord_thresh(E2_dom_sel)-c3_offset);
 
-for i=1:length(hit_times)
-    vline(hit_times(i)); 
-end
+% for i=1:length(hit_times)
+%     vline(hit_times(i)); 
+% end
 
 saveas(h, fullfile(save_dir, 'neural_hit_constraints.png')); 
 
@@ -520,7 +520,7 @@ for i=1:num_neurons
     plot(y_plot-offset, 'Color', E_color{(E_id(i))}); 
     errbar(1:length(y_plot), y_plot-offset,y_sem, 'Color', E_color{(E_id(i))}); 
 end
-vline((psth_win(2)-psth_win(1))/2+1); 
+% vline((psth_win(2)-psth_win(1))/2+1); 
 xlabel('frame')
 title('PSTH of Baseline Activity Locked to Target Hit'); 
 

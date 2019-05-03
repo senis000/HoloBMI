@@ -1,4 +1,4 @@
-function BaselineAcqnvsPrairie(folder, animal, day, frameRate)
+function BaselineAcqnvsPrairie(folder, animal, day, AComp, frameRate)
  %{
 Function to acquire the baseline in a prairie scope
 animal -> animal for the experiment
@@ -20,7 +20,7 @@ neuronMask -> matrix for spatial filters with px*py*unit
 
     %prairie view parameters
     chanIdx = 2; % green channel
-    %envPath = fullfile(folder, "env_VN")  ;%TODO set environment 
+    envPath = fullfile(folder,"utils", "Tseries_VivekNuria_15.env")  ;%TODO set environment 
 
     %%
     %*********************************************************************
@@ -29,8 +29,8 @@ neuronMask -> matrix for spatial filters with px*py*unit
 
     global pl baseActivity
     
-%     %% Cleaning 
-%     finishup = onCleanup(@() cleanMeUp(savePath));  %in case of ctrl-c it will lunch cleanmeup
+    %% Cleaning 
+    finishup = onCleanup(@() cleanMeUp(savePath));  %in case of ctrl-c it will lunch cleanmeup
 
     %% Prepare the nidaq
 %     s = daq.createSession('ni');
@@ -41,6 +41,9 @@ neuronMask -> matrix for spatial filters with px*py*unit
     % connection to Prairie
     pl = actxserver('PrairieLink.Application');
     pl.Connect()
+    
+    % pause needed for prairie to respond
+    pause(2)
 
     % Prairie variables
     px = pl.PixelsPerLine();
@@ -55,17 +58,16 @@ neuronMask -> matrix for spatial filters with px*py*unit
     if ~exist(savePathPrairie, 'dir')
         mkdir(savePathPrairie);
     end
-    savePrairieFilesBaseline(savePath, pl)
+    savePrairieFiles(savePath, pl, "baseline")
 
     lastFrame = zeros(px, py); % to compare with new incoming frames
 
     % set the environment for the Time Series in PrairieView
-%     tslCommand = "tsl " + envPath;
-%     pl.SendScriptCommands(tslCommand);  %TODO check if this works
+%     tslCommand = "-tsl " + envPath;
+%     pl.SendScriptCommands(tslCommand);  
     
     %% Load Baseline variables
-    % load onacid masks
-    load(fullfile(savePath,'redcomp.mat'), 'AComp');
+
     numberNeurons = size(AComp,2);
     % create smaller versions of the spatial filter
     strcMask = obtainStrcMask(AComp, px, py);

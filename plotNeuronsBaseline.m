@@ -28,13 +28,13 @@ totalNeurons -> amount of neurons to be displayed
 		title(['ROI ' int2str(ind(idx))]);
     end
     % plot std
-    figure()
-%    sgtitle('Std')
-    for idx=1:totalNeurons
-		subplot(4,5,idx)
-		plot(baseActivity(indm(idx), :)');
-		title(['ROI ' int2str(indm(idx))]);
-    end
+%     figure()
+% %    sgtitle('Std')
+%     for idx=1:totalNeurons
+% 		subplot(4,5,idx)
+% 		plot(baseActivity(indm(idx), :)');
+% 		title(['ROI ' int2str(indm(idx))]);
+%     end
     % plot C and Cnoise
     CNoise = CComp + YrA;
     figure()

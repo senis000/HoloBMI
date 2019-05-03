@@ -74,7 +74,7 @@ function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibra
     
 %}
     if nargin <6
-        frameRate = 29.989;
+        frameRate = 3.484;
     end
     if nargin < 7
         vectorHolo = [];
@@ -120,14 +120,14 @@ function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibra
 
     %% prairie view parameters
     chanIdx = 2; % green channel
-    envPath = [folder, 'utils/Tseries_VivekNuria.env']  ; 
+    envPath = fullfile(folder,"utils", "Tseries_VivekNuria_40.env") ;
 
     %% VTA parameters
     shutterVTA = round(2*frameRate);
     syncVTA = 0.001; % duration of the TTL
     
     %% Load BMI parameters from baseline calibration
-    bData = load(baselineCalibrationFile);
+    bData = load(fullfile(savePath, baselineCalibrationFile));
     back2Base = 1/2*bData.T1; % cursor must be under this value to be able to hit again
 
     %Fields: 
@@ -148,16 +148,16 @@ function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibra
     
     %pre-allocating arrays
     expHistory = single(nan(numberNeurons, movingAverageFrames));  %define a windows buffer
-    data.cursor = double(nan(1,expectedLengthExperiment));  %define a very long vector for cursor
-    data.bmiAct = double(nan(numberNeurons, expectedLengthExperiment));
-    data.baseVector = double(nan(numberNeurons,expectedLengthExperiment));  %define a very long vector for cursor    
-    data.selfHits = single(zeros(1,expectedLengthExperiment));  %define a very long vector for hits
-    data.holoHits = single(zeros(1,expectedLengthExperiment));  %define a very long vector for hits    
-    data.selfVTA = single(zeros(1,expectedLengthExperiment));  %define a very long vector for hits    
-    data.holoVTA = single(zeros(1,expectedLengthExperiment));  %define a very long vector for hits    
-    data.trialStart = single(zeros(1,expectedLengthExperiment));  %define a very long vector trialStart
+    data.cursor = double(nan(1,ceil(expectedLengthExperiment)));  %define a very long vector for cursor
+    data.bmiAct = double(nan(numberNeurons, ceil(expectedLengthExperiment)));
+    data.baseVector = double(nan(numberNeurons,ceil(expectedLengthExperiment)));  %define a very long vector for cursor    
+    data.selfHits = single(zeros(1,ceil(expectedLengthExperiment)));  %define a very long vector for hits
+    data.holoHits = single(zeros(1,ceil(expectedLengthExperiment)));  %define a very long vector for hits    
+    data.selfVTA = single(zeros(1,ceil(expectedLengthExperiment)));  %define a very long vector for hits    
+    data.holoVTA = single(zeros(1,ceil(expectedLengthExperiment)));  %define a very long vector for hits    
+    data.trialStart = single(zeros(1,ceil(expectedLengthExperiment)));  %define a very long vector trialStart
     %to debug!!! TODO REMOVE after debugging
-    data.timeVector = double(nan(1,expectedLengthExperiment));  %define a very long vector for cursor
+    data.timeVector = double(nan(1,ceil(expectedLengthExperiment)));  %define a very long vector for cursor
 
     %initializing general flags and counters 
     data.selfTargetCounter = 0; 
@@ -215,12 +215,7 @@ function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibra
     pl.SendScriptCommands(tslCommand);  
     
     % set the path where to store the imaging data -SetSavePath (-p) "path" ["addDateTime"]
-    savePathPrairie = savePath + "im/";
-    if ~exist(savePathPrairie, 'dir')
-        mkdir(savePathPrairie);
-    end
-    saveCommand = "-p " + savePathPrairie + expt_str + "_" + datestr(datetime('now'), 'yymmddTHHMMSS') + "/"; 
-    pl.SendScriptCommands(saveCommand);  
+    savePrairieFiles(savePath, pl, expt_str)  
     
     
     %% load onacid masks
@@ -269,17 +264,18 @@ function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibra
     m.Data.selfVTA      = selfVTA;
     m.Data.holoVTA      = holoVTA;
 
-    %************************************************************************
+    %% ************************************************************************
     %*************************** RUN ********************************
     %************************************************************************
 
     %start the time_series scan
 %     pl.SendScriptCommands("-ts");   % TODO check if this actually works 
-
+    data.frame = 1;
     tic;
+    disp('STARTING RECORDING!!!')
     while data.frame <= expectedLengthExperiment
         Im = pl.GetImage_2(chanIdx, px, py);
-        if Im ~= lastFrame   
+        if ~isequal(Im,lastFrame)
             lastFrame = Im;   % comparison and assignment takes ~4ms
             
 %             % Synchronization
@@ -316,6 +312,7 @@ function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibra
                 [~, cursor_i, target_hit, ~] = ...
                     dff2cursor_target(dff, bData);
                 data.cursor(data.frame) = cursor_i;
+%                 disp(data.cursor(data.frame))
                 %nansum([-nansum(dff(E1)), nansum(dff(E2))]);
                 %disp (data.cursor(data.frame));
                 m.Data.cursor(data.frame) = data.cursor(data.frame); % saving in memmap
@@ -366,7 +363,7 @@ function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibra
                                 if(flagBMI && flagVTAtrig)
                                     % Arduino pulse TODO
                                     disp('BBBMI and VTA stim')
-                                    a.writeDigitalPin("D6", 1); pause(syncVTA);a.writeDigitalPin("D6",0);
+                                    %a.writeDigitalPin("D6", 1); pause(syncVTA);a.writeDigitalPin("D6",0);
                                     nonBufferUpdateCounter = shutterVTA;
                                     
                                     data.selfTargetVTACounter = data.selfTargetVTACounter + 1;
@@ -417,7 +414,7 @@ function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibra
         end
 
     end
-    pl.Disconnect();
+%    pl.Disconnect();
 end
 % 
 % % fires when main function terminates (normal, error or interruption)
