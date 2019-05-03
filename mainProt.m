@@ -1,7 +1,7 @@
 % Main protocol for the experiment
 
 % define Animal, day and folder where to save
-animal = 'a1'; day = 'd3';
+animal = 'a1'; day = 'd4';
 folder = 'F:/VivekNuria/';
 
 % define posz TODO can we get this from prairie?

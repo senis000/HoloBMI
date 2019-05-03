@@ -39,8 +39,8 @@ def obtain_spatial_filters(fnames, fr, use_CNN=True):
     stride = 12  # amount of overlap between patches
     K = 4  # max number of components in each patch
     
-    SNR_lowest =  1  # very minimum
-    min_SNR = 2.5
+    SNR_lowest =  0.5  # very minimum
+    min_SNR = 2
     rval_lowest = 0.2 #minimum required space correlation.
     rval_thr = 0.8
     cnn_lowest = 0.2 #minimum required CNN threshold.
