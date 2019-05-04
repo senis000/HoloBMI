@@ -21,7 +21,6 @@ end
 % it returns the mask that will be used for the holostim
 
 % if we want to add neurons
-%TODO FIX BUG!!!!
 [holoMask, ~,~] = addcell (Im,holoMask,9);
 % delete neurons that we don't want by position on image
 holoMask = deleteMask(Im, holoMask, 3);  % third var is the number of areas to delete
@@ -60,6 +59,8 @@ savePrairieFilesHolo(savePath)
 %         'redIm' : image of the red channel,
 %         'baseIm' : background of the image given by caiman
 % it also saves figures for sanity check
+
+plotHoloStimTimeLock(botData, voltageRec, wd)
 
 %% Baseline acquisition
 

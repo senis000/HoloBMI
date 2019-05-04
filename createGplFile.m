@@ -1,7 +1,7 @@
 function createGplFile(savePath, holoMask, posz, pixelSize, varName)
 %{
 Function to create a gpl file to be uploaded to the prairie view
-savePAth --> path where to save the .gpl file
+savePath --> path where to save the .gpl file
 holoMask -> mask of the red neurons to be activated
 %}
 
