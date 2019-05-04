@@ -113,3 +113,4 @@ BMIAcqnvsPrairienoTrials(folder, animal, day, 'BMI', baselineCalibrationFile, fr
 
 %% Holo stim for functional connectivity
 % ran each neuron independently
+ 
