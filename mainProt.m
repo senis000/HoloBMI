@@ -21,7 +21,6 @@ end
 % it returns the mask that will be used for the holostim
 
 % if we want to add neurons
-%TODO FIX BUG!!!!
 [holoMask, ~,~] = addcell (Im,holoMask,9);
 % delete neurons that we don't want by position on image
 holoMask = deleteMask(Im, holoMask, 3);  % third var is the number of areas to delete
