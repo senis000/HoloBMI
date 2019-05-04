@@ -1,7 +1,11 @@
 % Main protocol for the experiment
 
 % define Animal, day and folder where to save
+<<<<<<< HEAD
 animal = 'a1'; day = 'd4';
+=======
+animal = 'a1'; day = 'd5';
+>>>>>>> 403e1bd0972703c3987e517730609c2f30bd2ba4
 folder = 'F:/VivekNuria/';
 
 % define posz TODO can we get this from prairie?
@@ -34,18 +38,24 @@ Im = double(Im);
 filetosave = fullfile(savePath, 'red.mat');
 save(filetosave,'Im', 'red')
 
-%% HOLO STIM 
+%% prepare HOLO STIM 
 % MAKE SURE YOU DO NOT SAVE RED CHANNEL HERE!!! 
 % creates holos with the mask of the red components as input
 createGplFile(savePath, holoMask, posz, px)
-% upload the .gpl file in the SLM
-% TODO check -LoadMarkPoints (-lmp) "filename"
-
+% creates regions of interest with the mask of the red components as input
+createBot(savePath, posx,posy)
+% upload the .gpl file in the SLM and the botfile in the BoT
 
 %define where to save the file
-%TODO DEFINE LENGTH OF EXPERIMENT DEPENDING ON NUMBER OF NEURONS
-%check -TSeriesLoad (-tsl) ["path"] with a saved environment
 savePrairieFilesHolo(savePath)
+
+%% Run HOLO STIM
+% TODO set the environment for the holo recording
+%check -TSeriesLoad (-tsl) ["path"] with a saved environment
+
+% load the files BoT and VoltageRec to check the results of holoStim
+% plotHoloStimTimeLock(botData, voltageRec, wd)  --> To plot the result of
+% stim
 
 %% Obtain spatial components
 % run OnAcidPrairieNotebook.ipynb 
@@ -78,13 +88,14 @@ load(fullfile(savePath,'BaselineOnline.mat'));
 % plots neurons so we can select which ones we like the most 
 totalneurons = min(size(AComp,2), 20);
 plotNeuronsBaseline(baseActivity, CComp, YrA, totalneurons)
-%TODO REMOVE ONE PLOT
+% load the files BoT and VoltageRec to check the results of holoStim
+plotHoloStimTimeLock(botData, voltageRec, wd)
 
 %% Baseline simulation
 % select correct parameters on
 vivek_tb_test_baseline_to_calibration
 
-%TODO HLINE AND VLINE need to be downloaded
+%TODO HLINE AND VLINE need to be added to the path
 % run the simulation of baseline
 % baseline2target(n_f_file, Acomp_file, E1_base, E2_base, frames_per_reward_range, ...
 %     target_on_cov_bool, prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, save_dir)
@@ -112,3 +123,4 @@ BMIAcqnvsPrairienoTrials(folder, animal, day, 'BMI', baselineCalibrationFile, fr
 
 %% Holo stim for functional connectivity
 % ran each neuron independently
+ 
