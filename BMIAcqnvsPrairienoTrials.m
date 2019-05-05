@@ -269,7 +269,7 @@ function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibra
     %************************************************************************
 
     %start the time_series scan
-%     pl.SendScriptCommands("-ts");   % TODO check if this actually works 
+%     pl.SendScriptCommands("-ts");   
     data.frame = 1;
     tic;
     disp('STARTING RECORDING!!!')

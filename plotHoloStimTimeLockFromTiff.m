@@ -23,20 +23,35 @@ wd => window to plot before/after neuron
     numSubp = ceil(sqrt(numNeuron));
     figure();
 
-    % to obtain the activity of the neuron
+    % to load the image info one by one 
     info = imfinfo(fname);
     num_images = numel(info);
+    
+    % to obtain the timing of the frames
+    frames = voltageRec(:,5); %TODO CHECK WHICH ONE IS IT!!!
+    
+    %to obtain the activity of the neurons
+    unitVals = zeros(numNeuron, num_images);
     for k = 1:num_images
-        A = imread(fname, k);
+        Im = imread(fname, k);
         for nn = 1:numNeuron
-            auxIndex = find(locs(nn)<=temp, 1, 'first');
-            minIndex = max(auxIndex - wd, 1);
-            maxIndex = min(auxIndex + wd, size(botData,1));
-            subplot(numSubp,numSubp,nn-1)
-            plot(temp(minIndex:maxIndex), botData(minIndex:maxIndex, nn))
-            vline(temp(auxIndex), 'r-')
-            title(['neuron: ', int2str(nn)])
+            auxMask = mask;
+            auxMask(auxMask~=nn) = 0;
+            posx = find(sum(auxMask,1)~=0);
+            posy = find(sum(auxMask,2)~=0);
+            neuronMask = auxMask(posy(1):posy(end), posx(1):posx(end));
+            Imd = double(Im(posminy:posmaxy,posminx:posmaxx));
+            unitVals(nn, k) = nansum(nansum(Imd.* neuronMask/nansum(neuronMask)));
+           
         end
-
+    end
+    for nn = 1:numNeuron
+        auxIndex = find(locs(nn)<=frames, 1, 'first');
+        minIndex = max(auxIndex - wd, 1);
+        maxIndex = min(auxIndex + wd, size(frames));
+        subplot(numSubp,numSubp,nn)
+        plot(frames(minIndex:maxIndex), unitVals(nn, minIndex:maxIndex))
+        vline(frames(auxIndex), 'r-')
+        title(['neuron: ', int2str(nn)])
     end
 end

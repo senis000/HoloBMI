@@ -91,7 +91,7 @@ neuronMask -> matrix for spatial filters with px*py*unit
     %************************************************************************
     frame = 1; % initialize frames
     %start the time_series scan
-    pl.SendScriptCommands("-ts");   % TODO check if this actually works 
+    pl.SendScriptCommands("-ts");   
 
     disp('Starting baseline acquisition')
     while frame <= expectedLengthExperiment

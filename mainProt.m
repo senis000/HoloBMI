@@ -1,4 +1,18 @@
-% Main protocol for the experiment
+%%%TODO'S!!!!
+%{
+- We need to know which voltage-output is which
+- plotHoloStimTimeLockFromTiff --> adjust voltage-output index and test
+- Make sure we know how to obtain the BoT with holo+voltage
+- Create environments for each part of the experiment
+- adapt code to match neurons (INDEX) from onacid with neurons from the holomask
+- Synchronization with Prairie -> each frame in voltage-ouput
+- check port, pin and pause time for arduino
+- holostim trigger
+- frame trigger
+%}
+
+%% Main protocol for the experiment
+
 
 % define Animal, day and folder where to save
 animal = 'a1'; day = 'd5';
@@ -94,7 +108,6 @@ plotNeuronsBaseline(baseActivity, CComp, YrA, totalneurons)
 % select correct parameters on
 vivek_tb_test_baseline_to_calibration
 
-%TODO HLINE AND VLINE need to be added to the path
 % run the simulation of baseline
 % baseline2target(n_f_file, Acomp_file, E1_base, E2_base, frames_per_reward_range, ...
 %     target_on_cov_bool, prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, save_dir)
