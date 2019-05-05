@@ -1,11 +1,7 @@
 % Main protocol for the experiment
 
 % define Animal, day and folder where to save
-<<<<<<< HEAD
-animal = 'a1'; day = 'd4';
-=======
 animal = 'a1'; day = 'd5';
->>>>>>> 403e1bd0972703c3987e517730609c2f30bd2ba4
 folder = 'F:/VivekNuria/';
 
 % define posz TODO can we get this from prairie?
@@ -36,14 +32,14 @@ Im = double(Im);
 
 % save red and Im in folder/animal/day
 filetosave = fullfile(savePath, 'red.mat');
-save(filetosave,'Im', 'red')
+save(filetosave,'Im', 'red', 'holoMask')
 
 %% prepare HOLO STIM 
 % MAKE SURE YOU DO NOT SAVE RED CHANNEL HERE!!! 
 % creates holos with the mask of the red components as input
 createGplFile(savePath, holoMask, posz, px)
 % creates regions of interest with the mask of the red components as input
-createBot(savePath, posx,posy)
+createBot(savePath, x,y)
 % upload the .gpl file in the SLM and the botfile in the BoT
 
 %define where to save the file
@@ -70,6 +66,11 @@ savePrairieFilesHolo(savePath)
 %         'baseIm' : background of the image given by caiman
 % it also saves figures for sanity check
 
+% while onacid does its magic 
+% load the files BoT and VoltageRec to check the results of holoStim
+plotHoloStimTimeLock(botData, voltageRec, wd)
+
+
 %% Baseline acquisition
 
 % loads the result of OnAcid
@@ -88,8 +89,6 @@ load(fullfile(savePath,'BaselineOnline.mat'));
 % plots neurons so we can select which ones we like the most 
 totalneurons = min(size(AComp,2), 20);
 plotNeuronsBaseline(baseActivity, CComp, YrA, totalneurons)
-% load the files BoT and VoltageRec to check the results of holoStim
-plotHoloStimTimeLock(botData, voltageRec, wd)
 
 %% Baseline simulation
 % select correct parameters on

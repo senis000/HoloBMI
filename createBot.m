@@ -5,11 +5,11 @@ savePath --> path where to save the .gpl file
 posx,posy  -> position of the neurons
 %}
     %% Parameters
-    width = 10;
-    height = 10;
+    width = 12;
+    height = 12;
 
     %% print the first part of the text
-    fileID = fopen(fullfile(savePath, 'Bot.gpl'),'wt');
+    fileID = fopen(fullfile(savePath, 'Bot.cfg'),'wt');
     fprintf(fileID,'<?xml version="1.0" encoding="utf-8"?>\n');
     fprintf(fileID,'<PVBOTs>\n');
     
