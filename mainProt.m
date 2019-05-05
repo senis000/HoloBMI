@@ -15,12 +15,12 @@
 
 
 % define Animal, day and folder where to save
-animal = 'a1'; day = 'd5';
+animal = 'a1'; day = 'd6';
 folder = 'F:/VivekNuria/';
 
 % define posz TODO can we get this from prairie?
-posz = 105.25;
-frameRate = 30.477;
+posz = 166.15;
+frameRate = 29.989;
 
 savePath = fullfile(folder, animal,  day);
 if ~exist(savePath, 'dir')
@@ -30,6 +30,7 @@ end
 %% Select ChroME neurons
 % Select area of interest with the 2p
 % find red neurons
+channel = 1;
 [holoMask, Im, px, py] = makeMasksPrairie(channel);
 
 % it returns the mask that will be used for the holostim

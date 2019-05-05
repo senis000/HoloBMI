@@ -5,9 +5,9 @@ savePath --> path where to save the .gpl file
 posx,posy  -> position of the neurons
 %}
     %% Parameters
-    width = 12;
-    height = 12;
-
+    width = 6;  %half the width
+    height = 6; %half the height
+    
     %% print the first part of the text
     fileID = fopen(fullfile(savePath, 'Bot.cfg'),'wt');
     fprintf(fileID,'<?xml version="1.0" encoding="utf-8"?>\n');
@@ -19,7 +19,7 @@ posx,posy  -> position of the neurons
     
     for ind = 1:length(posx)
         %TODO change from pixelspace to motorspace
-        content = [posx(ind), posy(ind), width, height];
+        content = [posx(ind)-width, posy(ind)-height, width*2, height*2];
         fprintf(fileID, formatSpec,content);
     end
     fprintf(fileID,'</PVBOTs>\n');

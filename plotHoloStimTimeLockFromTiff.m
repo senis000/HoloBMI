@@ -6,6 +6,8 @@ fname => tiff file
 mask => mask of neurons, simple N*M matrix obtained with bwlabel
 voltageRec => data from the voltage recording
 wd => window to plot before/after neuron
+
+TODO CHECK FRAMES!!!! WHICH VOLTAGE OUTPUT IS IT
 %}
     if nargin < 4
         wd = 100;
@@ -40,7 +42,7 @@ wd => window to plot before/after neuron
             posx = find(sum(auxMask,1)~=0);
             posy = find(sum(auxMask,2)~=0);
             neuronMask = auxMask(posy(1):posy(end), posx(1):posx(end));
-            Imd = double(Im(posminy:posmaxy,posminx:posmaxx));
+            Imd = double(Im(posy(1):posy(end),posx(1):posx(end)));
             unitVals(nn, k) = nansum(nansum(Imd.* neuronMask/nansum(neuronMask)));
            
         end
