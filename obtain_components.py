@@ -111,7 +111,7 @@ def red_channel(red, Afull, new_com, red_im, base_im, fanal, maxdist=3, toplot=T
     return redlabel
 
 
-def obtain_real_com(Afull, img_size = 20, thres=0.1):
+def obtain_real_com(Afull, thres=0.1):
     """
     Function to obtain the "real" position of the neuron regarding the spatial filter
     Afull(array): matrix with all the spatial components
@@ -127,7 +127,6 @@ def obtain_real_com(Afull, img_size = 20, thres=0.1):
         if np.nansum(center_mass)==0 :
             center_mass = scipy.ndimage.measurements.center_of_mass(Afull[:,:,neur])
         new_com[neur,:] = [center_mass[1], center_mass[0]]
-
                     
     return new_com
 
@@ -187,20 +186,36 @@ def obtain_components(folder, animal, day, estimates, dims):
     redinfo = scipy.io.savemat(f, dict)  
 
     
-def find_index(folder, animal, day, estimates, com, auxtol=4, cormin=0.6):
+def find_index(folder, animal, day, Afull, holofile, com, Ccomp, auxtol=10, cormin=0.6):
     # initialize vars
     neurcor = np.ones((units, all_C.shape[0])) * np.nan
     finalcorr = np.zeros(units)
     finalneur = np.zeros(units)
     finaldist = np.zeros(units)
-    pmask = np.zeros((metadata['FrameData']['SI.hRoiManager.pixelsPerLine'], metadata['FrameData']['SI.hRoiManager.linesPerFrame']))
     iter = 40
 	
-	# load matlab holoMask
-	finfo = os.path.join(folder, animal, day, red.mat)  #file name of the mat 
+	# load matlab data
+	finfo = os.path.join(folder, animal, day, 'red.mat')  #file name of the mat 
     matinfo = scipy.io.loadmat(finfo)
-	#extract position of neurons
-    relativepos = 
+    redxy = matinfo['red']
+    
+    fholo = os.path.join(folder, animal, day, holofile)  #file name of the mat 
+    holoinfo = scipy.io.loadmat(fholo)
+    online_activity = holoinfo['holoActivity']
+    
+	# extract position of neurons
+    
+    # find distances
+    dist = scipy.spatial.distance.cdist(redxy.T, com)
+    
+    dist[dist>auxtol] = np.nan
+    [nmat, ncaim] = np.where(~np.isnan(dist))
+    
+    for ind, nm in enumerate(np.unique(nmat)):
+        possible_match = ncaim[np.where(nmat==nm)[0]]
+        neurcor = np.zeros((np.unique(nmat).shape[0], possible_match.shape[0]))
+        for nc in possible_match:
+            neurcor[un, npro] = pd.DataFrame(np.transpose([auxC[~np.isnan(auxonline)], auxonline[~np.isnan(auxonline)]])).corr()[0][1]
+            
 	
-	
-	
+
