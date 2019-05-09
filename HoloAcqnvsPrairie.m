@@ -1,6 +1,6 @@
-function BaselineAcqnvsPrairie(folder, animal, day, AComp)
+function HoloAcqnvsPrairie(folder, animal, day, mask)
  %{
-Function to acquire the baseline in a prairie scope
+Function to acquire the holostim in a prairie scope
 animal -> animal for the experiment
 day -> day for the experiment
 neuronMask -> matrix for spatial filters with px*py*unit 
@@ -11,7 +11,7 @@ neuronMask -> matrix for spatial filters with px*py*unit
     %**********************************************************
     %****************  PARAMETERS  ****************************
     %**********************************************************
-    expectedLengthExperiment = 27000 * 3%ceil(3*60*frameRate); % in frames
+    expectedLengthExperiment = 3*7000%ceil(3*60*frameRate); % in frames
     
     savePath = fullfile(folder, animal,  day);
     if ~exist(savePath, 'dir')
@@ -27,17 +27,14 @@ neuronMask -> matrix for spatial filters with px*py*unit
     %******************  INITIALIZE  ***********************************
     %*********************************************************************
 
-    global pl baseActivity
+    global pl holoActivity
     
     %% Cleaning 
     finishup = onCleanup(@() cleanMeUp(savePath));  %in case of ctrl-c it will lunch cleanmeup
 
     %% Prepare the nidaq
-    s = daq.createSession('ni');
-    addDigitalChannel(s,'dev5','Port0/Line0:2','OutputOnly');
-    ni_out = [0 0 0]; 
-    outputSingleScan(s,ni_out);%set   
-    ni_getimage = [1 0 0]; 
+%     s = daq.createSession('ni');
+%     addDigitalChannel(s,'dev5','Port0/Line0:0','OutputOnly');
 
 
     %% Prepare for Prairie
@@ -61,7 +58,7 @@ neuronMask -> matrix for spatial filters with px*py*unit
     if ~exist(savePathPrairie, 'dir')
         mkdir(savePathPrairie);
     end
-    savePrairieFiles(savePath, pl, "baseline")
+    savePrairieFiles(savePath, pl, "holostim")
 
     lastFrame = zeros(px, py); % to compare with new incoming frames
 
@@ -69,24 +66,31 @@ neuronMask -> matrix for spatial filters with px*py*unit
 %     tslCommand = "-tsl " + envPath;
 %     pl.SendScriptCommands(tslCommand);  
     
-    %% Load Baseline variables
+    %% Load variables
 
-    numberNeurons = size(AComp,2);
+    numberNeurons = max(max(mask));
     % create smaller versions of the spatial filter
-    strcMask = obtainStrcMask(AComp, px, py);
+    strcMask = obtainStrcMaskfromMask(mask);
     
-    %% Create the file where to store the baseline
-    baseActivity = zeros(numberNeurons, expectedLengthExperiment) + nan;
-    fileName = fullfile(savePath, 'baselineActivity.dat');
+    %% Prepare the nidaq
+    s = daq.createSession('ni');
+    addDigitalChannel(s,'dev5','Port0/Line0:2','OutputOnly');
+    ni_out = [0 0 0]; 
+    outputSingleScan(s,ni_out);%set   
+    ni_getimage = [1 0 0]; 
+    
+    %% Create the file where to store the holostim
+    holoActivity = zeros(numberNeurons, expectedLengthExperiment) + nan;
+    fileName = fullfile(savePath, 'holoActivity.dat');
     % creates a file with the correct shape
     fileID = fopen(fileName,'w');
     if ~exist(fileName, 'file')
         disp('file does not exist. Memmap will not be saved')
     end
-    fwrite(fileID, baseActivity,'double');
+    fwrite(fileID, holoActivity,'double');
     fclose(fileID);
     % maps the file into memory
-    m = memmapfile(fileName, 'Format',{'double',size(baseActivity),'baseAct'}, 'repeat', 1); 
+    m = memmapfile(fileName, 'Format',{'double',size(holoActivity),'holoAct'}, 'repeat', 1); 
     m.Writable = true;
     %%
     %************************************************************************
@@ -94,19 +98,20 @@ neuronMask -> matrix for spatial filters with px*py*unit
     %************************************************************************
     frame = 1; % initialize frames
     %start the time_series scan
-    pl.SendScriptCommands("-ts");  
+    pl.SendScriptCommands("-ts"); 
     pause(1);  %empirically discovered time for the prairie to start gears
+
+    disp('Starting holo acquisition')
     counterSame = 0;
-    disp('Starting baseline acquisition')
     while counterSame < 500
         Im = pl.GetImage_2(chanIdx, px, py);
         if ~isequal(Im,lastFrame)   
             lastFrame = Im;   % comparison and assignment takes ~4ms
             outputSingleScan(s,ni_getimage); pause(0.001); outputSingleScan(s,[0 0 0]);
-           
+            
             unitVals = obtainRoi(Im, strcMask); % function to obtain Rois values 
-            baseActivity(:,frame) = unitVals;
-            m.Data.baseAct(:,frame) = unitVals; % 1 ms
+            holoActivity(:,frame) = unitVals;
+            m.Data.holoAct(:,frame) = unitVals; % 1 ms
             frame = frame + 1;
             counterSame = 0;
         else
@@ -119,11 +124,11 @@ neuronMask -> matrix for spatial filters with px*py*unit
 end
 
 function cleanMeUp(savePath)
-    global pl baseActivity
+    global pl holoActivity
     disp('cleaning')
     % evalin('base','save baseVars.mat'); %do we want to save workspace?
     % saving the global variables
-    save(fullfile(savePath, "BaselineOnline" + datestr(datetime('now'), 'yymmddTHHMMSS') + ".mat"), 'baseActivity')
+    save(fullfile(savePath, "holoOnline" + datestr(datetime('now'), 'yymmddTHHMMSS') + ".mat"), 'holoActivity')
     if pl.Connected()
         pl.Disconnect();
     end

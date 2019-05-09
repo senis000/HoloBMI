@@ -15,11 +15,11 @@
 
 
 % define Animal, day and folder where to save
-animal = 'a1'; day = 'd6';
-folder = 'F:/VivekNuria/';
+animal = 'NY27'; day = 'D1';
+folder = 'F:/VivekNuria/expt/HoloBmi';
 
 % define posz TODO can we get this from prairie?
-posz = 166.15;
+posz = 176.5;
 frameRate = 29.989;
 
 savePath = fullfile(folder, animal,  day);
@@ -30,8 +30,7 @@ end
 %% Select ChroME neurons
 % Select area of interest with the 2p
 % find red neurons
-channel = 1;
-[holoMask, Im, px, py] = makeMasksPrairie(channel);
+[holoMask, Im, Img, px, py] = makeMasksPrairie();
 
 % it returns the mask that will be used for the holostim
 
@@ -47,7 +46,7 @@ Im = double(Im);
 
 % save red and Im in folder/animal/day
 filetosave = fullfile(savePath, 'red.mat');
-save(filetosave,'Im', 'red', 'holoMask')
+save(filetosave,'Im', 'Img', 'red', 'holoMask')
 
 %% prepare HOLO STIM 
 % MAKE SURE YOU DO NOT SAVE RED CHANNEL HERE!!! 
@@ -59,6 +58,8 @@ createBot(savePath, x,y)
 
 %define where to save the file
 savePrairieFilesHolo(savePath)
+%%
+createXmlFile(savePath, max(max(holoMask)), 1, false)
 
 %% Run HOLO STIM
 % TODO set the environment for the holo recording
@@ -92,7 +93,7 @@ plotHoloStimTimeLock(botData, voltageRec, wd)
 load(fullfile(savePath,'redcomp.mat'));
 
 % runs the baseline acquisiton
-BaselineAcqnvsPrairie(folder, animal, day, AComp, frameRate);
+BaselineAcqnvsPrairie(folder, animal, day, AComp);
 % TODO SYNCHRONIZATION WITH PRAIRIE
 % saves in [savePath, 'baselineActivity.dat'] the activity of all the
 % neurons of the mask (Acomp+red)

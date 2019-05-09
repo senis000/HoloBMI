@@ -30,7 +30,11 @@ TODO CHECK FRAMES!!!! WHICH VOLTAGE OUTPUT IS IT
     num_images = numel(info);
     
     % to obtain the timing of the frames
-    frames = voltageRec(:,5); %TODO CHECK WHICH ONE IS IT!!!
+    frames = voltageRec(:,3);
+    meanFrame = nanmean(frames);
+    frames(frames<meanFrame) = 0;
+    frames(frames>meanFrame) = 1;
+    [~,locsFrames] = findpeaks(frames);
     
     %to obtain the activity of the neurons
     unitVals = zeros(numNeuron, num_images);
@@ -44,16 +48,15 @@ TODO CHECK FRAMES!!!! WHICH VOLTAGE OUTPUT IS IT
             neuronMask = auxMask(posy(1):posy(end), posx(1):posx(end));
             Imd = double(Im(posy(1):posy(end),posx(1):posx(end)));
             unitVals(nn, k) = nansum(nansum(Imd.* neuronMask/nansum(neuronMask)));
-           
         end
     end
     for nn = 1:numNeuron
-        auxIndex = find(locs(nn)<=frames, 1, 'first');
-        minIndex = max(auxIndex - wd, 1);
-        maxIndex = min(auxIndex + wd, size(frames));
+        auxIndex = find(locs(nn)<=locsFrames, 1, 'first');
+        minIndex = squeeze(max([auxIndex - wd, 1]));
+        maxIndex = squeeze(min([auxIndex + wd, size(locsFrames,1) - 1, size(unitVals,2)]));
         subplot(numSubp,numSubp,nn)
-        plot(frames(minIndex:maxIndex), unitVals(nn, minIndex:maxIndex))
-        vline(frames(auxIndex), 'r-')
+        plot(locsFrames(minIndex:maxIndex), unitVals(nn, minIndex:maxIndex))
+        vline(locsFrames(auxIndex), 'r-')
         title(['neuron: ', int2str(nn)])
     end
 end

@@ -5,8 +5,8 @@ savePath --> path where to save the .gpl file
 posx,posy  -> position of the neurons
 %}
     %% Parameters
-    width = 6;  %half the width
-    height = 6; %half the height
+    width = 8;  %half the width
+    height = 8; %half the height
     
     %% print the first part of the text
     fileID = fopen(fullfile(savePath, 'Bot.cfg'),'wt');

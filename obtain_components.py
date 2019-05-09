@@ -135,15 +135,16 @@ def obtain_real_com(Afull, img_size = 20, thres=0.1):
 def obtain_components(folder, animal, day, estimates, dims):
 
     # creates folder for plots
-    folder_path = folder + animal + '/' + day + '/'
-    fanal = folder_path+ 'plots/'
+    folder_path = os.path.join(folder, animal, day)
+    fanal = os.path.join(folder_path, 'plots')
     if not os.path.exists(fanal):
         os.makedirs(fanal)
 
     # load red.mat
-    fmat = folder_path+ 'red.mat' 
+    fmat = os.path.join(folder_path, 'red.mat') 
     redinfo = scipy.io.loadmat(fmat)
     red = redinfo['red']
+    base_im = np.reshape(estimates.b, dims).T
     
     # obtain the cnm results
     A_comp = estimates.A[:, estimates.idx_components]
@@ -157,13 +158,11 @@ def obtain_components(folder, animal, day, estimates, dims):
     new_com = obtain_real_com(Afull)
     
     # import red image
-    fred = folder_path+ 'red.tif'
-    red_im = redinfo['Im']
-    base_im = np.reshape(estimates.b, dims).T
     
-    fmat = folder_path + 'red.mat' 
+    fmat = os.path.join(folder_path, 'red.mat') 
     redinfo = scipy.io.loadmat(fmat)
     red = redinfo['red']
+    red_im = redinfo['Im']
     
     # match red neurons with green neurons
     redlabel = red_channel(red, Afull, new_com, red_im, base_im, fanal)  
@@ -173,7 +172,7 @@ def obtain_components(folder, animal, day, estimates, dims):
     A_comp = scipy.sparse.csr_matrix(np.reshape(Afull.astype('float'), A_comp.shape))
     
     # create dictionary to save as .mat
-    f = folder_path+ 'redcomp'
+    f = os.path.join(folder_path, 'redcomp')
     
     dict = {
         'AComp' : A_comp,
@@ -188,3 +187,20 @@ def obtain_components(folder, animal, day, estimates, dims):
     redinfo = scipy.io.savemat(f, dict)  
 
     
+def find_index(folder, animal, day, estimates, com, auxtol=4, cormin=0.6):
+    # initialize vars
+    neurcor = np.ones((units, all_C.shape[0])) * np.nan
+    finalcorr = np.zeros(units)
+    finalneur = np.zeros(units)
+    finaldist = np.zeros(units)
+    pmask = np.zeros((metadata['FrameData']['SI.hRoiManager.pixelsPerLine'], metadata['FrameData']['SI.hRoiManager.linesPerFrame']))
+    iter = 40
+	
+	# load matlab holoMask
+	finfo = os.path.join(folder, animal, day, red.mat)  #file name of the mat 
+    matinfo = scipy.io.loadmat(finfo)
+	#extract position of neurons
+    relativepos = 
+	
+	
+	

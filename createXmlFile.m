@@ -1,7 +1,7 @@
 function createXmlFile(savePath, numberNeurons, reps, flagRandom)
 %{
-Function to create a gpl file to be uploaded to the prairie view
-savePAth --> path where to save the .gpl file
+Function to create a xml file to be uploaded to the prairie view
+savePAth --> path where to save the .xml file
 numberNeurons -> How many neurons to randomly activate
 reps --> amount of stim per neuron
 flagRandom --> adding randomness to the targets of stimulation
@@ -15,12 +15,12 @@ Random only happens within repetitions
     %% Parameters of the GUI
     Iter = 1;
     IterDelay = 1000.00;
-    UncagingLaser = "fidelityHP";
+    UncagingLaser = "Monaco";
     UncagingLaserPower = 0.4;
-    InitialDelay = 0.22;
-    InterPointDelay = 4800;
-    Duration = 200;
-    SpiralRevolutions = 5; 
+    InitialDelay = 2000;
+    InterPointDelay =  0.12;
+    Duration = 40;
+    SpiralRevolutions = 20; 
     Repetitions = 1;  
     AllPointsAtOnce = "False";
     
@@ -39,7 +39,7 @@ Random only happens within repetitions
     %% prepare file
 
     % print the first part of the text
-    fileID = fopen([savePath, 'holoMask.xml'],'wt');
+    fileID = fopen(fullfile(savePath, 'holoMask.xml'),'wt');
     fprintf(fileID,'<?xml version="1.0" encoding="utf-8"?>\n');
     fprintf(fileID,'<PVSavedMarkPointSeriesElements Iterations="%d" IterationDelay="%.2f">\n', Iter, IterDelay);
     

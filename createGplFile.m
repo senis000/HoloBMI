@@ -10,9 +10,9 @@ holoMask -> mask of the red neurons to be activated
     end
 
     %% Parameters
-    UncagingLaserPower = 0;
+    UncagingLaserPower = 0.4;
     Duration = 100;
-    SpiralSize = 0.2;
+    SpiralSize = 0.3;
     SpiralRevolutions = 5; 
     
     conversionValue = 5.06666666666667;

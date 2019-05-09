@@ -1,4 +1,4 @@
-function [holoMask, Im, px, py] = makeMasksPrairie(channel)
+function [holoMask, Im, Img, px, py] = makeMasksPrairie()
     %{ Function to obtain masks in the red channel%}
 
     %channel = 1 ; %for the red channel
@@ -13,10 +13,11 @@ function [holoMask, Im, px, py] = makeMasksPrairie(channel)
     py = pl.LinesPerFrame();
 
     %take image from channel 1
-    Im = pl.GetImage_2(channel, px, py);
+    Im = pl.GetImage_2(1, px, py);
+    Img = pl.GetImage_2(2, px, py);
 
     %% extract rois
-    [mask, ~] = imFindCellsTM (Im, 11, 0.5, 9, 1, 0); %parameters depend on each image
+    [mask, ~] = imFindCellsTM (Im-Img/10, 11, 0.5, 9, 1, 0); %parameters depend on each image
     %displays the mask to see if we agree
     findCenter (mask, Im);
     holoMask = bwlabel(mask);

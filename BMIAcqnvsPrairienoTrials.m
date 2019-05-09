@@ -122,8 +122,21 @@ function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibra
     chanIdx = 2; % green channel
     envPath = fullfile(folder,"utils", "Tseries_VivekNuria_40.env") ;
 
-    %% VTA parameters
-    shutterVTA = round(2*frameRate);
+    %% Reward/VTA parameters
+    %Sound: 
+    xrnd = randn(1000,1);
+    reward_sound = audioplayer(xrnd, 10000); %Play sound using: play()
+%     xrnd_filt = filter([1 1], 1, xrnd); 
+%     reward_sound = audioplayer(xrnd_filt, 10000); %Play sound using: play()
+%     play(reward_sound)
+    
+    %Shutter:
+    flagShutter = 0; 
+    if flagShutter
+        shutterVTA = round(2*frameRate);
+    else
+        shutterVTA = 0; 
+    end
     syncVTA = 0.001; % duration of the TTL
     
     %% Load BMI parameters from baseline calibration
@@ -186,13 +199,16 @@ function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibra
     finishup = onCleanup(@() cleanMeUp(savePath, animal, day, bData));  %in case of ctrl-c it will launch cleanmeup
 
 %     %% Prepare the nidaq
-%     s = daq.createSession('ni');
-%     addDigitalChannel(s,'dev5','Port0/Line0:0','OutputOnly');
-    
-%     %% Prepare the arduino
-%     a = arduino('COM15', 'Uno');  
-%     %a.writeDigitalPin("D6", 1); pause(0.005);a.writeDigitalPin("D6",0); 
-%     %TODO check port, pin and pause time
+    s = daq.createSession('ni');
+    addDigitalChannel(s,'dev5','Port0/Line0:2','OutputOnly');
+    ni_out = [0 0 0]; 
+    outputSingleScan(s,ni_out);%set   
+    ni_getimage = [1 0 0]; 
+    ni_reward   = [0 1 0]; 
+    ni_holo     = [0 0 1]; 
+%       Line 0: GetImage Pulse
+%       Line 1: Triggers VTA stim / reward 
+%       Line 2: Triggers holo stim
 
     %% Prepare for Prairie
     % connection to Prairie
@@ -269,19 +285,18 @@ function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibra
     %************************************************************************
 
     %start the time_series scan
-%     pl.SendScriptCommands("-ts");   
+    pl.SendScriptCommands("-ts"); 
+    
+    pause(1);  %empirically discovered time for the prairie to start gears
     data.frame = 1;
     tic;
     disp('STARTING RECORDING!!!')
-    while data.frame <= expectedLengthExperiment
+    counterSame = 0;
+    while counterSame < 500 %while data.frame <= expectedLengthExperiment
         Im = pl.GetImage_2(chanIdx, px, py);
         if ~isequal(Im,lastFrame)
             lastFrame = Im;   % comparison and assignment takes ~4ms
-            
-%             % Synchronization
-%             outputSingleScan(s,1);
-%             pause(syncTime)
-%             outputSingleScan(s,0);
+            outputSingleScan(s,ni_getimage); pause(0.001); outputSingleScan(s,[0 0 0]);
 
             if nonBufferUpdateCounter == 0
                 % obtain value of the neurons fluorescene
@@ -312,9 +327,6 @@ function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibra
                 [~, cursor_i, target_hit, ~] = ...
                     dff2cursor_target(dff, bData);
                 data.cursor(data.frame) = cursor_i;
-%                 disp(data.cursor(data.frame))
-                %nansum([-nansum(dff(E1)), nansum(dff(E2))]);
-                %disp (data.cursor(data.frame));
                 m.Data.cursor(data.frame) = data.cursor(data.frame); % saving in memmap
                 %----------------------------------------------------------
                 
@@ -346,9 +358,9 @@ function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibra
                                 m.Data.holoHits(data.frame) = 1;
                                 
                                 if flagVTAtrig
-                                    disp('vta stim!')
-                                    % Arduino pulse TODO
-                                    a.writeDigitalPin("D6", 1); pause(syncVTA);a.writeDigitalPin("D6",0);
+                                    disp('reward delivery!')
+                                    outputSingleScan(s,ni_reward); pause(0.001); outputSingleScan(s,ni_out)
+                                    
                                     nonBufferUpdateCounter = shutterVTA;   
                                     
                                     data.holoTargetVTACounter = data.holoTargetVTACounter+1;
@@ -361,10 +373,9 @@ function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibra
                                 m.Data.selfHits(data.frame) =1;
                                 disp('holo target was NOT happening')
                                 if(flagBMI && flagVTAtrig)
-                                    % Arduino pulse TODO
-                                    disp('BBBMI and VTA stim')
-                                    %a.writeDigitalPin("D6", 1); pause(syncVTA);a.writeDigitalPin("D6",0);
                                     nonBufferUpdateCounter = shutterVTA;
+                                    disp('reward delivery! (self-target)')
+                                    outputSingleScan(s,ni_reward); pause(0.001); outputSingleScan(s,ni_out);                                    
                                     
                                     data.selfTargetVTACounter = data.selfTargetVTACounter + 1;
                                     data.selfVTA(data.frame) = 1;
@@ -376,24 +387,19 @@ function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibra
                             % update trials and hits vector
                             trialFlag = 1;
                             BufferUpdateCounter = relaxationFrames; 
-                            %TODO be careful when we set the VTA about the
-                            %counters
-                            % relaxationtime = length of the signal buffer
                             backtobaselineFlag = 1;
                         elseif flagHolosched
                             if ismember(data.frame, vectorHolo)
                                 disp('HOLO STIM')
                                 HoloTargetDelayTimer = HoloTargetWin;
                                 data.schedHoloCounter = data.schedHoloCounter + 1;
-                                % holo STIM trigger goes here TODO
-                                %todo vector of real holo stim
+                                outputSingleScan(s,ni_holo); pause(0.001); outputSingleScan(s,ni_out)
                             end
                         elseif flagVTAsched
                             if ismember(data.frame, vectorVTA)
                                 disp('scheduled VTA STIM')
-                                a.writeDigitalPin("D6", 1); pause(syncVTA);a.writeDigitalPin("D6",0);
+                                outputSingleScan(s,ni_reward); pause(0.001); outputSingleScan(s,ni_out)
                                 nonBufferUpdateCounter = shutterVTA;                                
-                                
                                 data.schedVTACounter = data.schedVTACounter + 1; 
                             end
                         end
@@ -411,6 +417,9 @@ function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibra
             
             data.frame = data.frame + 1;
             data.timeVector(data.frame) = toc;
+            counterSame = 0;
+        else
+            counterSame = counterSame + 1;
         end
 
     end
