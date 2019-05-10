@@ -11,6 +11,9 @@ totalNeurons -> amount of neurons to be displayed
     if nargin < 4
         totalNeurons = 20;
     end
+    
+    subplotnmb = ceil(sqrt(totalNeurons));
+    
 	Sm = nanstd(baseActivity(1:end,10:end),0,2)./nanmean(baseActivity(1:end,10:end),2);
     S = nanstd(baseActivity(1:end,10:end),0,2);
 	[~, indm] = sort(Sm, 'descend');
@@ -23,7 +26,7 @@ totalNeurons -> amount of neurons to be displayed
 	figure()
     %sgtitle('Std/mean')
     for idx=1:totalNeurons
-		subplot(4,5,idx)
+		subplot(subplotnmb,subplotnmb,idx)
 		plot(baseActivity(ind(idx), :)');
 		title(['ROI ' int2str(ind(idx))]);
     end
@@ -40,7 +43,7 @@ totalNeurons -> amount of neurons to be displayed
     figure()
 %    sgtitle('HoloStim')
     for idx=1:totalNeurons
-		subplot(4,5,idx)
+		subplot(subplotnmb,subplotnmb,idx)
 		plot(CNoise(indm(idx), :)');
         hold on
         plot(CComp(indm(idx), :)');

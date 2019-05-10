@@ -1,4 +1,4 @@
-function baseline2target(n_f_file, Acomp_file, E1_base, E2_base, frames_per_reward_range, target_on_cov_bool, prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, save_dir)
+function baseline2target(n_f_file, Acomp_file, onacid_bool,  E1_base, E2_base, frames_per_reward_range, target_on_cov_bool, prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, save_dir)
 %4.18.19
 %inputs:
 %n_f_file - contains matrix, neural fluorescence from baseline file, num_samples X num_neurons_baseline 
@@ -104,11 +104,23 @@ E2_sel_idxs = find(E2_sel);
 %%
 %3) Select Spatial Components for BMI E
 % % Uncomment and test with a mosue:
-load(Acomp_file, 'AComp');
-E_base_sel = [E1_base, E2_base];
-AComp_BMI = AComp(:, E_base_sel);
-save(fullfile(save_dir, 'redcompBMI.mat'), 'AComp_BMI', 'E_base_sel', 'E_id');
 
+E_base_sel = [E1_base, E2_base];
+
+if onacid_bool
+    load(Acomp_file, 'AComp');
+    AComp_BMI = AComp(:, E_base_sel);
+    save(fullfile(save_dir, 'redcompBMI.mat'), 'AComp_BMI', 'E_base_sel', 'E_id');
+else
+    load(Acomp_file, 'holoMask'); 
+%     load(fullfile(savePath, 'red.mat'), 'holoMask'); 
+    AComp_BMI = zeros(size(holoMask,1)*size(holoMask,2), length(E_base_sel)); 
+    for i = 1:length(E_base_sel)
+        mask_i = holoMask == E_base_sel(i);
+        AComp_BMI(:,i) = mask_i(:); 
+    end
+    save(fullfile(save_dir, 'redcompBMI.mat'), 'AComp_BMI', 'E_base_sel', 'E_id'); 
+end
 %4) Decoder information
 %Decoder information
 E1_proj = zeros(num_neurons, 1); 
@@ -169,10 +181,10 @@ if(f0_win_bool)
     end
     %Truncate data based on the f0_win:
     f_postf0 = f_raw(f0_win:end, :); 
-    f0_mean = repmat(mean(f_postf0, 1), size(f_postf0,1), 1);
+    f0_mean = repmat(nanmean(f_postf0, 1), size(f_postf0,1), 1);
 else
     f_postf0 = f_raw; 
-    f0_mean = repmat(mean(f_postf0, 1), size(f_postf0,1), 1);
+    f0_mean = repmat(nanmean(f_postf0, 1), size(f_postf0,1), 1);
     f0 = f0_mean; 
 end
 
@@ -218,11 +230,11 @@ end
 %Second, compute dff and dff_z:
 dff = (f_postf0-f0)./f0;
 %mean center the dff:
-n_mean = mean(dff,1); %1 x num_neurons
+n_mean = nanmean(dff,1); %1 x num_neurons
 mean_mat = repmat(n_mean, size(dff,1), 1);
 dffc = dff-mean_mat;
 %divide by std:
-n_std = var(dffc, 0, 1).^(1/2); %1 x num_neurons
+n_std = nanstd(dffc, 0, 1); %var(dffc, 0, 1).^(1/2); %1 x num_neurons
 dff_z = dffc./repmat(n_std, [size(dff,1) 1]); 
 if(plot_dff_bool)
     %plot dff
@@ -266,8 +278,10 @@ if(plot_dff_z_smooth_bool && dff_win_bool)
 end
 
 %%
+valid_idxs = find(~isnan(n_analyze(:,1)));
+n_analyze = n_analyze(valid_idxs, :); 
 analyze_cov = cov(n_analyze);
-analyze_mean = mean(n_analyze); 
+analyze_mean = nanmean(n_analyze); 
 if(plot_cov_bool)
     h = figure;
     imagesc(analyze_cov); 
@@ -276,7 +290,7 @@ if(plot_cov_bool)
     xlabel('roi')
     ylabel('roi')
     colormap;
-    caxis([-0.2 0.3]); 
+    caxis([-0.2 0.5]); 
     title('neural cov'); 
     saveas(h, fullfile(save_dir, 'cov_mat_baseline.png'))
 

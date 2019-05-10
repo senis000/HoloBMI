@@ -73,6 +73,7 @@ neuronMask -> matrix for spatial filters with px*py*unit
     strcMask = obtainStrcMaskfromMask(mask);
     
     %% Prepare the nidaq
+    clear s
     s = daq.createSession('ni');
     addDigitalChannel(s,'dev5','Port0/Line0:2','OutputOnly');
     ni_out = [0 0 0]; 

@@ -1,4 +1,4 @@
-function BaselineAcqnvsPrairie(folder, animal, day, AComp)
+function BaselineAcqnvsPrairie(folder, animal, day, AComp, holoMask, onacid_bool)
  %{
 Function to acquire the baseline in a prairie scope
 animal -> animal for the experiment
@@ -6,6 +6,10 @@ day -> day for the experiment
 neuronMask -> matrix for spatial filters with px*py*unit 
 
 %}
+
+    if nargin<6
+        onacid_bool = false;
+    end
 
     %%
     %**********************************************************
@@ -20,7 +24,6 @@ neuronMask -> matrix for spatial filters with px*py*unit
 
     %prairie view parameters
     chanIdx = 2; % green channel
-%     envPath = fullfile(folder,"utils", "Tseries_VivekNuria_15.env")  ;%TODO set environment 
 
     %%
     %*********************************************************************
@@ -66,14 +69,20 @@ neuronMask -> matrix for spatial filters with px*py*unit
     lastFrame = zeros(px, py); % to compare with new incoming frames
 
     % set the environment for the Time Series in PrairieView
-%     tslCommand = "-tsl " + envPath;
-%     pl.SendScriptCommands(tslCommand);  
+    loadCommand = "-tsl " + fullfile('F:/VivekNuria/utils', "Tseries_VivekNuria_15.env");
+    pl.SendScriptCommands(loadCommand);  
     
     %% Load Baseline variables
 
-    numberNeurons = size(AComp,2);
     % create smaller versions of the spatial filter
-    strcMask = obtainStrcMask(AComp, px, py);
+    if onacid_bool
+        numberNeurons = size(AComp,2);
+        strcMask = obtainStrcMask(AComp, px, py);
+    else
+        numberNeurons = max(max(holoMask));
+        strcMask = obtainStrcMaskfromMask(holoMask);
+    end
+    
     
     %% Create the file where to store the baseline
     baseActivity = zeros(numberNeurons, expectedLengthExperiment) + nan;

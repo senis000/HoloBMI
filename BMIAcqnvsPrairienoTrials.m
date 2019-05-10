@@ -74,7 +74,7 @@ function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibra
     
 %}
     if nargin <6
-        frameRate = 3.484;
+        frameRate = 30;
     end
     if nargin < 7
         vectorHolo = [];
@@ -108,19 +108,18 @@ function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibra
     relaxationTime = 0;  % there can't be another hit in this many sec
     %back2Base = 1/2*bData.T1; % cursor must be under this value to be able to hit again
 
-    savePath = [folder, animal, '/',  day, '/'];
+    savePath = fullfile(folder, animal, day); %[folder, animal, '/',  day, '/'];
     if ~exist(savePath, 'dir')
         mkdir(savePath);
     end
     % values of parameters in frames
-    expectedLengthExperiment = 2*60*frameRate; % in frames
+    expectedLengthExperiment = 40*60*frameRate; % in frames
     baseFrames = round(2*60 * frameRate); % Period at the begginig without BMI to establish BL
     movingAverageFrames = 2;
     relaxationFrames = round(relaxationTime * frameRate);
 
     %% prairie view parameters
     chanIdx = 2; % green channel
-    envPath = fullfile(folder,"utils", "Tseries_VivekNuria_40.env") ;
 
     %% Reward/VTA parameters
     %Sound: 
@@ -188,7 +187,7 @@ function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibra
     BufferUpdateCounter = 0;
     
     %Only useful if: flagBMI=false; flagHolosched = true; flagVTAtrig = true;
-    HoloTargetWin = 3; %number of frames after a holo stim to look for target
+    HoloTargetWin = 10; %number of frames after a holo stim to look for target
     HoloTargetDelayTimer = 0; %if this timer is >0 check for a holo target
 %     detectHoloTargetFlag = 0; %if this is 1, start looking for a holo target
     
@@ -196,9 +195,10 @@ function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibra
     data.frame = 1; % initialize frames
     
     %% Cleaning 
-    finishup = onCleanup(@() cleanMeUp(savePath, animal, day, bData));  %in case of ctrl-c it will launch cleanmeup
+    finishup = onCleanup(@() cleanMeUp(savePath, bData));  %in case of ctrl-c it will launch cleanmeup
 
 %     %% Prepare the nidaq
+    clear s
     s = daq.createSession('ni');
     addDigitalChannel(s,'dev5','Port0/Line0:2','OutputOnly');
     ni_out = [0 0 0]; 
@@ -227,8 +227,8 @@ function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibra
     lastFrame = zeros(px, py); % to compare with new incoming frames
 
     % set the environment for the Time Series in PrairieView
-    tslCommand = "-tsl " + envPath;
-    pl.SendScriptCommands(tslCommand);  
+    loadCommand = "-tsl " + fullfile('F:/VivekNuria/utils', "Tseries_VivekNuria_40.env");
+    pl.SendScriptCommands(loadCommand);   
     
     % set the path where to store the imaging data -SetSavePath (-p) "path" ["addDateTime"]
     savePrairieFiles(savePath, pl, expt_str)  
@@ -274,20 +274,21 @@ function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibra
 %     fclose(fileID);
     
     %initialize the values of the memmap
-    m.Data.trialStart   = trialStart;
-    m.Data.selfHits     = selfHits;
-    m.Data.holoHits     = holoHits;
-    m.Data.selfVTA      = selfVTA;
-    m.Data.holoVTA      = holoVTA;
+    m.Data.trialStart   = data.trialStart;
+    m.Data.selfHits     = data.selfHits;
+    m.Data.holoHits     = data.holoHits;
+    m.Data.selfVTA      = data.selfVTA;
+    m.Data.holoVTA      = data.holoVTA;
 
     %% ************************************************************************
     %*************************** RUN ********************************
     %************************************************************************
 
     %start the time_series scan
-    pl.SendScriptCommands("-ts"); 
+    pause(2); 
+    pl.SendScriptCommands("-ts");  
     
-    pause(1);  %empirically discovered time for the prairie to start gears
+    pause(2);  %empirically discovered time for the prairie to start gears
     data.frame = 1;
     tic;
     disp('STARTING RECORDING!!!')
@@ -359,6 +360,7 @@ function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibra
                                 
                                 if flagVTAtrig
                                     disp('reward delivery!')
+                                    play(reward_sound);
                                     outputSingleScan(s,ni_reward); pause(0.001); outputSingleScan(s,ni_out)
                                     
                                     nonBufferUpdateCounter = shutterVTA;   
@@ -427,12 +429,12 @@ function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibra
 end
 % 
 % % fires when main function terminates (normal, error or interruption)
-function cleanMeUp(savePath, animal, day, bData)
+function cleanMeUp(savePath, bData)
     global pl data
     disp('cleaning')
     % evalin('base','save baseVars.mat'); %do we want to save workspace?
     % saving the global variables
-    save(savePath + 'BMI_online.mat','animal', 'day', 'data', 'bData')
+    save(fullfile(savePath, "BMI_online" + datestr(datetime('now'), 'yymmddTHHMMSS') + ".mat"), 'data', 'bData')
     if pl.Connected()
         pl.Disconnect();
     end

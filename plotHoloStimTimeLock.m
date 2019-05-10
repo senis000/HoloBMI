@@ -1,6 +1,6 @@
-% function [ind, zVector] = plotHoloStimTimeLock(holoData, voltageRec, duration, wd)
-duration = 40
-wd = 1000
+function [ind, zVector] = plotHoloStimTimeLock(holoData, voltageRec, duration, wd)
+% duration = 40
+% wd = 1000
 
 %{
 Function to plot the response of neurons to the holo_stim
@@ -60,13 +60,13 @@ duration => including the repetitions
     for nn = 1: indSubp
         auxIndex = find(locs(nn)<=locsFrames, 1, 'first');
         minIndex = max(auxIndex - wd, 1);
-        maxIndex = min(auxIndex + wd, size(holoData,2));
+        maxIndex = min(auxIndex + wd, size(locsFrames,1));
         minzIndex = max(auxIndex - preStim, 1);
         maxzIndex = min(auxIndex + postStim, size(holoData,2));
         meanVector(nn) = nanmean(holoData_detrend(nn, minzIndex:auxIndex),2);
         stdVector(nn) = nanstd(holoData_detrend(nn, :),0,2);
 %         stdVector(nn) = nanstd(holoData_detrend(nn, minzIndex:auxIndex),0,2); %nanstd(holoData(nn, minzIndex:auxIndex),0,2);
-        z_data{nn} = (holoData_detrend(nn, (auxIndex+5):maxzIndex))/stdVector(nn); % - meanVector(nn
+        z_data{nn} = (holoData_detrend(nn, auxIndex:maxzIndex))/stdVector(nn); % - meanVector(nn
         zVector(nn) = nanmean(z_data{nn});
         subplot(numSubp,numSubp,nn)
         plot(round(locsFrames(minIndex:maxIndex)./100)./10, holoData_dff(nn, minIndex:maxIndex))
@@ -80,7 +80,7 @@ duration => including the repetitions
     for nn = 1: length(ind)
         auxIndex = find(locs(ind(nn))<=locsFrames, 1, 'first');
         minIndex = max(auxIndex - wd, 1);
-        maxIndex = min(auxIndex + wd, size(holoData,2));
+        maxIndex = min(auxIndex + wd, size(locsFrames,1));
         subplot(numSubp,numSubp,nn)
         plot(round(locsFrames(minIndex:maxIndex)./100)./10, holoData_dff(ind(nn), minIndex:maxIndex))
         vline(locs(ind(nn))/1000, 'r-')
@@ -90,31 +90,31 @@ duration => including the repetitions
 % end
 
 %%
-%65 vs 9
-nn=62;
-y_data = holoData_detrend(nn,:);
-auxIndex = find(locs(nn)<=locsFrames, 1, 'first')
-
-h = figure; 
-plot(y_data); 
-vline(auxIndex)
-
-h = figure;
-plot(z_data{nn})
-title(num2str(mean(z_data{nn}))); 
+% %65 vs 9
+% nn=62;
+% y_data = holoData_detrend(nn,:);
+% auxIndex = find(locs(nn)<=locsFrames, 1, 'first')
+% 
+% h = figure; 
+% plot(y_data); 
+% vline(auxIndex)
+% 
+% h = figure;
+% plot(z_data{nn})
+% title(num2str(mean(z_data{nn}))); 
 % vline(locs(nn)/1000, 'r-')
 
-%%
-h = figure;
-plot(holoData_detrend(nn,:)); 
+% %%
+% h = figure;
+% plot(holoData_detrend(nn,:)); 
+% 
+% %%
+% h = figure;
+% plot(holoData(nn,:)); 
 
-%%
-h = figure;
-plot(holoData(nn,:)); 
 
-
-%%
-mean(z_data{nn})
-%%
-h = figure;
-plot(zVector(ind), '.-')
+% %%
+% mean(z_data{nn})
+% %%
+% h = figure;
+% plot(zVector(ind), '.-')

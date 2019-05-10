@@ -8,7 +8,7 @@ function savePrairieFilesHolo(savePath)
     if ~exist(savePathPrairie, 'dir')
         mkdir(savePathPrairie);
     end
-    savePathPrairieHolo = fullfile(savePathPrairie, "test_holostim"); 
+    savePathPrairieHolo = fullfile(savePathPrairie, "holostim"); 
     if ~exist(savePathPrairie, 'dir')
         mkdir(savePathPrairie);
     end
