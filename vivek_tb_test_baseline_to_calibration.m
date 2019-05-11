@@ -7,12 +7,12 @@
 % plotNeuronsBaseline(baseActivity, CComp, YrA, 20);
 %%
 %save(savePath + "BaselineOnline.mat", 'baseActivity')
-base_file = fullfile(savePath, 'BaselineOnline.mat')
+base_file = fullfile(savePath, 'BaselineOnline190510T215952.mat')
 exist(base_file)
 
-%%
-rc = load(fullfile(savePath, 'redcomp.mat')); 
-r   = load(fullfile(savePath, 'red.mat'));
+% %%
+% rc = load(fullfile(savePath, 'redcomp.mat')); 
+% r   = load(fullfile(savePath, 'red.mat'));
 
 
 

@@ -69,7 +69,7 @@ duration => including the repetitions
         z_data{nn} = (holoData_detrend(nn, auxIndex:maxzIndex))/stdVector(nn); % - meanVector(nn
         zVector(nn) = nanmean(z_data{nn});
         subplot(numSubp,numSubp,nn)
-        plot(round(locsFrames(minIndex:maxIndex)./100)./10, holoData_dff(nn, minIndex:maxIndex))
+        plot(locsFrames(minIndex:maxIndex)./1000, holoData_dff(nn, minIndex:maxIndex))
         vline(locs(nn)/1000, 'r-')
         title(['neuron: ', int2str(nn)])
     end
@@ -82,7 +82,7 @@ duration => including the repetitions
         minIndex = max(auxIndex - wd, 1);
         maxIndex = min(auxIndex + wd, size(locsFrames,1));
         subplot(numSubp,numSubp,nn)
-        plot(round(locsFrames(minIndex:maxIndex)./100)./10, holoData_dff(ind(nn), minIndex:maxIndex))
+        plot(locsFrames(minIndex:maxIndex)./1000, holoData_dff(ind(nn), minIndex:maxIndex))
         vline(locs(ind(nn))/1000, 'r-')
         title(['neuron: ', int2str(ind(nn))])
     end

@@ -6,8 +6,8 @@ function savePrairieFiles(savePath, pl, expt_str)
         mkdir(savePathPrairie);
     end
     savePathPrairieBase = fullfile(savePathPrairie, expt_str); 
-    if ~exist(savePathPrairie, 'dir')
-        mkdir(savePathPrairie);
+    if ~exist(savePathPrairieBase, 'dir')
+        mkdir(savePathPrairieBase);
     end
     saveCommand = "-p " + savePathPrairieBase;
     pl.SendScriptCommands(saveCommand);

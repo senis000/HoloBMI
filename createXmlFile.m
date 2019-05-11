@@ -25,7 +25,7 @@ power 0.4 is a 100 in the gui
     InitialDelay = 2000;
     InterPointDelay =  0.12;
     Duration = 40;
-    SpiralRevolutions = 10; 
+    SpiralRevolutions = 20; 
     Repetitions = 1;  
     AllPointsAtOnce = "False";
     
