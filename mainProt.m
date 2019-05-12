@@ -1,14 +1,14 @@
 %%%TODO'S!!!!
 %{
-
+%put all the plots in a folder of plots
 %}
 
 %% Main protocol for the experiment
 
 
 % define Animal, day and folder where to save
-animal = 'NY26'; day = 'D1';
-folder = 'E:/VivekNuria/expt/HoloBmi';
+animal = 'NY27'; day = 'D1';
+folder = 'F:/VivekNuria/expt/HoloBmi';
 
 % define posz TODO can we get this from prairie?
 posz = 0;
@@ -32,21 +32,29 @@ end
 % it returns the mask that will be used for the holostim
 
 % if we want to add neurons
-[holoMask, ~,~] = addcell (Im, holoMask,9);
-% if we want to add neurons in green channel
-[holoMask, ~,~] = addcell (Img, holoMask,9);
-% delete neurons that we don't want by position on image
+[holoMask, ~,~] = addcell (Im, holoMask,9); %Press enter in beginning
+
+
 holoMask = deleteMask(Im, holoMask, 3);  % third var is the number of areas to delete
+%THIS DOESNT NEED ENTER AT BEGINNING
+% delete neurons that we don't want by position on image
+
+% if we want to add neurons in green channel
+[holoMaskRedGreen, ~,~] = addcell (Img, holoMask,9);
+%DONT DELETE NEURONS HERE!  THEY ARE FROM RED CHANNEL
+
 
 %% when we are happy with the result
 [x,y] = findCenter(holoMask);
+[xrg,yrg] = findCenter(holoMaskRedGreen);
 red = [x';y'];
+redGreen = [xrg';yrg'];
 Im = double(Im);
 Img = double(Img);
 
 % save red and Im in folder/animal/day
 filetosave = fullfile(savePath, 'red.mat');
-save(filetosave,'Im', 'Img', 'red', 'holoMask')
+save(filetosave,'Im', 'Img', 'red', 'redGreen', 'holoMask', 'holoMaskRedGreen')
 
 %% prepare HOLO STIM 
 % MAKE SURE YOU DO NOT SAVE RED CHANNEL HERE!!! 
@@ -80,8 +88,12 @@ disp(num_stim_neurons*stim_time_per_neuron*frameRate)
 %This does one neuron at a time.
 clear s
 HoloAcqnvsPrairie(folder, animal, day, holoMask)
+%WE WANT RED+GREEN FOR THIS
 
-
+%%
+%Convert the holostim acqn using image-block ripping utility
+%Load holoactivity.mat and voltage recording for plotting
+%(Import to matlab: output type is Numeric Matrix.  Name it "voltageRec")
 %% Obtain spatial components
 % run OnAcidPrairieNotebook.ipynb 
 %TODO: We still have to confirm if onacid on holostim gives same spatial 
@@ -101,6 +113,8 @@ HoloAcqnvsPrairie(folder, animal, day, holoMask)
 % it also saves figures for sanity check
 
 % while onacid does its magic 
+
+%%
 % load the VoltageRec to check the results of holoStim
 plotHoloStimTimeLock(holoActivity, voltageRec, 40, 1000) % --> To plot the result of
 %ToDo: for plotting, do sliding window deltaf/f
@@ -118,7 +132,7 @@ end
 % runs the baseline acquisiton
 % reminder to remove the RED channel
 % Baseline environment already removes MARKPOINTS and set the reps to 27000
-BaselineAcqnvsPrairie(folder, animal, day, AComp, holoMask, onacid_bool);
+BaselineAcqnvsPrairie(folder, animal, day, AComp, holoMaskRedGreen, onacid_bool, frameRate);
 % saves in [savePath, 'baselineActivity.dat'] the activity of all the
 % neurons of the mask (Acomp+red)
 % saves in baseOnline.mat the baseline activity
@@ -139,9 +153,10 @@ plotNeuronsBaseline(baseActivity, CComp, YrA, totalneurons)
 
 %%
 %Manually enter:
-E1_base = sort([32 26 20 9], 'ascend') %JUST NEEDS GCAMP
-E2_base = sort([4 10 11 24], 'ascend') %NEEDS CHROME
+E1_base = sort([85 48 22 34], 'ascend') %JUST NEEDS GCAMP
+E2_base = sort([39 45 50 37], 'ascend') %NEEDS CHROME
 
+% E2_candidates = [39 45 59 37 88 6 26 46 78 48 22 20 33]
 %TODO: 
 %onacid from the baseline acquisition?
 %if we don't do onacid on the baseline activity, we won't have any
@@ -149,7 +164,38 @@ E2_base = sort([4 10 11 24], 'ascend') %NEEDS CHROME
 
 %% Calibrate Target with Baseline simulation
 % select correct parameters on
-vivek_tb_test_baseline_to_calibration
+% vivek_tb_test_baseline_to_calibration
+
+base_file = fullfile(savePath, 'BaselineOnline190512T025909.mat')
+exist(base_file)
+n_f_file = base_file;
+exist(n_f_file)
+ndata = load(n_f_file);
+num_base_samples = sum(~isnan(ndata.baseActivity(1,:))); 
+baseline_frameRate = num_base_samples/(15*60);
+A_file = fullfile(savePath, 'red.mat'); 
+exist(A_file)
+onacid_bool = 0
+
+sec_per_reward_range = [100 80]; 
+
+frames_per_reward_range = sec_per_reward_range*baseline_frameRate %[1 1.5]*60*frameRate
+%multiply by frames per minute to convert
+%to 
+
+target_on_cov_bool = 0
+prefix_win = 40
+f0_win_bool = 1
+f0_win = 2*60*ceil(frameRate)
+dff_win_bool = 1
+dff_win = 2
+ 
+reward_per_frame_range = 1./frames_per_reward_range
+
+close all
+baseline2target(n_f_file, A_file, onacid_bool, E1_base, E2_base, frames_per_reward_range, ...
+    target_on_cov_bool, prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, savePath)
+
 
 % run the simulation of baseline
 % baseline2target(n_f_file, Acomp_file, E1_base, E2_base, frames_per_reward_range, ...
@@ -157,10 +203,14 @@ vivek_tb_test_baseline_to_calibration
 % frames_per_reward_range must be higher than 80seconds (to keep the
 % occurence of artificial vs natural higher than 80% 
 
+%%
+target_info = load(fullfile(savePath, 'BMI_target_info.mat'));
+
 %% Holo stim checking 4 together
-% TODO make this smoother, by being able to plot results + creating the
-% file + creating the xml etc
+%TODO create file + creating the xml etc
 % create the masks for holo stim the 4 ensemble neurons
+
+
 if onacid_bool
     EnsembleMask=deleteNonEnsemble (AComp, E2_base, px, py);
 else
@@ -172,31 +222,56 @@ else
         EnsembleMask = auxmask + EnsembleMask;
     end
 end
+
+pl = actxserver('PrairieLink.Application');
+pl.Connect();
 savePrairieFiles(savePath, pl, '4neurons_together')
 createGplFile(savePath, EnsembleMask, posz, px, 'ensemble_')
 
-% upload the GPL file
-% run 4 masks together
-pl = actxserver('PrairieLink.Application');
-pl.Connect();
+createBot(savePath, x(E2_base),y(E2_base))
+
 loadCommand = "-tsl " + fullfile('F:/VivekNuria/utils', "Tseries_VivekNuria_holo_4.env");
 pl.SendScriptCommands(loadCommand);
-pl.Disconnect()
+
+%ACTIONS:
+% SELECT BOT on image window
+% upload the GPL file
+% upload the BOT file
+% Manually sselect neurons, make group, laser power 50, 4 iterations with
+% 10 sec bw
+% CHANGE NUMBER OF REPS IN T-SERIES
+%% Run 4 masks together
+
+pl.SendScriptCommands("-ts"); 
+pause(1);
 
 %% Holo stim checking connectivity
 % create randomize run for each individual neuron of the ensemple
 savePrairieFiles(savePath, pl, 'connectivity_pre')
 createXmlFile(savePath, 4, 5, 0.2, 'connectivty_', true)
+% loadCommand = "-lmp " + fullfile(savepath, "connectivty_holostim.xml");
+% pl.SendScriptCommands(loadCommand);
+% LOAD XML FILE
+
+%% Run 
+pl.SendScriptCommands("-ts"); 
+pause(1);
+
+%% disconnect prairie
+pl.Disconnect()
 % ran each neuron independently
 
 %%
 %Compute vectorHolo
 frameRate = 30 %baseline_frameRate
 expectedLengthExperiment = 40*60*frameRate
-vectorHolo = createVectorHolo(baseline_frameRate, expectedLengthExperiment);
+[vectorHolo, ISI] = createVectorHolo(frameRate, expectedLengthExperiment, 20, 5, false);
 
 %%
 %run Pre-training
+%Change the Mark Points:
+%Make 120 reps, put "Wait for Trigger" = First Reptition, Trigger
+%Selection: Start with External, PFI1
 clear s
 baselineCalibrationFile = 'BMI_target_info.mat';
 vectorVTA = []
@@ -208,7 +283,7 @@ vectorVTA = []
 %         'VTA_pretrain'}; 
 
 expt_str = 'HoloVTA_pretrain'; 
-BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibrationFile, baseline_frameRate, vectorHolo, vectorVTA)
+BMIAcqnvsPrairienoTrialsHoloCL(folder, animal, day, expt_str, baselineCalibrationFile, baseline_frameRate, vectorHolo, vectorVTA)
 
 %% run BMI
 %remember to set the markpoints to proper stim

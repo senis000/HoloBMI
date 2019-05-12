@@ -8,9 +8,9 @@ function [vectorHolo, ISI] = createVectorHolo(frameRate, expectedLengthExperimen
 
 averageStimPeriod = IHSImean*frameRate;%In frames:
 range = IHSIrange*frameRate; %ISI will vary between [averageStimPeriod-range averageStimPeriod+range]
-num_stims = expectedLengthExperiment/averageStimPeriod;
+num_stims = round(expectedLengthExperiment/averageStimPeriod);
 ISI = rand(num_stims,1)*2*range +(averageStimPeriod-range); 
-vectorHolo = cumsum(ISI);
+vectorHolo = round(cumsum(ISI));
 
 if toplot
     % Debug:
