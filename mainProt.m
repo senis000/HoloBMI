@@ -192,14 +192,20 @@ dff_win = 2
  
 reward_per_frame_range = 1./frames_per_reward_range
 
+cursor_zscore_bool = 1;
+f0_init_slide = 0; 
+
 close all
-baseline2target(n_f_file, A_file, onacid_bool, E1_base, E2_base, frames_per_reward_range, ...
-    target_on_cov_bool, prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, savePath)
+ baseline2target_vBMI(n_f_file, A_file, onacid_bool,  ...
+    E1_base, E2_base, frames_per_reward_range, target_on_cov_bool, ...
+    prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, save_dir, ...
+    cursor_zscore_bool, f0_init_slide);
+
+% baseline2target(n_f_file, A_file, onacid_bool, E1_base, E2_base, frames_per_reward_range, ...
+%     target_on_cov_bool, prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, savePath)
 
 
 % run the simulation of baseline
-% baseline2target(n_f_file, Acomp_file, E1_base, E2_base, frames_per_reward_range, ...
-%     target_on_cov_bool, prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, save_dir)
 % frames_per_reward_range must be higher than 80seconds (to keep the
 % occurence of artificial vs natural higher than 80% 
 
