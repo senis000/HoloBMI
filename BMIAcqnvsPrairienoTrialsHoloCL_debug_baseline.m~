@@ -422,13 +422,11 @@ title('cursor from baseline vBMI');
 %%
 h =figure; 
 hold on;
-plot(cursor_BMI);  
+plot(data.cursor);  
 plot(cursor_base_BMI); 
 base_x = length(data.cursor)-length(cursor_base) + (1:length(cursor_base)); 
 plot(base_x, cursor_base);
-legend({'BMI', 'baseline', 'baseline_BMI'}); 
-
-[rho, pval] = corr(cursor_BMI(:), cursor_base_BMI(:))
+legend({'
 
 %%
 sum(cursor_base >= bData.T1)

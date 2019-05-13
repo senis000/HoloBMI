@@ -1,5 +1,5 @@
 function [dff_z, cursor, target_hit, c1_bool, c2_val, c2_bool, c3_val, c3_bool] = ...
-    dff2cursor_target(dff, bData) 
+    dff2cursor_target(dff, bData, cursor_zscore_bool) 
 %4.19.19
 %INPUT: smoothed dff
 %1) z-score dff
@@ -34,14 +34,19 @@ function [dff_z, cursor, target_hit, c1_bool, c2_val, c2_bool, c3_val, c3_bool] 
 num_E2 = length(bData.E2_sel_idxs); 
 
 %z-score:
-dff_z = (dff-bData.n_mean')./bData.n_std';
-dff_z = dff_z(:).'; %set dff_z to be a row
+if(cursor_zscore_bool)
+    dff_z = (dff-bData.n_mean')./bData.n_std';
+    dff_z = dff_z(:).'; %set dff_z to be a row
+    n_analyze = dff_z;
+else
+    n_analyze = dff;
+end
 
-E1 = dff_z(bData.E1_sel_idxs); 
-E2 = dff_z(bData.E2_sel_idxs); 
+E1 = n_analyze(bData.E1_sel_idxs); 
+E2 = n_analyze(bData.E2_sel_idxs); 
 
 %c1: cursor
-cursor = dff_z*bData.decoder;
+cursor = n_analyze*bData.decoder;
 c1_val = cursor; 
 
 %c2: E1_mean

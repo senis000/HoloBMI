@@ -1,4 +1,0 @@
-function [cursor, target_hit, c1_val, c1_bool, c2_val, c2_bool, c3_val, c3_bool, c3_thresh] = ...
-    dff2cursor_target()
-    
-

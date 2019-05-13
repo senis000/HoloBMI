@@ -1,7 +1,7 @@
-function baseline2target(n_f_file, Acomp_file, onacid_bool,  ...
-    E1_base, E2_base, frames_per_reward_range, target_on_cov_bool, ...
-    prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, save_dir, ...
-    cursor_zscore_bool)
+% function baseline2target_vBMI(n_f_file, Acomp_file, onacid_bool,  ...
+%     E1_base, E2_base, frames_per_reward_range, target_on_cov_bool, ...
+%     prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, save_dir, ...
+%     cursor_zscore_bool, f0_init_slide)
 %4.18.19
 %inputs:
 %n_f_file - contains matrix, neural fluorescence from baseline file, num_samples X num_neurons_baseline 
@@ -22,14 +22,63 @@ function baseline2target(n_f_file, Acomp_file, onacid_bool,  ...
 %dff_win_bool - whether to smooth dff in a window
 %dff_win - number of frames to use for smoothing dff
 %save_dir - directory to save baseline results in in.
+%
+%cursor_zscore_bool - if 1, neural activity is zscored before going into
+%cursor calculation. if 0, neural activity is not zscored.  
+%
+%f0_init_slide - if 0, f0 is only used after f0_win samples.  if 1, f0 is
+%adapted in the window from 0 to f0_win samples.
 
-% %%
-% %Debug parameters: 
-% % (n_f_file, E_id, f0_win_bool, f0_win, dff_win_bool, dff_win, save_dir)
+%%
+%Debug parameters: 
+% (n_f_file, E_id, f0_win_bool, f0_win, dff_win_bool, dff_win, save_dir)
+
+
+folder = '/Users/vivekathalye/Dropbox/Data/holo_bmi_debug_190512'
+animal = 'test'
+day = 'test'
+
+save_dir = fullfile(folder, animal, day); %[folder, animal, '/',  day, '/'];
+if ~exist(save_dir, 'dir')
+    mkdir(save_dir);
+end
+
+baselineCalibrationFile = fullfile(save_dir, 'BMI_target_info.mat'); 
+baselineDataFile = fullfile(save_dir, 'BaselineOnline190512T025909.mat'); 
+n_f_file = baselineDataFile;
+exist(baselineCalibrationFile)
+exist(baselineDataFile)
+load(baselineCalibrationFile)
+
+target_on_cov_bool = 0; 
+
+frame_rate = 30; 
+sec_per_reward_range = [100 80]; 
+frames_per_reward_range = sec_per_reward_range*frame_rate; %[1.5*60*frame_rate 1*60*frame_rate];
+prefix_win = 40; %number frames to remove from the start of imaging
+f0_win_bool = 1;
+f0_win = 2*60*frame_rate; %frames
+dff_win_bool = 1; 
+dff_win = 2; %frames
+f0_init_slide = 0; 
+cursor_zscore_bool = 1;
+on_acid_bool = 0;
+
+% load(fullfile(savePath, baselineDataFile)); 
+% %baseActivity
+% %removenan:
+% f_data = baseActivity; 
+% f_data(:,isnan(f_data(1,:))) = [];
+% num_samples = size(f_data, 2); 
+
+
+% data_dir = '/Users/vivekathalye/Dropbox/Work/projects/holo_BMI/baseline'; 
+% n_f_file = fullfile(data_dir, 'baseline_IntegrationRois_00001_1.csv'); 
 % 
 % save_dir = '/Users/vivekathalye/Dropbox/Work/projects/holo_BMI/baseline/results'
 % mkdir(save_dir); 
-% 
+
+
 % target_on_cov_bool = 0; 
 % 
 % frame_rate = 10; 
@@ -40,8 +89,7 @@ function baseline2target(n_f_file, Acomp_file, onacid_bool,  ...
 % dff_win_bool = 1; 
 % dff_win = 2; %frames
 % 
-% data_dir = '/Users/vivekathalye/Dropbox/Work/projects/holo_BMI/baseline'; 
-% n_f_file = fullfile(data_dir, 'baseline_IntegrationRois_00001_1.csv'); 
+% 
 % %Load baseline data:
 % A = csvread(n_f_file, 1, 0);
 % ts = A(:,1); 
@@ -59,6 +107,8 @@ function baseline2target(n_f_file, Acomp_file, onacid_bool,  ...
 % %this file
 % E_id = [2 2 2 2 1 1 1 1]'; 
 
+
+
 %%
 %Plots to show: 
 %Plot colors: 
@@ -69,8 +119,8 @@ E_color = {plot_b, plot_o};
 
 plot_raw_bool = 1; 
 plot_f0_bool = 1; 
+plot_smooth_bool = 1; 
 plot_dff_bool = 1; 
-plot_dff_z_smooth_bool = 1; 
 plot_cov_bool = 1; 
 %-
 
@@ -85,8 +135,11 @@ mkdir(plotPath);
 
 %1) Select Temporal: BMI E data from baseline 
 
-load(n_f_file); %num_samples x num_neurons_base
-f_base = baseActivity.';
+load(n_f_file); 
+f_base = baseActivity; 
+f_base(:,isnan(f_base(1,:))) = [];
+f_base = f_base.';
+
 % f_base = f_base(1:1000, :); %debugging input data with nans... 
 %Assume variable is called f_base
 
@@ -110,34 +163,36 @@ E2_sel_idxs = find(E2_sel);
 %3) Select Spatial Components for BMI E
 % % Uncomment and test with a mosue:
 
-E_base_sel = [E1_base, E2_base];
+% E_base_sel = [E1_base, E2_base];
+% 
+% if onacid_bool
+%     load(Acomp_file, 'AComp');
+%     AComp_BMI = AComp(:, E_base_sel);
+%     strcMask = obtainStrcMask(AComp_BMI, px, py);
+%     save(fullfile(save_dir, 'redcompBMI.mat'), 'strcMask', 'E_base_sel', 'E_id');
+% else
+%     AComp_BMI = []
+%     load(Acomp_file, 'holoMaskRedGreen'); 
+%     holoMask = holoMaskRedGreen;
+% %     load(fullfile(savePath, 'red.mat'), 'holoMask'); 
+%     EnsembleMask = zeros(size(holoMask));
+%     for indn = 1:length(E1_base)
+%         auxmask = holoMask;
+%         auxmask(auxmask~=E1_base(indn)) = 0;
+%         auxmask(auxmask~=0) = indn;
+%         EnsembleMask = auxmask + EnsembleMask;
+%     end
+%     for indn = 1:length(E2_base)
+%         auxmask = holoMask;
+%         auxmask(auxmask~=E2_base(indn)) = 0;
+%         auxmask(auxmask~=0) = indn + length(E1_base);
+%         EnsembleMask = auxmask + EnsembleMask;
+%     end
+%     strcMask = obtainStrcMaskfromMask(EnsembleMask);
+%     save(fullfile(save_dir, 'redcompBMI.mat'), 'strcMask', 'E_base_sel', 'E_id'); 
+% end
 
-if onacid_bool
-    load(Acomp_file, 'AComp');
-    AComp_BMI = AComp(:, E_base_sel);
-    strcMask = obtainStrcMask(AComp_BMI, px, py);
-    save(fullfile(save_dir, 'redcompBMI.mat'), 'strcMask', 'E_base_sel', 'E_id');
-else
-    AComp_BMI = []
-    load(Acomp_file, 'holoMaskRedGreen'); 
-    holoMask = holoMaskRedGreen;
-%     load(fullfile(savePath, 'red.mat'), 'holoMask'); 
-    EnsembleMask = zeros(size(holoMask));
-    for indn = 1:length(E1_base)
-        auxmask = holoMask;
-        auxmask(auxmask~=E1_base(indn)) = 0;
-        auxmask(auxmask~=0) = indn;
-        EnsembleMask = auxmask + EnsembleMask;
-    end
-    for indn = 1:length(E2_base)
-        auxmask = holoMask;
-        auxmask(auxmask~=E2_base(indn)) = 0;
-        auxmask(auxmask~=0) = indn + length(E1_base);
-        EnsembleMask = auxmask + EnsembleMask;
-    end
-    strcMask = obtainStrcMaskfromMask(EnsembleMask);
-    save(fullfile(save_dir, 'redcompBMI.mat'), 'strcMask', 'E_base_sel', 'E_id'); 
-end
+%%
 %4) Decoder information
 %Decoder information
 E1_proj = zeros(num_neurons, 1); 
@@ -188,17 +243,34 @@ end
 
 %%
 %First process f0: 
-if(f0_win_bool)
-    %Implemented in the same fashion as in the BMI currently
-    num_samples = size(f_raw,1);
-    f0 = zeros(num_samples-f0_win+1, num_neurons); 
-    f0(1,:) = mean(f_raw(1:f0_win, :), 1);
-    for i = 2:length(f0)
-        f0(i,:) = f0(i-1)*((f0_win-1)/f0_win) + f_raw((i+f0_win-1), :)/f0_win; 
+if(f0_win_bool)    
+    %Calculate f0 as in BMI: 
+    
+    if f0_init_slide
+        num_samples = size(f_raw,1);
+        f0 = zeros(num_samples,num_neurons); 
+        for i=1:length(f0)
+            if i==1
+                f0(i,:) = f_raw(i,:);
+            elseif i<f0_win
+                f0(i,:) = (f0(i-1,:)*(i-1)+f_raw(i,:))/i;
+            else
+                f0(i,:) = (f0(i-1,:)*(f0_win-1)+f_raw(i,:))/f0_win;
+            end
+        end
+        f_postf0 = f_raw;
+        f0_mean = repmat(nanmean(f_postf0, 1), size(f_postf0,1), 1);
+    else
+        num_samples = size(f_raw,1);
+        f0 = zeros(num_samples-f0_win+1, num_neurons); 
+        f0(1,:) = mean(f_raw(1:f0_win, :), 1);
+        for i = 2:length(f0)
+            f0(i,:) = f0(i-1)*((f0_win-1)/f0_win) + f_raw((i+f0_win-1), :)/f0_win; 
+        end
+        %Truncate data based on the f0_win:
+        f_postf0 = f_raw(f0_win:end, :); 
+        f0_mean = repmat(nanmean(f_postf0, 1), size(f_postf0,1), 1);        
     end
-    %Truncate data based on the f0_win:
-    f_postf0 = f_raw(f0_win:end, :); 
-    f0_mean = repmat(nanmean(f_postf0, 1), size(f_postf0,1), 1);
 else
     f_postf0 = f_raw; 
     f0_mean = repmat(nanmean(f_postf0, 1), size(f_postf0,1), 1);
@@ -243,8 +315,32 @@ if(plot_f0_bool)
 end
 %Note: a more sophisticated method would calculate f0 based on low-pass
 %filtered calcium.  our f0 estimate is biased by ca transients.
+
 %%
-%Second, compute dff and dff_z:
+%Second, smooth f:
+if(dff_win_bool)
+    num_samples = size(f_postf0,1);     
+	f_smooth = zeros(num_samples, num_neurons); 
+    smooth_filt = ones(dff_win,1)/dff_win;     
+    for i=1:num_neurons
+        f_smooth(:,i) = conv(f_postf0(:,i), smooth_filt, 'same'); 
+    end
+else
+    f_smooth = f_postf0; 
+end
+
+if(plot_smooth_bool && dff_win_bool)
+	h = figure; hold on;
+    plot(f_postf0(:,1)); 
+    plot(f_smooth(:,1)); 
+    legend({'f', 'f smooth'}); 
+    xlabel('frame'); 
+    ylabel('F'); 
+    title('F vs smoothed F'); 
+end
+
+%%
+%Third, compute dff and dff_z:
 dff = (f_postf0-f0)./f0;
 %mean center the dff:
 n_mean = nanmean(dff,1); %1 x num_neurons
@@ -271,30 +367,14 @@ if(plot_dff_bool)
     saveas(h, im_path); 
 end
 
+
 %%
-%Third (final), smooth dff:
-if(dff_win_bool)
-    num_samples = max(length(dff_z)-(dff_win-1), 0); 
-	n_analyze = zeros(num_samples, num_neurons); 
-    smooth_filt = ones(dff_win,1)/dff_win; 
-    for i=1:num_neurons
-        n_analyze(:,i) = conv(dff_z(:,i), smooth_filt, 'valid'); 
-    end
+if cursor_zscore_bool
+    n_analyze = dff_z;
 else
-    n_analyze = dff_z; 
+    n_analyze = dff;
 end
-
-if(plot_dff_z_smooth_bool && dff_win_bool)
-	h = figure; hold on;
-    plot(dff_z(dff_win:end, 1)); 
-    plot(n_analyze(:,1)); 
-    legend({'dff z', 'dff z smooth'}); 
-    xlabel('frame'); 
-    ylabel('dff z'); 
-    title('dff zscore vs smoothed dff zscore'); 
-end
-
-%%
+ 
 valid_idxs = find(~isnan(n_analyze(:,1)));
 n_analyze = n_analyze(valid_idxs, :); 
 analyze_cov = cov(n_analyze);
@@ -318,12 +398,13 @@ if(plot_cov_bool)
     axis square
     xlabel('PC'); 
     ylabel('Frac Var Explained'); 
-    title('DFF Z Smooth PCA Covariance');
+    title('DFF Smooth PCA Covariance');
     saveas(h, fullfile(plotPath, 'cov_pca_baseline.png'))
 end
 
 %%
 %Cursor Cov:
+
 cursor_cov = decoder'*analyze_cov*decoder; 
 % cursor_cov = decoder'*test_cov*decoder; 
 % cursor_cov
@@ -368,7 +449,7 @@ E2_subord_mean_analyze          = (E2_sum_analyze - E2_dom_samples)/(num_E2-1);
 T0 = max(n_analyze*decoder);
 E2_coeff = 0.5; %multiples the std dev, for figuring out E2_subord_thresh
 E2_subord_thresh = E2_subord_mean+E2_subord_std*E2_coeff;
-E1_thresh = E1_mean + 2*E1_std; %E1_mean_max; %E1_mean;
+E1_thresh = E1_mean + 1.5*E1_std; %E1_mean_max; %E1_mean;
 
 T = T0; 
 T_delta = 0.05;
@@ -433,8 +514,11 @@ while(~task_complete)
         task_complete = 1;
         disp('target calibration complete!');
     elseif(reward_prob_per_frame > reward_per_frame_range(2))
+        %Task too easy, make T harder:
         T = T+T_delta; 
     elseif(reward_prob_per_frame < reward_per_frame_range(1))
+        %Task too hard, make T easier:
+        
         %If we swept the full range of T, lower E2_coeff:
         if(T<=0)
             T=T0; 
@@ -443,7 +527,7 @@ while(~task_complete)
         end        
         T = T-T_delta; 
     end
-    T
+%     T
 %     E2_coeff
 %     E2_subord_thresh
     iter = iter+1;
@@ -497,6 +581,44 @@ hit_times = intersect(intersect(c1, c2), c3);
 disp('num baseline hits:'); 
 num_hits = length(hit_times)
 
+cursor_amp = (max(cursor_obs)-min(cursor_obs));
+cursor_offset = cursor_amp/10; 
+max_cursor = max(cursor_obs); 
+
+
+%%
+h =figure; hold on;
+scatter(c1, ones(length(c1),1)*max_cursor + cursor_offset, 15, 'r'); %plot(cursor_obs-cursor_offset, 'k'); 
+scatter(c2, ones(length(c2),1)*max_cursor + 2*cursor_offset, 15, 'g'); %plot(cursor_obs-cursor_offset, 'k'); 
+scatter(c3, ones(length(c3),1)*max_cursor + 3*cursor_offset, 15, 'b'); %plot(cursor_obs-cursor_offset, 'k'); 
+plot(cursor_obs); 
+hline(T); 
+plot(E1_mean_analyze-cursor_amp); 
+plot(E2_subord_mean_analyze-2*cursor_amp); 
+xlabel('frame'); 
+
+legend({'c1', 'c2 - E1 cond', 'c3 - E2 cond', 'cursor', 'E1 mean', 'E2 subord mean'}); 
+vline(hit_times); 
+saveas(h, fullfile(plotPath, 'cursor_hit_ts.png')); 
+
+%%
+h =figure; hold on;
+scatter(c1, ones(length(c1),1)*max_cursor + cursor_offset, 15, 'r'); %plot(cursor_obs-cursor_offset, 'k'); 
+scatter(c2, ones(length(c2),1)*max_cursor + 2*cursor_offset, 15, 'g'); %plot(cursor_obs-cursor_offset, 'k'); 
+scatter(c3, ones(length(c3),1)*max_cursor + 3*cursor_offset, 15, 'b'); %plot(cursor_obs-cursor_offset, 'k'); 
+plot(cursor_obs); 
+hline(T); 
+plot(E1_mean_analyze-cursor_amp); 
+plot(E2_subord_mean_analyze-2*cursor_amp); 
+xlabel('frame'); 
+
+legend({'c1', 'c2 - E1 cond', 'c3 - E2 cond', 'cursor', 'E1 mean', 'E2 subord mean'}); 
+vline(hit_times); 
+saveas(h, fullfile(plotPath, 'cursor_hit_ts.png')); 
+
+%%
+offset = 0; 
+[h, offset_vec] = plot_cursor_E1_E2_activity(cursor_obs, E1_mean_analyze, E2_mean_analyze, n_analyze, E_id, E_color, offset)
 %%
 cursor_obs = n_analyze*decoder; 
 h = figure;
