@@ -1,4 +1,4 @@
-function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA)
+function BMIAcqnvsPrairienoTrials_E1(folder, animal, day, expt_str, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA)
     %{
     Function to acquire the BMI in a prairie scope
     animal -> animal for the experiment
@@ -167,12 +167,10 @@ function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibra
     data.holoHits = single(zeros(1,ceil(expectedLengthExperiment)));  %define a very long vector for hits    
     data.selfVTA = single(zeros(1,ceil(expectedLengthExperiment)));  %define a very long vector for hits    
     data.holoVTA = single(zeros(1,ceil(expectedLengthExperiment)));  %define a very long vector for hits    
+    data.holoDelivery = single(zeros(1,ceil(expectedLengthExperiment)));  %define a very long vector for hits    
     data.trialStart = single(zeros(1,ceil(expectedLengthExperiment)));  %define a very long vector trialStart
     %to debug!!! TODO REMOVE after debugging
     data.timeVector = double(nan(1,ceil(expectedLengthExperiment)));  %define a very long vector for cursor
-    data.vectorHolo = vectorHolo; 
-    data.vectorVTA = vectorVTA; 
-    
 
     %initializing general flags and counters 
     data.selfTargetCounter = 0; 
@@ -194,7 +192,8 @@ function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibra
     HoloTargetDelayTimer = 0; %if this timer is >0 check for a holo target
 %     detectHoloTargetFlag = 0; %if this is 1, start looking for a holo target
 
-
+    E1CheckWin = 1000;
+    
     backtobaselineFlag = 0;
     data.frame = 1; % initialize frames
     
@@ -315,6 +314,7 @@ function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibra
                 
                 % calculate baseline activity and actual activity for the DFF
                 signal = single(nanmean(expHistory, 2));
+                %NOTE: signal is the smoothed Fraw
                 if data.frame == initFrameBase
                     baseval = single(ones(numberNeurons,1)).*unitVals;
                 elseif data.frame <= baseFrames
@@ -327,8 +327,9 @@ function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibra
                 
                 %----------------------------------------------------------
                 %Cursor
-                % calculate of DFF
+                % calculate (smoothed) DFF
                 dff = (signal - baseval) ./ baseval;
+                %Passing smoothed dff to "decoder"
                 [~, cursor_i, target_hit, ~] = ...
                     dff2cursor_target(dff, bData);
                 data.cursor(data.frame) = cursor_i;
@@ -405,21 +406,38 @@ function BMIAcqnvsPrairienoTrials(folder, animal, day, expt_str, baselineCalibra
                                     disp(['Num Self Hits: ', num2str(data.selfTargetCounter)]); 
                                 end
                             end
-                        elseif flagHolosched
-                            if ismember(data.frame, vectorHolo)
-                                disp('HOLO STIM')
-                                HoloTargetDelayTimer = HoloTargetWin;
-                                data.schedHoloCounter = data.schedHoloCounter + 1;
-                                outputSingleScan(s,ni_holo); pause(0.001); outputSingleScan(s,ni_out)
-                            end
-                        elseif flagVTAsched
-                            if ismember(data.frame, vectorVTA)
-                                disp('scheduled VTA STIM')
-                                outputSingleScan(s,ni_reward); pause(0.001); outputSingleScan(s,ni_out)
-                                nonBufferUpdateCounter = shutterVTA;                                
-                                data.schedVTACounter = data.schedVTACounter + 1; 
+                        end
+                        if ~trialFlag
+                            if flagHolosched
+                                if ismember(data.frame, vectorHolo)
+                                    E1_check_counter = E1CheckWin; 
+                                end                                
+                                if E1_check_counter > 0
+                                    %Check E1, if lower than threshold, do
+                                    %stim, and save frame
+                                    if(mean(dff_z(bData.E1_sel_idxs)) <= bData.E1_thresh)                                    
+                                        disp('HOLO STIM')
+                                        E1_check_counter = 0;
+                                        HoloTargetDelayTimer = HoloTargetWin;
+                                        data.schedHoloCounter = data.schedHoloCounter + 1;
+                                        outputSingleScan(s,ni_holo); pause(0.001); outputSingleScan(s,ni_out)                                    
+                                        %Also, save the frame we do this!!
+                                        data.holoDelivery(data.frame) = 1;
+                                    else
+                                        E1_check_counter = E1_check_counter-1;
+                                    end
+                                end
+
+                            elseif flagVTAsched
+                                if ismember(data.frame, vectorVTA)
+                                    disp('scheduled VTA STIM')
+                                    outputSingleScan(s,ni_reward); pause(0.001); outputSingleScan(s,ni_out)
+                                    nonBufferUpdateCounter = shutterVTA;                                
+                                    data.schedVTACounter = data.schedVTACounter + 1; 
+                                end
                             end
                         end
+                            
                     end
                 else
                     BufferUpdateCounter = BufferUpdateCounter - 1;

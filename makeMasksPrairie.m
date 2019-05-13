@@ -1,7 +1,15 @@
-function [holoMask, Im, Img, px, py] = makeMasksPrairie()
-    %{ Function to obtain masks in the red channel%}
-
+function [holoMask, Im, Img, px, py] = makeMasksPrairie(thres)
+    %{ 
+Function to obtain masks in the red channel
+thres -> 0-1 high - strict threshold for the pattern recognition
+%}
+ 
     %channel = 1 ; %for the red channel
+    if nargin < 1
+        thres = 0.5;
+    end
+        
+    
     %% connection to Prairie
     pl = actxserver('PrairieLink.Application');
     pl.Connect();
@@ -17,7 +25,7 @@ function [holoMask, Im, Img, px, py] = makeMasksPrairie()
     Img = pl.GetImage_2(2, px, py);
 
     %% extract rois
-    [mask, ~] = imFindCellsTM (Im-Img/10, 11, 0.5, 9, 1, 0); %parameters depend on each image
+    [mask, ~] = imFindCellsTM (Im-Img/10, 9, thres, 7, 1, 0); %parameters depend on each image
     %displays the mask to see if we agree
     findCenter (mask, Im);
     holoMask = bwlabel(mask);

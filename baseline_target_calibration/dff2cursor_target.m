@@ -1,6 +1,7 @@
 function [dff_z, cursor, target_hit, c1_bool, c2_val, c2_bool, c3_val, c3_bool] = ...
     dff2cursor_target(dff, bData) 
 %4.19.19
+%INPUT: smoothed dff
 %1) z-score dff
 %2) calculate cursor value
 %3) determine if target is hit
@@ -31,12 +32,13 @@ function [dff_z, cursor, target_hit, c1_bool, c2_val, c2_bool, c3_val, c3_bool] 
 % num_E2 = length(E2_sel_idxs); 
 
 num_E2 = length(bData.E2_sel_idxs); 
-E1 = dff(bData.E1_sel_idxs); 
-E2 = dff(bData.E2_sel_idxs); 
 
 %z-score:
 dff_z = (dff-bData.n_mean')./bData.n_std';
 dff_z = dff_z(:).'; %set dff_z to be a row
+
+E1 = dff_z(bData.E1_sel_idxs); 
+E2 = dff_z(bData.E2_sel_idxs); 
 
 %c1: cursor
 cursor = dff_z*bData.decoder;
@@ -59,3 +61,4 @@ c3_bool = E2_subord_mean >= bData.E2_subord_thresh(E2_dom_sel);
 
 %target hit
 target_hit = c1_bool & c2_bool & c3_bool; 
+%target_hit = c1_bool;

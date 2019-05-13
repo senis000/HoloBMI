@@ -1,4 +1,4 @@
-function baseline2target(n_f_file, Acomp_file, onacid_bool,  E1_base, E2_base, frames_per_reward_range, target_on_cov_bool, prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, save_dir)
+function baseline2target_using_BMI_code(n_f_file, Acomp_file, onacid_bool,  E1_base, E2_base, frames_per_reward_range, target_on_cov_bool, prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, save_dir)
 %4.18.19
 %inputs:
 %n_f_file - contains matrix, neural fluorescence from baseline file, num_samples X num_neurons_baseline 
@@ -572,7 +572,7 @@ save_path = fullfile(save_dir, ['target_calibration_ALL_' date_str '.mat']);
 save(save_path); 
 
 %2)Just the target parameters for running BMI
-save_path = fullfile(save_dir, ['BMI_target_info_' date_str '.mat']); 
+save_path = fullfile(save_dir, 'BMI_target_info.mat'); 
 %Change variable names for BMI code:
 T1 = T; %Change to T1, as this is what BMI expects
 save(save_path, 'AComp_BMI', 'n_mean', 'n_std', 'decoder', 'E_id', 'E1_sel_idxs', 'E2_sel_idxs', 'E1_base', 'E2_base', 'T1', 'E1_thresh', 'E2_subord_thresh', 'E2_coeff', 'E2_subord_mean', 'E2_subord_std'); 

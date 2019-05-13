@@ -73,6 +73,7 @@ neuronMask -> matrix for spatial filters with px*py*unit
     strcMask = obtainStrcMaskfromMask(mask);
     
     %% Prepare the nidaq
+    clear s
     s = daq.createSession('ni');
     addDigitalChannel(s,'dev5','Port0/Line0:2','OutputOnly');
     ni_out = [0 0 0]; 
@@ -105,7 +106,8 @@ neuronMask -> matrix for spatial filters with px*py*unit
     counterSame = 0;
     while counterSame < 500
         Im = pl.GetImage_2(chanIdx, px, py);
-        if ~isequal(Im,lastFrame)   
+        if ~isequal(Im,lastFrame) 
+            tic;
             lastFrame = Im;   % comparison and assignment takes ~4ms
             outputSingleScan(s,ni_getimage); pause(0.001); outputSingleScan(s,[0 0 0]);
             
@@ -114,6 +116,10 @@ neuronMask -> matrix for spatial filters with px*py*unit
             m.Data.holoAct(:,frame) = unitVals; % 1 ms
             frame = frame + 1;
             counterSame = 0;
+            t = toc;
+            if t< 0.02
+                pause(0.02-t)
+            end
         else
             counterSame = counterSame + 1;
         end

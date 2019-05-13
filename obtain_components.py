@@ -195,7 +195,7 @@ def find_index(folder, animal, day, Afull, holofile, com, Ccomp, auxtol=10, corm
     iter = 40
 	
 	# load matlab data
-	finfo = os.path.join(folder, animal, day, 'red.mat')  #file name of the mat 
+    finfo = os.path.join(folder, animal, day, 'red.mat')  #file name of the mat 
     matinfo = scipy.io.loadmat(finfo)
     redxy = matinfo['red']
     
