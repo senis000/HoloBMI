@@ -201,7 +201,7 @@ def find_index(folder, animal, day, Afull, holofile, com, Ccomp, auxtol=10, corm
     
     fholo = os.path.join(folder, animal, day, holofile)  #file name of the mat 
     holoinfo = scipy.io.loadmat(fholo)
-    online_activity = holoinfo['holoActivity']
+    online_data = holoinfo['holoActivity']
     
 	# extract position of neurons
     
@@ -211,11 +211,13 @@ def find_index(folder, animal, day, Afull, holofile, com, Ccomp, auxtol=10, corm
     dist[dist>auxtol] = np.nan
     [nmat, ncaim] = np.where(~np.isnan(dist))
     
-    for ind, nm in enumerate(np.unique(nmat)):
+    for indm, nm in enumerate(np.unique(nmat)):
         possible_match = ncaim[np.where(nmat==nm)[0]]
         neurcor = np.zeros((np.unique(nmat).shape[0], possible_match.shape[0]))
-        for nc in possible_match:
-            neurcor[un, npro] = pd.DataFrame(np.transpose([auxC[~np.isnan(auxonline)], auxonline[~np.isnan(auxonline)]])).corr()[0][1]
+        for indc, nc in enumerate(possible_match):
+            auxonline = (np.asarray(online_data[nm, :]) - np.nanmean(online_data[nm, :]))/np.nanmean(online_data[nm, :]) 
+            
+            neurcor[indm, indc] = pd.DataFrame(np.transpose([auxC[~np.isnan(auxonline)], auxonline[~np.isnan(auxonline)]])).corr()[0][1]
             
 	
 
