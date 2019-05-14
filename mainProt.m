@@ -4,10 +4,11 @@
 %}
 
 %% Main protocol for the experiment
-
+%Start by running:
+%test_bmi_nidaq_triggers.m
 
 % define Animal, day and folder where to save
-animal = 'NY27'; day = 'D1';
+animal = 'NY26'; day = 'BMItest';
 folder = 'F:/VivekNuria/expt/HoloBmi';
 
 % define posz TODO can we get this from prairie?
@@ -153,8 +154,8 @@ plotNeuronsBaseline(baseActivity, CComp, YrA, totalneurons)
 
 %%
 %Manually enter:
-E1_base = sort([85 48 22 34], 'ascend') %JUST NEEDS GCAMP
-E2_base = sort([39 45 50 37], 'ascend') %NEEDS CHROME
+E1_base = sort([8 17 12 7], 'ascend') %JUST NEEDS GCAMP
+E2_base = sort([2 4 3 16], 'ascend') %NEEDS CHROME
 
 % E2_candidates = [39 45 59 37 88 6 26 46 78 48 22 20 33]
 %TODO: 
@@ -166,7 +167,7 @@ E2_base = sort([39 45 50 37], 'ascend') %NEEDS CHROME
 % select correct parameters on
 % vivek_tb_test_baseline_to_calibration
 
-base_file = fullfile(savePath, 'BaselineOnline190512T025909.mat')
+base_file = fullfile(savePath, 'BaselineOnline190513T192550.mat')
 exist(base_file)
 n_f_file = base_file;
 exist(n_f_file)
@@ -198,7 +199,7 @@ f0_init_slide = 0;
 close all
  baseline2target_vBMI(n_f_file, A_file, onacid_bool,  ...
     E1_base, E2_base, frames_per_reward_range, target_on_cov_bool, ...
-    prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, save_dir, ...
+    prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, savePath, ...
     cursor_zscore_bool, f0_init_slide);
 
 % baseline2target(n_f_file, A_file, onacid_bool, E1_base, E2_base, frames_per_reward_range, ...
@@ -210,6 +211,7 @@ close all
 % occurence of artificial vs natural higher than 80% 
 
 %%
+%copy paste the path to the target info file
 target_info = load(fullfile(savePath, 'BMI_target_info.mat'));
 
 %% Holo stim checking 4 together
@@ -279,7 +281,7 @@ expectedLengthExperiment = 40*60*frameRate
 %Make 120 reps, put "Wait for Trigger" = First Reptition, Trigger
 %Selection: Start with External, PFI1
 clear s
-baselineCalibrationFile = 'BMI_target_info.mat';
+baselineCalibrationFile = 'BMI_target_info_20190513T195642.mat';
 vectorVTA = []
 %expt_str: 
 %     expt_cell = {...
@@ -289,7 +291,7 @@ vectorVTA = []
 %         'VTA_pretrain'}; 
 
 expt_str = 'HoloVTA_pretrain'; 
-BMIAcqnvsPrairienoTrialsHoloCL(folder, animal, day, expt_str, baselineCalibrationFile, baseline_frameRate, vectorHolo, vectorVTA)
+BMIAcqnvsPrairienoTrialsHoloCL(folder, animal, day, expt_str, baselineCalibrationFile, baseline_frameRate, vectorHolo, vectorVTA, cursor_zscore_bool)
 
 %% run BMI
 %remember to set the markpoints to proper stim

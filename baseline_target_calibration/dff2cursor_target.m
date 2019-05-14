@@ -34,9 +34,10 @@ function [dff_z, cursor, target_hit, c1_bool, c2_val, c2_bool, c3_val, c3_bool] 
 num_E2 = length(bData.E2_sel_idxs); 
 
 %z-score:
+dff = dff(:).';
+dff_z = (dff-bData.n_mean)./bData.n_std;
+dff_z = dff_z(:).'; %set dff_z to be a row
 if(cursor_zscore_bool)
-    dff_z = (dff-bData.n_mean')./bData.n_std';
-    dff_z = dff_z(:).'; %set dff_z to be a row
     n_analyze = dff_z;
 else
     n_analyze = dff;

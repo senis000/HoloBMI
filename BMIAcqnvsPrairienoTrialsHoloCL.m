@@ -1,4 +1,4 @@
-function BMIAcqnvsPrairienoTrialsHoloCL(folder, animal, day, expt_str, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA)
+function BMIAcqnvsPrairienoTrialsHoloCL(folder, animal, day, expt_str, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, cursor_zscore_bool)
     %{
     Function to acquire the BMI in a prairie scope
     animal -> animal for the experiment
@@ -114,7 +114,9 @@ function BMIAcqnvsPrairienoTrialsHoloCL(folder, animal, day, expt_str, baselineC
     end
     % values of parameters in frames
     expectedLengthExperiment = 40*60*frameRate; % in frames
-    baseFrames = round(2*60 * frameRate); % Period at the begginig without BMI to establish BL
+    %EDIT HERE
+%     baseFrames = round(0.1*60 * frameRate); % Period at the beginning without BMI to establish BL    
+    baseFrames = round(2*60 * frameRate); % Period at the beginning without BMI to establish BL
     movingAverageFrames = 2;
     relaxationFrames = round(relaxationTime * frameRate);
 
@@ -299,7 +301,8 @@ function BMIAcqnvsPrairienoTrialsHoloCL(folder, animal, day, expt_str, baselineC
     counterSame = 0; %Counts how many frames are the same as past,
     counterSameThresh = 500;
     baseBuffer_full = 0; %bool indicating the Fbuffer filled
-    
+    %---
+    disp('baseBuffer filling!...')
     while counterSame < counterSameThresh %while data.frame <= expectedLengthExperiment
         Im = pl.GetImage_2(chanIdx, px, py);
         if ~isequal(Im,lastFrame)
@@ -321,11 +324,14 @@ function BMIAcqnvsPrairienoTrialsHoloCL(folder, animal, day, expt_str, baselineC
                 if data.frame == initFrameBase
 %                     baseval = single(ones(numberNeurons,1)).*unitVals;
                     baseval = single(ones(numberNeurons,1)).*unitVals/baseFrames;
+                    %---
                 elseif data.frame <= (initFrameBase+baseFrames)
 %                     baseval = base(baseval*(data.frame - 1) + signal)./data.frame;
                     baseval = baseval + unitVals/baseFrames;
+                    disp(data.frame);
                     if data.frame == (initFrameBase+baseFrames)
                         baseBuffer_full = 1;
+                        disp('baseBuffer FULL!'); 
                     end
                 elseif data.frame > (initFrameBase+baseFrames)
                     baseval = (baseval*(baseFrames - 1) + unitVals)./baseFrames;
@@ -343,11 +349,11 @@ function BMIAcqnvsPrairienoTrialsHoloCL(folder, animal, day, expt_str, baselineC
                     dff = (Fsmooth - baseval) ./ baseval;
                     %Passing smoothed dff to "decoder"
                     [~, cursor_i, target_hit, ~] = ...
-                        dff2cursor_target(dff, bData);
+                        dff2cursor_target(dff, bData, cursor_zscore_bool);
 %                     data.bmidffz(:,data.frame) = dff_z;
                     data.cursor(data.frame) = cursor_i;
                     m.Data.cursor(data.frame) = data.cursor(data.frame); % saving in memmap
-                    %disp(cursor_i)
+                    disp(cursor_i)
                     %----------------------------------------------------------
                 end
                 

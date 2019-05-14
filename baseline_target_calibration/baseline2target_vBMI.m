@@ -144,6 +144,10 @@ f_base = f_base.';
 % f_base = f_base(1:1000, :); %debugging input data with nans... 
 %Assume variable is called f_base
 
+E1_temp = f_base(:,E1_base); 
+E2_temp = f_base(:,E2_base); 
+f = [E1_temp E2_temp]; 
+
 %Throw out prefix frames:
 E1_raw = f_base((prefix_win+1):end,E1_base); 
 E2_raw = f_base((prefix_win+1):end,E2_base); 
@@ -164,34 +168,34 @@ E2_sel_idxs = find(E2_sel);
 %3) Select Spatial Components for BMI E
 % % Uncomment and test with a mosue:
 
-% E_base_sel = [E1_base, E2_base];
-% 
-% if onacid_bool
-%     load(Acomp_file, 'AComp');
-%     AComp_BMI = AComp(:, E_base_sel);
-%     strcMask = obtainStrcMask(AComp_BMI, px, py);
-%     save(fullfile(save_dir, 'redcompBMI.mat'), 'strcMask', 'E_base_sel', 'E_id');
-% else
-%     AComp_BMI = []
-%     load(Acomp_file, 'holoMaskRedGreen'); 
-%     holoMask = holoMaskRedGreen;
-% %     load(fullfile(savePath, 'red.mat'), 'holoMask'); 
-%     EnsembleMask = zeros(size(holoMask));
-%     for indn = 1:length(E1_base)
-%         auxmask = holoMask;
-%         auxmask(auxmask~=E1_base(indn)) = 0;
-%         auxmask(auxmask~=0) = indn;
-%         EnsembleMask = auxmask + EnsembleMask;
-%     end
-%     for indn = 1:length(E2_base)
-%         auxmask = holoMask;
-%         auxmask(auxmask~=E2_base(indn)) = 0;
-%         auxmask(auxmask~=0) = indn + length(E1_base);
-%         EnsembleMask = auxmask + EnsembleMask;
-%     end
-%     strcMask = obtainStrcMaskfromMask(EnsembleMask);
-%     save(fullfile(save_dir, 'redcompBMI.mat'), 'strcMask', 'E_base_sel', 'E_id'); 
-% end
+E_base_sel = [E1_base, E2_base];
+
+if onacid_bool
+    load(Acomp_file, 'AComp');
+    AComp_BMI = AComp(:, E_base_sel);
+    strcMask = obtainStrcMask(AComp_BMI, px, py);
+    save(fullfile(save_dir, 'redcompBMI.mat'), 'strcMask', 'E_base_sel', 'E_id');
+else
+    AComp_BMI = []
+    load(Acomp_file, 'holoMaskRedGreen'); 
+    holoMask = holoMaskRedGreen;
+%     load(fullfile(savePath, 'red.mat'), 'holoMask'); 
+    EnsembleMask = zeros(size(holoMask));
+    for indn = 1:length(E1_base)
+        auxmask = holoMask;
+        auxmask(auxmask~=E1_base(indn)) = 0;
+        auxmask(auxmask~=0) = indn;
+        EnsembleMask = auxmask + EnsembleMask;
+    end
+    for indn = 1:length(E2_base)
+        auxmask = holoMask;
+        auxmask(auxmask~=E2_base(indn)) = 0;
+        auxmask(auxmask~=0) = indn + length(E1_base);
+        EnsembleMask = auxmask + EnsembleMask;
+    end
+    strcMask = obtainStrcMaskfromMask(EnsembleMask);
+    save(fullfile(save_dir, 'redcompBMI.mat'), 'strcMask', 'E_base_sel', 'E_id'); 
+end
 
 %%
 %4) Decoder information
@@ -502,9 +506,18 @@ while(~task_complete)
         %3) E2_subord > mu (anded with previous constraint)
         %For each idx, subtract the 
         c3 = find(E2_subord_mean_analyze >= E2_subord_thresh(E2_dom_sel)); 
-
-        hits = intersect(intersect(c1, c2), c3);        
-        reward_prob_per_frame = length(hits)/length(n_analyze);
+        hits = intersect(intersect(c1, c2), c3);
+        %Remove hits that fall in a back2base
+        
+        b2base_thresh = 0.5*T;
+        hits_valid = ones(length(hits),1); 
+        if length(hits) > 1
+            for i = 2:length(hits)
+                b2base_bool = sum(cursor_obs(hits(i-1):hits(i)) <= b2base_thresh) > 1; 
+                hits_valid(i) = b2base_bool; 
+            end
+        end
+        reward_prob_per_frame = sum(hits_valid)/length(n_analyze);
     end
     
     reward_prob_per_frame
@@ -580,8 +593,22 @@ disp('E2 subord >= c');
 length(c3)
 
 hit_times = intersect(intersect(c1, c2), c3);
-disp('num baseline hits:'); 
+disp('num baseline hits WITHOUT B2BASE:'); 
 num_hits = length(hit_times)
+
+b2base_thresh = 0.5*T;
+hits_valid = ones(length(hit_times),1); 
+if length(hit_times) > 1
+    for i = 2:length(hit_times)
+        b2base_bool = sum(cursor_obs(hit_times(i-1):hit_times(i)) <= b2base_thresh) > 1; 
+        hits_valid(i) = b2base_bool; 
+    end
+end
+disp('num baseline hits WITH B2BASE:'); 
+num_valid_hits = sum(hits_valid)
+
+valid_hit_times = hit_times(find(hits_valid)); 
+
 
 cursor_amp = (max(cursor_obs)-min(cursor_obs));
 cursor_offset = cursor_amp/10; 
@@ -597,9 +624,9 @@ hline(T);
 plot(E1_mean_analyze-cursor_amp); 
 plot(E2_subord_mean_analyze-2*cursor_amp); 
 xlabel('frame'); 
-
+title(['hits with b2base: ' num2str(num_valid_hits)]); 
 legend({'c1', 'c2 - E1 cond', 'c3 - E2 cond', 'cursor', 'E1 mean', 'E2 subord mean'}); 
-vline(hit_times); 
+vline(valid_hit_times); 
 saveas(h, fullfile(plotPath, 'cursor_hit_ts.png')); 
 
 %%
@@ -615,7 +642,7 @@ hist(cursor_obs, 50);
 vline(T); 
 xlabel('Cursor'); 
 ylabel('Number of Observations'); 
-title('E2-E1 threshold plotted on E2-E1 distribution'); 
+title(['E2-E1 threshold plotted on E2-E1 distribution, num hits ' num2str(num_valid_hits)]); 
 saveas(h, fullfile(plotPath, 'cursor_dist_T.png')); 
 
 % %%
@@ -648,7 +675,7 @@ saveas(h, fullfile(plotPath, 'cursor_dist_T.png'));
 %%
 %Plot PSTH of neural activity locked to target hit: 
 psth_win = [-30 30]*3; 
-[psth_mean, psth_sem, psth_mat] = calc_psth(n_analyze, hit_times, psth_win);
+[psth_mean, psth_sem, psth_mat] = calc_psth(n_analyze, valid_hit_times, psth_win);
 h = figure; hold on;
 offset = 0; 
 for i=1:num_neurons
