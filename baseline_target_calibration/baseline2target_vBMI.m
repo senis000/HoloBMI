@@ -346,7 +346,7 @@ end
 
 %%
 %Third, compute dff and dff_z:
-dff = (f_postf0-f0)./f0;
+dff = (f_smooth-f0)./f0;
 %mean center the dff:
 n_mean = nanmean(dff,1); %1 x num_neurons
 mean_mat = repmat(n_mean, size(dff,1), 1);

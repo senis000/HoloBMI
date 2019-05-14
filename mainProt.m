@@ -8,8 +8,8 @@
 %test_bmi_nidaq_triggers.m
 
 % define Animal, day and folder where to save
-animal = 'NY26'; day = 'BMItest';
-folder = 'F:/VivekNuria/expt/HoloBmi';
+animal = 'NY20'; day = 'BMItest';
+folder = 'E:/VivekNuria/expt/HoloBmi';
 
 % define posz TODO can we get this from prairie?
 posz = 0;
@@ -122,7 +122,7 @@ plotHoloStimTimeLock(holoActivity, voltageRec, 40, 1000) % --> To plot the resul
 
 %% Baseline acquisition
 % loads the result of OnAcid
-% DONT FORGET TO REMOVE RED CHANNEL!!!!
+% REMOVE RED CHANNEL!!!!
 
 if ~onacid_bool
     AComp = 0;
@@ -145,7 +145,7 @@ BaselineAcqnvsPrairie(folder, animal, day, AComp, holoMaskRedGreen, onacid_bool,
 if onacid_bool
     totalneurons = min(size(AComp,2), 20);
 else
-    totalneurons = max(max(holoMask));
+    totalneurons = max(max(holoMaskRedGreen));
     CComp = [];
     YrA = []; 
 end
@@ -154,8 +154,8 @@ plotNeuronsBaseline(baseActivity, CComp, YrA, totalneurons)
 
 %%
 %Manually enter:
-E1_base = sort([8 17 12 7], 'ascend') %JUST NEEDS GCAMP
-E2_base = sort([2 4 3 16], 'ascend') %NEEDS CHROME
+E1_base = sort([14 13 18 17], 'ascend') %JUST NEEDS GCAMP
+E2_base = sort([22 3 7 5], 'ascend') %NEEDS CHROME
 
 % E2_candidates = [39 45 59 37 88 6 26 46 78 48 22 20 33]
 %TODO: 
@@ -167,7 +167,8 @@ E2_base = sort([2 4 3 16], 'ascend') %NEEDS CHROME
 % select correct parameters on
 % vivek_tb_test_baseline_to_calibration
 
-base_file = fullfile(savePath, 'BaselineOnline190513T192550.mat')
+% base_file = fullfile(savePath, 'BaselineOnline190513T232418.mat')
+base_file = fullfile(savePath, 'BaselineOnline.mat')
 exist(base_file)
 n_f_file = base_file;
 exist(n_f_file)
@@ -178,7 +179,7 @@ A_file = fullfile(savePath, 'red.mat');
 exist(A_file)
 onacid_bool = 0
 
-sec_per_reward_range = [100 80]; 
+sec_per_reward_range = [80 60]; 
 
 frames_per_reward_range = sec_per_reward_range*baseline_frameRate %[1 1.5]*60*frameRate
 %multiply by frames per minute to convert
@@ -193,10 +194,15 @@ dff_win = 2
  
 reward_per_frame_range = 1./frames_per_reward_range
 
-cursor_zscore_bool = 1;
+cursor_zscore_bool = 0;
 f0_init_slide = 0; 
 
 close all
+%  baseline2target_vBMI(n_f_file, A_file, onacid_bool,  ...
+%     [1 2 3 4], [5 6 7 8], frames_per_reward_range, target_on_cov_bool, ...
+%     prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, savePath, ...
+%     cursor_zscore_bool, f0_init_slide);
+
  baseline2target_vBMI(n_f_file, A_file, onacid_bool,  ...
     E1_base, E2_base, frames_per_reward_range, target_on_cov_bool, ...
     prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, savePath, ...
@@ -230,6 +236,8 @@ else
         EnsembleMask = auxmask + EnsembleMask;
     end
 end
+figure;
+imshow(EnsembleMask); 
 
 pl = actxserver('PrairieLink.Application');
 pl.Connect();
@@ -281,7 +289,7 @@ expectedLengthExperiment = 40*60*frameRate
 %Make 120 reps, put "Wait for Trigger" = First Reptition, Trigger
 %Selection: Start with External, PFI1
 clear s
-baselineCalibrationFile = 'BMI_target_info_20190513T195642.mat';
+baselineCalibrationFile = 'BMI_target_info_20190514T015556.mat';
 vectorVTA = []
 %expt_str: 
 %     expt_cell = {...
@@ -290,7 +298,7 @@ vectorVTA = []
 %         'Holo_pretrain', ...
 %         'VTA_pretrain'}; 
 
-expt_str = 'HoloVTA_pretrain'; 
+expt_str = 'BMI'; 
 BMIAcqnvsPrairienoTrialsHoloCL(folder, animal, day, expt_str, baselineCalibrationFile, baseline_frameRate, vectorHolo, vectorVTA, cursor_zscore_bool)
 
 %% run BMI

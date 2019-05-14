@@ -104,7 +104,8 @@ neuronMask -> matrix for spatial filters with px*py*unit
     frame = 1; % initialize frames
     %start the time_series scan
     pl.SendScriptCommands("-ts");  
-    pause(1);  %empirically discovered time for the prairie to start gears
+    disp('sent -ts'); 
+    pause(2);  %empirically discovered time for the prairie to start gears
     counterSame = 0;
     disp('Starting baseline acquisition')
     while counterSame < 500
