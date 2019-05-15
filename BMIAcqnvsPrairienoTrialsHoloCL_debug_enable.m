@@ -539,7 +539,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
                 end
                 deliver_reward = 0; 
                 disp('reward delivered!'); 
-                
+            end
                 
             data.frame = data.frame + 1;
             data.timeVector(data.frame) = toc;

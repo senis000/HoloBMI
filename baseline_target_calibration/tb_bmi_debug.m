@@ -55,10 +55,10 @@ test = load(debug_input_file)
 %%
 n_prefix = 100*ones(8,40); 
 n_base = 100*ones(8,100); 
-n_T = [zeros(4,10); 10000*ones(4,10)];
+n_T = [zeros(4,5); 10000*ones(4,5)];
 n_z = zeros(8,10); 
 
-F_v = [n_prefix n_base n_z n_T n_z n_T n_z n_T];
+F_v = [n_prefix n_base n_z n_T n_z n_T n_z n_T n_z n_z n_z];
 
 %%
 plot_b = [0    0.4470    0.7410];
