@@ -299,7 +299,12 @@ vectorVTA = []
 %         'VTA_pretrain'}; 
 
 expt_str = 'BMI'; 
-BMIAcqnvsPrairienoTrialsHoloCL(folder, animal, day, expt_str, baselineCalibrationFile, baseline_frameRate, vectorHolo, vectorVTA, cursor_zscore_bool)
+debug_bool = 0; 
+debut_input = []; 
+BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
+    expt_str, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
+    cursor_zscore_bool, debug_bool, debug_input)
+% BMIAcqnvsPrairienoTrialsHoloCL(folder, animal, day, expt_str, baselineCalibrationFile, baseline_frameRate, vectorHolo, vectorVTA, cursor_zscore_bool)
 
 %% run BMI
 %remember to set the markpoints to proper stim

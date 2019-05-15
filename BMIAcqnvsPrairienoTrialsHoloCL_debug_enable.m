@@ -200,6 +200,10 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
     HoloTargetWin = 20; %number of frames after a holo stim to look for target
     HoloTargetDelayTimer = 0; %if this timer is >0 check for a holo target
 %     detectHoloTargetFlag = 0; %if this is 1, start looking for a holo target
+
+    deliver_reward      = 0; 
+    rewardDelayCounter  = 0; 
+    rewardDelayFrames   = 10; 
     
     backtobaselineFlag = 0;
     data.frame = 1; % initialize frames
@@ -411,21 +415,29 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
                         end
                     else
 %                         disp('HERE2'); 
-                        if target_hit      %if it hit the target
+                        if deliver_reward && rewardDelayCounter==0
+                            if(~debug_bool)
+                                outputSingleScan(s,ni_reward); pause(0.001); outputSingleScan(s,ni_out);
+                            end
+                            deliver_reward = 0; 
+                            disp('reward delivered!'); 
+                        elseif target_hit      %if it hit the target
                             disp('target hit')
                             if(HoloTargetDelayTimer > 0)
-                                disp('holo target was happening')
+                                disp('Holo Target Achieved')
                                 HoloTargetDelayTimer = 0; 
                                 data.holoTargetCounter = data.holoTargetCounter + 1;
                                 data.holoHits(data.frame) = 1;
                                 m.Data.holoHits(data.frame) = 1;
                                 
                                 if flagVTAtrig
-                                    disp('reward delivery!')
+                                    disp('RewardTone delivery!')
                                     if(~debug_bool)
                                         play(reward_sound);
-                                        outputSingleScan(s,ni_reward); pause(0.001); outputSingleScan(s,ni_out)
-                                    end                                    
+%                                         outputSingleScan(s,ni_reward); pause(0.001); outputSingleScan(s,ni_out)
+                                    end
+                                    rewardDelayCounter = rewardDelayFrames; 
+                                    deliver_reward = 1;                                     
                                     nonBufferUpdateCounter = shutterVTA;   
                                     
                                     data.holoTargetVTACounter = data.holoTargetVTACounter+1;
@@ -447,10 +459,15 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
                                 disp('self hit')
                                 if(flagBMI && flagVTAtrig)
                                     nonBufferUpdateCounter = shutterVTA;
-                                    disp('reward delivery! (self-target)')
+                                    disp('Target Achieved! (self-target)')
+                                    disp('RewardTone delivery!')
                                     if ~debug_bool
-                                        outputSingleScan(s,ni_reward); pause(0.001); outputSingleScan(s,ni_out);                                    
-                                    end
+                                        play(reward_sound);
+                                    end                                        
+                                    rewardDelayCounter = rewardDelayFrames; 
+                                    deliver_reward = 1;                                         
+%                                         outputSingleScan(s,ni_reward); pause(0.001); outputSingleScan(s,ni_out);                                    
+
                                     
                                     data.selfTargetVTACounter = data.selfTargetVTACounter + 1;
                                     data.selfVTA(data.frame) = 1;
@@ -490,9 +507,14 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
                             elseif flagVTAsched
                                 if ismember(data.frame, vectorVTA)
                                     disp('scheduled VTA STIM')
+                                    disp('RewardTone delivered!'); 
                                     if(~debug_bool)
-                                        outputSingleScan(s,ni_reward); pause(0.001); outputSingleScan(s,ni_out)
+                                        play(reward_sound); 
+%                                         outputSingleScan(s,ni_reward); pause(0.001); outputSingleScan(s,ni_out)
                                     end
+                                    rewardDelayCounter = rewardDelayFrames; 
+                                    deliver_reward = 1; 
+
                                     nonBufferUpdateCounter = shutterVTA;                                
                                     data.schedVTACounter = data.schedVTACounter + 1; 
                                 end
@@ -515,6 +537,9 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
                 HoloTargetDelayTimer = HoloTargetDelayTimer-1;
             end
             
+            if(rewardDelayCounter > 0)
+                rewardDelayCounter = rewardDelayCounter -1; 
+            end
             data.frame = data.frame + 1;
             data.timeVector(data.frame) = toc;
             counterSame = 0;

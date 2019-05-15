@@ -16,7 +16,7 @@ reward_sound = audioplayer(xrnd, 10000); %Play sound using: play()
 %Sound + Reward
 disp('reward delivery!')
 play(reward_sound);
-pause(0.5); 
+pause(0.3); 
 outputSingleScan(s,ni_reward); pause(0.001); outputSingleScan(s,ni_out);
 
 %NOTE: if we do reward sound and solenoid together, solenoid clicks before
