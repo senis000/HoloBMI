@@ -5,6 +5,10 @@ function [dff_z, cursor, target_hit, c1_bool, c2_val, c2_bool, c3_val, c3_bool] 
 %1) z-score dff
 %2) calculate cursor value
 %3) determine if target is hit
+% OUTPUT: 
+% c1: cursor
+% c2: E1_mean > E1_thresh
+% c3: E2_subord_mean > E2_subord_thresh
 %
 % relevant fields from bData: 
 %n_mean, n_std, decoder, E1_sel_idxs, E2_sel_idxs, E1_thresh, E2_subord_thresh, T)
