@@ -415,13 +415,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
                         end
                     else
 %                         disp('HERE2'); 
-                        if deliver_reward && rewardDelayCounter==0
-                            if(~debug_bool)
-                                outputSingleScan(s,ni_reward); pause(0.001); outputSingleScan(s,ni_out);
-                            end
-                            deliver_reward = 0; 
-                            disp('reward delivered!'); 
-                        elseif target_hit      %if it hit the target
+                        if target_hit      %if it hit the target
                             disp('target hit')
                             if(HoloTargetDelayTimer > 0)
                                 disp('Holo Target Achieved')
@@ -539,7 +533,14 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
             
             if(rewardDelayCounter > 0)
                 rewardDelayCounter = rewardDelayCounter -1; 
-            end
+            elseif(deliver_reward && rewardDelayCounter==0)
+                if(~debug_bool)
+                    outputSingleScan(s,ni_reward); pause(0.001); outputSingleScan(s,ni_out);
+                end
+                deliver_reward = 0; 
+                disp('reward delivered!'); 
+                
+                
             data.frame = data.frame + 1;
             data.timeVector(data.frame) = toc;
             counterSame = 0;
