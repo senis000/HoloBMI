@@ -1,6 +1,6 @@
 function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
     expt_str, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
-    cursor_zscore_bool, debug_bool, debug_input)
+    cursor_zscore_bool, debug_bool, debug_input, baseValSeed)
     %{
     Function to acquire the BMI in a prairie scope
     animal -> animal for the experiment
@@ -117,9 +117,10 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
     % values of parameters in frames
     expectedLengthExperiment = 40*60*frameRate; % in frames
     %EDIT HERE
-    baseFrames = 100; 
+%     baseFrames = 50; 
 %     baseFrames = round(0.1*60 * frameRate); % Period at the beginning without BMI to establish BL    
 %     baseFrames = round(2*60 * frameRate); % Period at the beginning without BMI to establish BL
+    baseFrames = round(4*60 * frameRate); % Period at the beginning without BMI to establish BL
     movingAverageFrames = 2;
     relaxationFrames = round(relaxationTime * frameRate);
 
@@ -129,7 +130,8 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
     %% Reward/VTA parameters
     %Sound: 
     xrnd = randn(1000,1);
-    reward_sound = audioplayer(xrnd, 10000); %Play sound using: play()
+    Fs = 10000; 
+    reward_sound = audioplayer(xrnd, Fs); %Play sound using: play()
 %     xrnd_filt = filter([1 1], 1, xrnd); 
 %     reward_sound = audioplayer(xrnd_filt, 10000); %Play sound using: play()
 %     play(reward_sound)
@@ -244,7 +246,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
         lastFrame = zeros(px, py); % to compare with new incoming frames
 
         % set the environment for the Time Series in PrairieView
-        loadCommand = '-tsl ' + fullfile('F:/VivekNuria/utils', 'Tseries_VivekNuria_40.env');
+        loadCommand = ['-tsl ', fullfile('F:/VivekNuria/utils', 'Tseries_VivekNuria_40.env')];
         pl.SendScriptCommands(loadCommand);   
 
         % set the path where to store the imaging data -SetSavePath (-p) "path" ["addDateTime"]
@@ -323,7 +325,6 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
     counterSameThresh = 500;
     baseBuffer_full = 0; %bool indicating the Fbuffer filled
     %---
-    disp('baseBuffer filling!...')
     while (~debug_bool && counterSame < counterSameThresh) || (debug_bool && data.frame < size(debug_input,2)) %while data.frame <= expectedLengthExperiment
         if ~debug_bool
             Im = pl.GetImage_2(chanIdx, px, py);
@@ -353,11 +354,21 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
                 Fbuffer(:,end) = unitVals;
                 
                 % calculate F0 baseline activity 
+                %HERE!
+
+                    
                 if data.frame == initFrameBase
 %                     baseval = single(ones(numberNeurons,1)).*unitVals;
-                    baseval = single(ones(numberNeurons,1)).*unitVals/baseFrames;
+                    if ~isnan(sum(baseValSeed))
+                        baseBuffer_full = 1; 
+                        baseval = baseValSeed;
+                        disp('baseBuffer seeded!'); 
+                    else
+                        baseval = unitVals/baseFrames;
+                        disp('baseBuffer filling!...')
+                    end
                     %---
-                elseif data.frame <= (initFrameBase+baseFrames)
+                elseif ~baseBuffer_full %&& data.frame <= (initFrameBase+baseFrames)
 %                     baseval = base(baseval*(data.frame - 1) + signal)./data.frame;
                     baseval = baseval + unitVals/baseFrames;
                     disp(data.frame);
@@ -365,7 +376,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
                         baseBuffer_full = 1;
                         disp('baseBuffer FULL!'); 
                     end
-                elseif data.frame > (initFrameBase+baseFrames)
+                else %data.frame > (initFrameBase+baseFrames)
                     baseval = (baseval*(baseFrames - 1) + unitVals)./baseFrames;
                 end
                 data.baseVector(:,data.frame) = baseval;
@@ -427,7 +438,8 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
                                 if flagVTAtrig
                                     disp('RewardTone delivery!')
                                     if(~debug_bool)
-                                        play(reward_sound);
+%                                         play(reward_sound);
+                                        sound(xrnd, Fs); 
 %                                         outputSingleScan(s,ni_reward); pause(0.001); outputSingleScan(s,ni_out)
                                     end
                                     rewardDelayCounter = rewardDelayFrames; 
@@ -456,7 +468,8 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
                                     disp('Target Achieved! (self-target)')
                                     disp('RewardTone delivery!')
                                     if ~debug_bool
-                                        play(reward_sound);
+%                                         play(reward_sound);
+                                        sound(xrnd, Fs);
                                     end                                        
                                     rewardDelayCounter = rewardDelayFrames; 
                                     deliver_reward = 1;                                         
@@ -503,7 +516,8 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
                                     disp('scheduled VTA STIM')
                                     disp('RewardTone delivered!'); 
                                     if(~debug_bool)
-                                        play(reward_sound); 
+%                                         play(reward_sound); 
+                                        sound(xrnd, Fs); 
 %                                         outputSingleScan(s,ni_reward); pause(0.001); outputSingleScan(s,ni_out)
                                     end
                                     rewardDelayCounter = rewardDelayFrames; 

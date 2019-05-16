@@ -49,7 +49,7 @@ neuronMask -> matrix for spatial filters with px*py*unit
     pl.Connect()
     
     % pause needed for prairie to respond
-    pause(2)
+    pause(1)
 
     % Prairie variables
     px = pl.PixelsPerLine();

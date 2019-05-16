@@ -218,33 +218,7 @@ E2_proj
 disp('decoder:')
 decoder = E2_proj - E1_proj
 
-%%
-%--------------------------------------------------------------------------
-%raw data plot: 
-if(plot_raw_bool)
-    [h, offset_vec] = plot_E_activity(f_raw, E_id, E_color);
-    
-%     h = figure;
-%     hold on; 
-%     offset = 0; 
-%     for i=1:num_neurons
-%         y_plot = f_raw(:,i);
-%         y_plot = y_plot-min(y_plot); 
-%         y_amp = max(y_plot); 
-% 
-%         if(i>1)
-%             offset = offset+y_amp; 
-%         end
-% 
-%         plot_color = E_color{E_id(i)};
-%         plot(y_plot-offset, 'Color', plot_color); 
-%     end
-    xlabel('frame'); 
-    ylabel('fluorescence'); 
-    title('raw fluorescence in baseline'); 
-    im_path = fullfile(plotPath, 'baseline_fraw.png'); 
-    saveas(h, im_path); 
-end
+
 
 %%
 %First process f0: 
@@ -270,7 +244,7 @@ if(f0_win_bool)
         f0 = zeros(num_samples-f0_win+1, num_neurons); 
         f0(1,:) = mean(f_raw(1:f0_win, :), 1);
         for i = 2:length(f0)
-            f0(i,:) = f0(i-1)*((f0_win-1)/f0_win) + f_raw((i+f0_win-1), :)/f0_win; 
+            f0(i,:) = f0(i-1,:)*((f0_win-1)/f0_win) + f_raw((i+f0_win-1), :)/f0_win; 
         end
         %Truncate data based on the f0_win:
         f_postf0 = f_raw(f0_win:end, :); 
@@ -280,6 +254,34 @@ else
     f_postf0 = f_raw; 
     f0_mean = repmat(nanmean(f_postf0, 1), size(f_postf0,1), 1);
     f0 = f0_mean; 
+end
+
+%%
+%--------------------------------------------------------------------------
+%raw data plot: 
+if(plot_raw_bool)
+    [h, offset_vec] = plot_E_activity(f_postf0, E_id, E_color);
+    
+%     h = figure;
+%     hold on; 
+%     offset = 0; 
+%     for i=1:num_neurons
+%         y_plot = f_raw(:,i);
+%         y_plot = y_plot-min(y_plot); 
+%         y_amp = max(y_plot); 
+% 
+%         if(i>1)
+%             offset = offset+y_amp; 
+%         end
+% 
+%         plot_color = E_color{E_id(i)};
+%         plot(y_plot-offset, 'Color', plot_color); 
+%     end
+    xlabel('frame'); 
+    ylabel('fluorescence'); 
+    title('raw fluorescence in baseline'); 
+    im_path = fullfile(plotPath, 'baseline_fraw.png'); 
+    saveas(h, im_path); 
 end
 
 %%

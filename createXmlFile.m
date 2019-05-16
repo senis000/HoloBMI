@@ -22,9 +22,10 @@ power 0.4 is a 100 in the gui
     IterDelay = 1000.00;
     UncagingLaser = "Monaco";
     UncagingLaserPower = power;
-    InitialDelay = 2000;
+    InitialDelay = 5000;
     InterPointDelay =  0.12;
-    Duration = 40;
+%     Duration = 40;
+    Duration = 20; 
     SpiralRevolutions = 20; 
     Repetitions = 1;  
     AllPointsAtOnce = "False";

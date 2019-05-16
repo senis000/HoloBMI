@@ -21,13 +21,13 @@ ylabel('dff_z');
 title('zscore dff'); 
 
 %%
-h = figure; hold on;
-offset = 3; 
-for i =1:8 
-    plot(valid_idxs, n_valid(i,:)-offset*i); 
-end
-hold on;  vline(vectorHolo(1), 'k'); hline(bData.T1); hold off
-
+% h = figure; hold on;
+% offset = 3; 
+% for i =1:8 
+%     plot(valid_idxs, n_valid(i,:)-offset*i); 
+% end
+% hold on;  hline(bData.T1); hold off
+% vline(vectorHolo(1), 'k');
 %vline(find(data.holoVTA));
 
 % %%
@@ -44,7 +44,8 @@ cursor_est = n_valid'*bData.decoder;
 
 h = figure;
 plot(cursor_est); 
-hold on; vline(vectorHolo(1)); hline(bData.T1); hold off
+hold on;  hline(bData.T1); hold off
+%vline(vectorHolo(1));
 
 title('estimated cursor'); 
 
@@ -68,15 +69,33 @@ corr(cursor_est(:), cursor_valid(:))
 h = figure;
 hist(cursor_valid, 50); 
 
-%%
-h = figure;
-hist(cursor_valid(1:500), 100); 
+% %%
+% h = figure;
+% hist(cursor_valid(1:500), 100); 
+% 
+% %%
+% h = figure;
+% hist(cursor_valid((end-500):end), 50); 
 
 %%
+%Load baseline for comparison: 
+base_data = load(fullfile('E:\VivekNuria\expt\HoloBmi\NY20\BMItest', 'target_calibration_ALL_20190515T000442.mat')); 
+% size(base_data.n_analyze)
 h = figure;
-hist(cursor_valid((end-500):end), 50); 
-
+plot(base_data.cursor_obs); 
+hold on; 
+plot(cursor_valid); 
+legend({'baseline', 'BMI'}); 
 
 % %%
 % [dff_z, cursor, target_hit, c1_bool, c2_val, c2_bool, c3_val, c3_bool] = ...
 %     dff2cursor_target(dff, bData)
+
+%%
+n_sel = 8; 
+h = figure;
+% x_base = (1:size(base_data.f0,1))+3599
+% plot(x_base, base_data.f0(:,n_sel)); 
+% hold on;
+plot(data.baseVector(n_sel,:))
+
