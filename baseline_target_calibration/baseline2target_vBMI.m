@@ -644,7 +644,7 @@ hist(cursor_obs, 50);
 vline(T); 
 xlabel('Cursor'); 
 ylabel('Number of Observations'); 
-title(['E2-E1 threshold plotted on E2-E1 distribution, num hits ' num2str(num_valid_hits)]); 
+title(['E2-E1 threshold plotted on E2-E1 distribution, num valid hits ' num2str(num_valid_hits) ' num hits ' num2str(num_hits)]); 
 saveas(h, fullfile(plotPath, 'cursor_dist_T.png')); 
 
 % %%
@@ -714,7 +714,8 @@ save_path = fullfile(save_dir, ['target_calibration_ALL_' date_str '.mat']);
 save(save_path); 
 
 %2)Just the target parameters for running BMI
-save_path = fullfile(save_dir, ['BMI_target_info_' date_str '.mat']); 
+target_info_file = ['BMI_target_info_' date_str '.mat'];
+save_path = fullfile(save_dir, target_info_file); 
 %Change variable names for BMI code:
 T1 = T; %Change to T1, as this is what BMI expects
 save(save_path, 'AComp_BMI', 'n_mean', 'n_std', 'decoder', 'E_id', 'E1_sel_idxs', 'E2_sel_idxs', 'E1_base', 'E2_base', 'T1', 'E1_thresh', 'E2_subord_thresh', 'E2_coeff', 'E2_subord_mean', 'E2_subord_std'); 

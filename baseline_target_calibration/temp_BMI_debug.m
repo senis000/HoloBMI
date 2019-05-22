@@ -19,6 +19,8 @@ h = plot_E_activity(n_valid', bData.E_id, E_color);
 xlabel('frame'); 
 ylabel('dff_z');    
 title('zscore dff'); 
+hold on; vline(find(data.selfVTA(valid_idxs))); 
+
 
 %%
 % h = figure; hold on;

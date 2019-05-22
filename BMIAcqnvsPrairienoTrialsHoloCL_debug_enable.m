@@ -115,13 +115,13 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
         mkdir(savePath);
     end
     % values of parameters in frames
-    expectedLengthExperiment = 40*60*frameRate; % in frames
+    expectedLengthExperiment = 60*60*frameRate; % in frames
     %EDIT HERE
 %     baseFrames = 50; 
 %     baseFrames = round(0.1*60 * frameRate); % Period at the beginning without BMI to establish BL    
-%     baseFrames = round(2*60 * frameRate); % Period at the beginning without BMI to establish BL
-    baseFrames = round(4*60 * frameRate); % Period at the beginning without BMI to establish BL
-    movingAverageFrames = 2;
+    baseFrames = round(2*60 * frameRate); % Period at the beginning without BMI to establish BL
+%     baseFrames = round(4*60 * frameRate); % Period at the beginning without BMI to establish BL
+    movingAverageFrames = 4;
     relaxationFrames = round(relaxationTime * frameRate);
 
     %% prairie view parameters
@@ -199,7 +199,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
     BufferUpdateCounter = 0;
     
     %Only useful if: flagBMI=false; flagHolosched = true; flagVTAtrig = true;
-    HoloTargetWin = 20; %number of frames after a holo stim to look for target
+    HoloTargetWin = 30; %number of frames after a holo stim to look for target
     HoloTargetDelayTimer = 0; %if this timer is >0 check for a holo target
 %     detectHoloTargetFlag = 0; %if this is 1, start looking for a holo target
 
@@ -246,6 +246,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
         lastFrame = zeros(px, py); % to compare with new incoming frames
 
         % set the environment for the Time Series in PrairieView
+        %75600
         loadCommand = ['-tsl ', fullfile('F:/VivekNuria/utils', 'Tseries_VivekNuria_40.env')];
         pl.SendScriptCommands(loadCommand);   
 
@@ -265,7 +266,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
     end
     
     %% Create the file where to store info in case matlab crashes
-    fileName = [savePath, 'bmiExp.dat'];
+    fileName = fullfile(savePath, 'bmiExp.dat');
     % creates a file with the correct shape
     fileID = fopen(fileName,'w');
     fwrite(fileID, data.cursor ,'double');
@@ -371,7 +372,6 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
                 elseif ~baseBuffer_full %&& data.frame <= (initFrameBase+baseFrames)
 %                     baseval = base(baseval*(data.frame - 1) + signal)./data.frame;
                     baseval = baseval + unitVals/baseFrames;
-                    disp(data.frame);
                     if data.frame == (initFrameBase+baseFrames)
                         baseBuffer_full = 1;
                         disp('baseBuffer FULL!'); 
@@ -396,7 +396,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
 %                     data.bmidffz(:,data.frame) = dff_z;
                     data.cursor(data.frame) = cursor_i;
                     m.Data.cursor(data.frame) = data.cursor(data.frame); % saving in memmap
-                    disp(['Cursor: ' num2str(cursor_i)]); 
+%                     disp(['Cursor: ' num2str(cursor_i)]); 
 %                     disp(['Target : ' num2str(target_hit)]); 
 %                     disp(['C1 - cursor: ' num2str(c1_bool)]); 
 %                     disp(['C2 - E1 : ' num2str(c2_bool)]); 

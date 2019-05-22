@@ -14,14 +14,14 @@ ni_holo     = [0 0 1];
 % reward_sound = audioplayer(xrnd, 10000); %Play sound using: play()
 %%
 %Sound + Reward
-% weight of the black cup for reward calibration is: 1.596
+% weight of the black cup for reward calibration is: 1.587
 
 disp('reward delivery!')
 t = [];
-for i=1:100
+for i=1%:100
 %     tic;play(reward_sound);t(end+1) = toc;
 %     tic;sound(xrnd, 10000);t(end+1) = toc;
-    pause(0.5);
+    pause(0.2);
     outputSingleScan(s,ni_reward); pause(0.001); outputSingleScan(s,ni_out);
 end
 disp ('end')

@@ -34,7 +34,7 @@ duration => including the repetitions
     
     % Todo, check if this is needed or just a temporal delay in the recoding
     
-    figure()
+%     figure()
     numSubp = ceil(sqrt(size(holoData,1)-1));
     indSubp = min([size(holoData,1)-1, length(locs)]);
     meanVector = zeros(indSubp, 1);
@@ -68,10 +68,10 @@ duration => including the repetitions
 %         stdVector(nn) = nanstd(holoData_detrend(nn, minzIndex:auxIndex),0,2); %nanstd(holoData(nn, minzIndex:auxIndex),0,2);
         z_data{nn} = (holoData_detrend(nn, auxIndex:maxzIndex))/stdVector(nn); % - meanVector(nn
         zVector(nn) = nanmean(z_data{nn});
-        subplot(numSubp,numSubp,nn)
-        plot(locsFrames(minIndex:maxIndex)./1000, holoData_dff(nn, minIndex:maxIndex))
-        vline(locs(nn)/1000, 'r-')
-        title(['neuron: ', int2str(nn)])
+%         subplot(numSubp,numSubp,nn)
+%         plot(locsFrames(minIndex:maxIndex)./1000, holoData_dff(nn, minIndex:maxIndex))
+%         vline(locs(nn)/1000, 'r-')
+%         title(['neuron: ', int2str(nn)])
     end
     
     [~, ind] = sort(zVector, 'descend');
