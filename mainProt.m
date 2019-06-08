@@ -1,13 +1,51 @@
 %%%TODO'S!!!!
 %{
-%put all the plots in a folder of plots
+Base: disp number of target hits (without b2base)
+BMI: disp number of delivered holo stims
+streamline analysis of baseline, pretrain, bmi data, plots in same format
+rewards per minute plot
+anticipatory licking?
+Baseline CA vs stim time
+ Close-loop E2 not being high-ish
+analyze baseline E2
+ what window around stim triggers reward
+%
+%For Experiment:
+%A protocol for determing reliably stimmed cells, and determing power and
+duration of stim
 %}
 
 %% Main protocol for the experiment
-%Start by running:
-%test_bmi_nidaq_triggers.m
+%--------------------------------------------------------------------------
+%BEFORE ANIMAL IN BOX:
+%DO:
+% Hook up BNCs: 
+% 1) BMI solenoid, AI5
+% 2) Monaco Trig, AI6
+% 3) Frame Trig, AI7
+% 4) Holo Trig PFI1
+% 
+% Power Arduino: 
+%   (Power supply needed to power solenoid, can't control solenoid on USB power)
+% Voltage Recording: All Inputs Active (check 6+7)
+%
+%Fill syringe with sucrose cuz of gravity
+%Run test_bmi_nidaq_triggers.m
+%   check triggers for 1) get image, 2) trig photostim, 3) trig reward
+%calibrate solenoid opening time
+%
+%load pyctrl expt for the mouse
+%collect load cell sensor baseline data
+%
+%Put mouse in
+%put gel from headbar to ear
+%adjust spout so mouse can lick
+%put objective
+%run test_bmi_nidaq_triggers.m
 
-% define Animal, day and folder where to save
+
+
+%% define Animal, day and folder where to save
 animal = 'NY20'; day = 'BMItest';
 folder = 'E:/VivekNuria/expt/HoloBmi';
 
@@ -23,11 +61,28 @@ if ~exist(savePath, 'dir')
 end
 
 %%
-%Once the imaging view is set, disable the motor control!!!!
-
+%--------------------------------------------------------------------------
+%DO:
+%find FOV
+%-disable the motor control!!!!
+%-set imaging FOV.  Use High Power to calc image for holoMask
+%-lower imaging power back to normal
+%--------------------------------------------------------------------------
 %% Select ChroME neurons
 % Select area of interest with the 2p
 % find red neurons
+
+%--------------------------------------------------------------------------
+%DO:
+%-mainMasksPrairie, make holoMask
+%-deleteMask, delete bad neurons.  
+%-addcell, add neurons
+%-add green cells: 
+%--[holoMaskRedGreen, ~,~] = addcell (Img, holoMask,9);
+%--[holoMaskRedGreen, ~,~] = addcell (Img, holoMaskRedGreen,9);
+%--------------------------------------------------------------------------
+
+
 [holoMask, Im, Img, px, py] = makeMasksPrairie();
 
 % it returns the mask that will be used for the holostim
@@ -42,10 +97,16 @@ holoMask = deleteMask(Im, holoMask, 3);  % third var is the number of areas to d
 
 % if we want to add neurons in green channel
 [holoMaskRedGreen, ~,~] = addcell (Img, holoMask,9);
+%If you need to do more than one round:
+[holoMaskRedGreen, ~,~] = addcell (Img, holoMaskRedGreen,9);
 %DONT DELETE NEURONS HERE!  THEY ARE FROM RED CHANNEL
 
+%%
+%See the holoMask:
+h = figure;
+imshow(holoMask) 
 
-%% when we are happy with the result
+%% Save the holoMask
 [x,y] = findCenter(holoMask);
 [xrg,yrg] = findCenter(holoMaskRedGreen);
 red = [x';y'];
@@ -57,9 +118,8 @@ Img = double(Img);
 filetosave = fullfile(savePath, 'red.mat');
 save(filetosave,'Im', 'Img', 'red', 'redGreen', 'holoMask', 'holoMaskRedGreen')
 
-%% prepare HOLO STIM 
-% MAKE SURE YOU DO NOT SAVE RED CHANNEL HERE!!! 
-% Change number of reps depending on the amount of neurons in prairie view
+%% prepare HOLO STIM of individual neurons
+%Create gpl, xml files for individual points
 
 % load environment
 pl = actxserver('PrairieLink.Application');
@@ -70,20 +130,40 @@ pl.Disconnect()
 
 % creates holos with the mask of the red components as input
 createGplFile(savePath, holoMask, posz, px)
-% upload the .gpl file in the SLM 
-%(Import: Top half of MarkPoints)
+
 
 %define where to save the file
 savePrairieFilesHolo(savePath)
 
 % create the stim train for prairie
-createXmlFile(savePath, max(max(holoMask)), 1, 0.3, '', false)
-%Import: Mark Point Series, Bot half of MarkPoints
+num_neurons_stim = max(max(holoMask));
 
-%% Update prairie view repetitions based on num neurons to stim
+numberNeurons=max(max(holoMask));
+power = 0.2; 
+duration = 30; 
+numSpirals = 20; 
+
+powerVector = power*ones(1,numberNeurons); %*0.1; %0.2 = 50, 0.1=25
+durationVector = duration*ones(1,numberNeurons);
+spiralVector = numSpirals*ones(1,numberNeurons);
+initDelay = 2000;
+iterations = 1;
+reps = 1;
+
+createXmlFile(savePath, numberNeurons, reps, initDelay, durationVector, powerVector, spiralVector, iterations, '', false)
+
+% Update prairie view repetitions based on num neurons to stim
 num_stim_neurons = max(max(holoMask));
 stim_time_per_neuron = 2.1;
 disp(num_stim_neurons*stim_time_per_neuron*frameRate)
+
+%--------------------------------------------------------------------------
+%DO: 
+% upload .gpl in MarkPoints (Top half)
+% upload .xml in MarkPoints (Bot half)
+% update T-series repetitions in Prairie View with above number
+% Make sure Voltage Recording has all channels enabled
+%--------------------------------------------------------------------------
 
 %% Run HOLO STIM
 %This does one neuron at a time.
