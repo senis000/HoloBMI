@@ -157,6 +157,9 @@ plotNeuronsBaseline(baseActivity, CComp, YrA, totalneurons)
 E1_base = sort([14 13 18 17], 'ascend') %JUST NEEDS GCAMP
 E2_base = sort([22 3 7 5], 'ascend') %NEEDS CHROME
 
+ensembleNeurons = [E1_base, E2_base];
+plotNeuronsEnsemble(baseActivity, ensembleNeurons)
+
 % E2_candidates = [39 45 59 37 88 6 26 46 78 48 22 20 33]
 %TODO: 
 %onacid from the baseline acquisition?
@@ -261,21 +264,21 @@ pl.SendScriptCommands(loadCommand);
 pl.SendScriptCommands("-ts"); 
 pause(1);
 
-%% Holo stim checking connectivity
-% create randomize run for each individual neuron of the ensemple
+
+%% Runs connectivity
+%define where to save the file
+if pl.Connected()
+    pl.Disconnect();
+end
 savePrairieFiles(savePath, pl, 'connectivity_pre')
-createXmlFile(savePath, 4, 5, 0.2, 'connectivty_', true)
-% loadCommand = "-lmp " + fullfile(savepath, "connectivty_holostim.xml");
-% pl.SendScriptCommands(loadCommand);
-% LOAD XML FILE
 
-%% Run 
-pl.SendScriptCommands("-ts"); 
-pause(1);
+% create the stim train for prairie
+createXmlFile(savePath, 4, 5, 0.2, 'connectivity_pre', true)
+%Import: Mark Point Series, Bot half of MarkPoints
+% Update prairie view repetitions based on num neurons to stim
 
-%% disconnect prairie
-pl.Disconnect()
-% ran each neuron independently
+clear s
+ConnectivityAcqnvsPrairie(folder, animal, day, ensembleMask, 'PRE')
 
 %%
 %Compute vectorHolo
@@ -283,8 +286,14 @@ frameRate = 30 %baseline_frameRate
 expectedLengthExperiment = 40*60*frameRate
 [vectorHolo, ISI] = createVectorHolo(frameRate, expectedLengthExperiment, 20, 5, false);
 
-%%
-%run Pre-training
+%% create masks bot and image to check during experiment
+createBot(savePath, x(ensembleNeurons),y(ensembleNeurons))
+ensembleMask = holoMaskRedGreen;
+ensembleMask(~ismember(ensembleMask,ensembleNeurons))= 0;
+figure('Position', [600,300, 256, 256])
+imshow(ensembleMask);
+
+%% run Pre-training
 %Change the Mark Points:
 %Make 120 reps, put "Wait for Trigger" = First Reptition, Trigger
 %Selection: Start with External, PFI1
@@ -312,15 +321,20 @@ BMIAcqnvsPrairienoTrials(folder, animal, day, 'BMI', baselineCalibrationFile, fr
 
 %% Holo stim for functional connectivity
 % upload the GPL file
-pl = actxserver('PrairieLink.Application');
-pl.Connect();
-loadCommand = "-tsl " + fullfile('F:/VivekNuria/utils', "Tseries_VivekNuria_holo.env");
-pl.SendScriptCommands(loadCommand);
-pl.Disconnect()
+%% Runs connectivity
+%define where to save the file
+if pl.Connected()
+    pl.Disconnect();
+end
+savePrairieFiles(savePath, pl, 'connectivity_post')
 
-%% Holo stim checking connectivity
-% create randomize run for each individual neuron of the ensemple
-savePrairieFiles(savePath, pl, 'connectivity_pre')
-createXmlFile(savePath, 4, 5, 'connectivty_', true)
+% create the stim train for prairie
+createXmlFile(savePath, 4, 5, 0.2, 'connectivity_post', true)
+%Import: Mark Point Series, Bot half of MarkPoints
+% Update prairie view repetitions based on num neurons to stim
+
+clear s
+ConnectivityAcqnvsPrairie(folder, animal, day, ensembleMask, 'POST')
+
 % ran each neuron independently
  
