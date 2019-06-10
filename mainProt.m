@@ -226,29 +226,24 @@ E2_base = [98   158   161   164];
 
 %TODO: update protocol to iterate from E2_candidates to E2_base
 
-%% Holo stim of Ensemble
+%% Holo stim of Ensemble (only stim cells)
 %TODO create file + creating the xml etc
 % create the masks for holo stim the 4 ensemble neurons
 if onacid_bool
-    EnsembleMask=deleteNonEnsemble (AComp, E2_base, px, py);
+    StimMask=deleteNonEnsemble (AComp, E2_base, px, py);
 else
-    EnsembleMask = zeros(size(holoMaskRedGreen,1));
-    for indn = 1:length(E2_base)
-        auxmask = holoMaskRedGreen;
-        auxmask(auxmask~=E2_base(indn)) = 0;
-        auxmask(auxmask~=0) = indn;
-        EnsembleMask = auxmask + EnsembleMask;
-    end
+    StimMask = holoMaskRedGreen;
+    StimMask(~ismember(StimMask,E2_base))= 0;
 end
 figure;
-imshow(EnsembleMask); 
+imshow(StimMask); 
 
 %%
 %GPL for Stim Ensemble
 pl = actxserver('PrairieLink.Application');
 pl.Connect();
 savePrairieFiles(savePath, pl, '4neurons_together')
-createGplFile(savePath, EnsembleMask, posz, px, 'ensemble_')
+createGplFile(savePath, StimMask, posz, px, 'ensemble_')
 
 createBot(savePath, x(E2_base),y(E2_base))
 
@@ -425,8 +420,16 @@ plotNeuronsBaseline(baseActivity, CComp, YrA, 20)
 %%
 %Manually enter:
 E1_base = sort([64 19 141 83], 'ascend') %JUST NEEDS GCAMP
-% E2_base = sort([7 12 34 48], 'ascend')
+E2_base = sort([7 12 34 48], 'ascend')
 
+ensembleNeurons = [E1_base, E2_base];
+plotNeuronsEnsemble(baseActivity, ensembleNeurons)
+
+% E2_candidates = [39 45 59 37 88 6 26 46 78 48 22 20 33]
+%TODO: 
+%onacid from the baseline acquisition?
+%if we don't do onacid on the baseline activity, we won't have any
+%roi's just from gcamp
 
 %%
 %OPTION: Use previously collected BMI data as the baseline data: 
@@ -512,6 +515,38 @@ close all
 %--------------------------------------------------------------------------
 
 
+if onacid_bool
+    StimMask=deleteNonEnsemble (AComp, E2_base, px, py);
+else
+    StimMask = holoMaskRedGreen;
+    StimMask(~ismember(StimMask,E2_base))= 0;
+end
+
+figure;
+imshow(StimMask); 
+
+pl = actxserver('PrairieLink.Application');
+pl.Connect();
+savePrairieFiles(savePath, pl, '4neurons_together')
+createGplFile(savePath, StimMask, posz, px, 'ensemble_')
+
+createBot(savePath, x(E2_base),y(E2_base))
+
+loadCommand = "-tsl " + fullfile('F:/VivekNuria/utils', "Tseries_VivekNuria_holo_4.env");
+pl.SendScriptCommands(loadCommand);
+
+%ACTIONS:
+% SELECT BOT on image window
+% upload the GPL file
+% upload the BOT file
+% Manually sselect neurons, make group, laser power 50, 4 iterations with
+% 10 sec bw
+% CHANGE NUMBER OF REPS IN T-SERIES
+%% Run 4 masks together
+
+pl.SendScriptCommands("-ts"); 
+pause(1);
+
 %%
 %Power/Duration Reminder: 
 %
@@ -534,8 +569,12 @@ close all
 %-Manually enter: powerVector, durationVector
 %--------------------------------------------------------------------------
 
+%% Runs connectivity
+%define where to save the file
+if pl.Connected()
+    pl.Disconnect();
+end
 savePrairieFiles(savePath, pl, 'connectivity_pre')
-% powerVector = [0.06 0.04 0.08 0.06]; %0.2 = 50
 
 %Manually Enter: 
 powerVector = .004*[15 22 50 40];
@@ -556,12 +595,9 @@ pl.SendScriptCommands(loadCommand);
 %D0:
 %1) Add water to imaging window if needed
 %--------------------------------------------------------------------------
+clear s
+ConnectivityAcqnvsPrairie(folder, animal, day, StimMask, 'PRE')
 
-pl.SendScriptCommands("-ts"); 
-pause(1);
-
-%% disconnect prairie
-pl.Disconnect()
 
 %% create stims for pretrain
 initDelay = 0;
@@ -593,6 +629,15 @@ if ~seedBase
     vectorHolo = vectorHolo + baseFrames;
 end
 % num imaging reps should be 75600 = 72000+3600
+
+%% create masks bot and image to check during experiment
+createBot(savePath, x(ensembleNeurons),y(ensembleNeurons))
+ensembleMask = holoMaskRedGreen;
+ensembleMask(~ismember(ensembleMask,ensembleNeurons))= 0;
+figure('Position', [600,300, 256, 256])
+imshow(ensembleMask);
+
+%% run Pre-training
 
 %%
 %Seed BMI baseVal using Pretrain
@@ -691,14 +736,12 @@ BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
 %1) pyctrl
 %2) load cells
 %3) video
-%% Holo stim for functional connectivity
-% upload the GPL file
-pl = actxserver('PrairieLink.Application');
-pl.Connect();
-loadCommand = "-tsl " + fullfile('F:/VivekNuria/utils', "Tseries_VivekNuria_holo_all.env");
-pl.SendScriptCommands(loadCommand);
+
 
 %% Holo stim checking connectivity
+if pl.Connected()
+    pl.Disconnect();
+end
 % create randomize run for each individual neuron of the ensemple
 savePrairieFiles(savePath, pl, 'connectivity_post')
 % numberNeurons, reps, power, varName, flagRandom)
@@ -713,11 +756,18 @@ iterations = 1;
 
 createXmlFile(savePath, numberNeurons, reps, initDelay, durationVector, powerVector, spiralVector, iterations, 'connectivity_post_', true)
 
-%% run
-pl.SendScriptCommands("-ts"); 
-pause(1);
-%% end
+pl = actxserver('PrairieLink.Application');
+pl.Connect();
+loadCommand = "-tsl " + fullfile('F:/VivekNuria/utils', "Tseries_VivekNuria_holo_all.env");
+pl.SendScriptCommands(loadCommand);
 pl.Disconnect()
+
+%% run
+
+clear s
+ConnectivityAcqnvsPrairie(folder, animal, day, ensembleMask, 'POST')
+%% end
+
 
 %%
 %SAVE THIS Protocol script IN FOLDER (savePath)

@@ -218,7 +218,33 @@ E2_proj
 disp('decoder:')
 decoder = E2_proj - E1_proj
 
-
+%%
+%--------------------------------------------------------------------------
+%raw data plot: 
+if(plot_raw_bool)
+    [h, offset_vec] = plot_E_activity(f_raw, E_id, E_color);
+    
+%     h = figure;
+%     hold on; 
+%     offset = 0; 
+%     for i=1:num_neurons
+%         y_plot = f_raw(:,i);
+%         y_plot = y_plot-min(y_plot); 
+%         y_amp = max(y_plot); 
+% 
+%         if(i>1)
+%             offset = offset+y_amp; 
+%         end
+% 
+%         plot_color = E_color{E_id(i)};
+%         plot(y_plot-offset, 'Color', plot_color); 
+%     end
+    xlabel('frame'); 
+    ylabel('fluorescence'); 
+    title('raw fluorescence in baseline'); 
+    im_path = fullfile(plotPath, 'baseline_fraw.png'); 
+    saveas(h, im_path); 
+end
 
 %%
 %First process f0: 
@@ -244,7 +270,7 @@ if(f0_win_bool)
         f0 = zeros(num_samples-f0_win+1, num_neurons); 
         f0(1,:) = mean(f_raw(1:f0_win, :), 1);
         for i = 2:length(f0)
-            f0(i,:) = f0(i-1,:)*((f0_win-1)/f0_win) + f_raw((i+f0_win-1), :)/f0_win; 
+            f0(i,:) = f0(i-1)*((f0_win-1)/f0_win) + f_raw((i+f0_win-1), :)/f0_win; 
         end
         %Truncate data based on the f0_win:
         f_postf0 = f_raw(f0_win:end, :); 
@@ -254,34 +280,6 @@ else
     f_postf0 = f_raw; 
     f0_mean = repmat(nanmean(f_postf0, 1), size(f_postf0,1), 1);
     f0 = f0_mean; 
-end
-
-%%
-%--------------------------------------------------------------------------
-%raw data plot: 
-if(plot_raw_bool)
-    [h, offset_vec] = plot_E_activity(f_postf0, E_id, E_color);
-    
-%     h = figure;
-%     hold on; 
-%     offset = 0; 
-%     for i=1:num_neurons
-%         y_plot = f_raw(:,i);
-%         y_plot = y_plot-min(y_plot); 
-%         y_amp = max(y_plot); 
-% 
-%         if(i>1)
-%             offset = offset+y_amp; 
-%         end
-% 
-%         plot_color = E_color{E_id(i)};
-%         plot(y_plot-offset, 'Color', plot_color); 
-%     end
-    xlabel('frame'); 
-    ylabel('fluorescence'); 
-    title('raw fluorescence in baseline'); 
-    im_path = fullfile(plotPath, 'baseline_fraw.png'); 
-    saveas(h, im_path); 
 end
 
 %%
@@ -644,7 +642,7 @@ hist(cursor_obs, 50);
 vline(T); 
 xlabel('Cursor'); 
 ylabel('Number of Observations'); 
-title(['E2-E1 threshold plotted on E2-E1 distribution, num valid hits ' num2str(num_valid_hits) ' num hits ' num2str(num_hits)]); 
+title(['E2-E1 threshold plotted on E2-E1 distribution, num hits ' num2str(num_valid_hits)]); 
 saveas(h, fullfile(plotPath, 'cursor_dist_T.png')); 
 
 % %%
@@ -714,8 +712,7 @@ save_path = fullfile(save_dir, ['target_calibration_ALL_' date_str '.mat']);
 save(save_path); 
 
 %2)Just the target parameters for running BMI
-target_info_file = ['BMI_target_info_' date_str '.mat'];
-save_path = fullfile(save_dir, target_info_file); 
+save_path = fullfile(save_dir, ['BMI_target_info_' date_str '.mat']); 
 %Change variable names for BMI code:
 T1 = T; %Change to T1, as this is what BMI expects
 save(save_path, 'AComp_BMI', 'n_mean', 'n_std', 'decoder', 'E_id', 'E1_sel_idxs', 'E2_sel_idxs', 'E1_base', 'E2_base', 'T1', 'E1_thresh', 'E2_subord_thresh', 'E2_coeff', 'E2_subord_mean', 'E2_subord_std'); 

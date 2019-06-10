@@ -1,4 +1,4 @@
-function createXmlFile(savePath, numberNeurons, reps, initDelay, durationVector, powerVector, SpiralVector, Iter, varName, flagRandom)
+function createXmlFile(savePath, numberNeurons, reps, power, varName, flagRandom)
 %{
 Function to create a xml file to be uploaded to the prairie view
 savePAth --> path where to save the .xml file
@@ -9,22 +9,25 @@ Random only happens within repetitions
 power 0.4 is a 100 in the gui
 %}
 
-    if nargin < 10
+    if nargin < 6
         flagRandom = true;
     end
     
-    if nargin<9
+    if nargin<5
         varname = '';
     end
 
     %% Parameters of the GUI
+    Iter = 1;
     IterDelay = 1000.00;
     UncagingLaser = "Monaco";
-    InitialDelay = initDelay;
+    UncagingLaserPower = power;
+    InitialDelay = 2000;
     InterPointDelay =  0.12;
-%     Duration = 40; 
+    Duration = 40;
+    SpiralRevolutions = 20; 
+    Repetitions = 1;  
     AllPointsAtOnce = "False";
-    Repetitions = 1;
     
     %% Array of random holostims 
     holovector = nan(numberNeurons,reps);
@@ -46,7 +49,7 @@ power 0.4 is a 100 in the gui
     fprintf(fileID,'<PVSavedMarkPointSeriesElements Iterations="%d" IterationDelay="%.2f">\n', Iter, IterDelay);
     
     % print for each point
-    formatSpec1 = ['  <PVMarkPointElement Repetitions="%d" UncagingLaser="%s" UncagingLaserPower="%.3f"', ...
+    formatSpec1 = ['  <PVMarkPointElement Repetitions="%d" UncagingLaser="%s" UncagingLaserPower="%.1f"', ...
         ' TriggerFrequency="None" TriggerSelection="None" TriggerCount="1"', ...
         ' AsyncSyncFrequency="None" VoltageOutputCategoryName="None" VoltageRecCategoryName="None"', ...
         ' parameterSet="CurrentSettings">\n'];
@@ -56,10 +59,7 @@ power 0.4 is a 100 in the gui
     
     for ind = 1:numberNeurons*reps
         %TODO change from pixelspace to motorspace
-        duration = durationVector(holovector(ind));
-        UncagingLaserPower = powerVector(holovector(ind));
-        SpiralRevolutions = SpiralVector(holovector(ind));
-        content1 = [InitialDelay, InterPointDelay, duration, SpiralRevolutions]; 
+        content1 = [InitialDelay, InterPointDelay, Duration, SpiralRevolutions]; 
         content2 = [holovector(ind), holovector(ind)];
         fprintf(fileID, formatSpec1, Repetitions, UncagingLaser, UncagingLaserPower);
         fprintf(fileID, formatSpec2, content1, AllPointsAtOnce, content2);
