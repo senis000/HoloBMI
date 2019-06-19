@@ -332,7 +332,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
         end
         
         if ~isequal(Im,lastFrame) || debug_bool
-            tic;
+            tic; %Start timing to see length of an iteration
             if(~debug_bool)
                 lastFrame = Im;   % comparison and assignment takes ~4ms
                 outputSingleScan(s,ni_getimage); pause(0.001); outputSingleScan(s,[0 0 0]);
