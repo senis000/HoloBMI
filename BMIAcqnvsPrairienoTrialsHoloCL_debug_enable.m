@@ -207,6 +207,9 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
     rewardDelayCounter  = 0; 
     rewardDelayFrames   = 10; 
     
+    back2BaseCounter = 0;
+    back2BaseFrameThresh = 2; %need to be back2Base for two frames before another target can be achieved
+    %TODO: make this an input/variable loaded from calibration
     backtobaselineFlag = 0;
     data.frame = 1; % initialize frames
     
@@ -421,7 +424,12 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
 
                     if backtobaselineFlag 
                         if data.cursor(data.frame) <= back2Base 
+                            back2BaseCounter = back2BaseCounter+1;
+
+                        end
+                        if back2BaseCounter >= back2BaseFrameThresh
                             backtobaselineFlag = 0;
+                            back2BaseCounter = 0;
                             disp('back to baseline')
                         end
                     else

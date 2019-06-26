@@ -44,8 +44,8 @@ duration of stim
 %--------------------------------------------------------------------------
 
 % define Animal, day and folder where to save
-animal = 'NY28'; day = 'D3_p2';
-folder = 'E:/VivekNuria/expt/HoloBmi';
+animal = 'NY20'; day = 'D1';
+folder = 'F:/VivekNuria/expt/HoloBmi';
 
 % define posz TODO can we get this from prairie?
 posz = 0;
@@ -81,23 +81,40 @@ end
 %--------------------------------------------------------------------------
 
 
-[holoMask, Im, Img, px, py] = makeMasksPrairie();
-
+[holoMask, Im, Img, px, py] = makeMasksPrairie(0.7);
 % it returns the mask that will be used for the holostim
+
+holoMask = deleteMask(Im, holoMask, 7);  % third var is the number of areas to delete
+%THIS DOESNT NEED ENTER AT BEGINNING
+% delete neurons that we don't want by position on image
 
 % if we want to add neurons
 [holoMask, ~,~] = addcell (Im, holoMask,9); %Press enter in beginning
 
 
-holoMask = deleteMask(Im, holoMask, 7);  % third var is the number of areas to delete
-%THIS DOESNT NEED ENTER AT BEGINNING
-% delete neurons that we don't want by position on image
+
 
 % if we want to add neurons in green channel
 [holoMaskRedGreen, ~,~] = addcell (Img, holoMask,9);
 %If you need to do more than one round:
 [holoMaskRedGreen, ~,~] = addcell (Img, holoMaskRedGreen,9);
 %DONT DELETE NEURONS HERE!  THEY ARE FROM RED CHANNEL
+
+%%
+%Needed to manually edit holoMask
+% % %delete 41
+% del_ind = 41;
+% holoMask(holoMask==del_ind) = 0; 
+% for u=del_ind:max(max(holoMask))
+%     holoMask(holoMask==u) = u-1;
+% end
+% 
+% %
+% del_ind = 41;
+% holoMaskRedGreen(holoMaskRedGreen==del_ind) = 0; 
+% for u=del_ind:max(max(holoMaskRedGreen))
+%     holoMaskRedGreen(holoMaskRedGreen==u) = u-1;
+% end
 
 %%
 %See the holoMask:
@@ -165,6 +182,10 @@ disp(num_stim_neurons*stim_time_per_neuron*frameRate)
 
 %% Run HOLO STIM to check stim-able neurons
 %This stims one neuron at a time.
+%--------------------------------------------------------------------------
+%DO: 
+%1) Do live scan check
+%--------------------------------------------------------------------------
 
 clear s
 HoloAcqnvsPrairie(folder, animal, day, holoMask)
@@ -175,7 +196,7 @@ HoloAcqnvsPrairie(folder, animal, day, holoMask)
 %--------------------------------------------------------------------------
 %DO: 
 %Image-block ripping utility: Convert the holostim acqn
-%Load holoactivity.mat and voltage recording for plotting
+%Load holoOnlineX.mat and voltage recording for plotting
 %(Import csv to matlab: output type is Numeric Matrix.  Name it "voltageRec")
 %--------------------------------------------------------------------------
 
@@ -202,7 +223,7 @@ HoloAcqnvsPrairie(folder, animal, day, holoMask)
 %%
 %(Image-Block Ripping Utility) Convert holostim file with bruker converter 
 % load the VoltageRec to check the results of holoStim
-plotHoloStimTimeLock(holoActivity, voltageRec, 40, 100) % --> To plot the result of
+plotHoloStimTimeLock(holoActivity, voltageRec, 40, 1000) % --> To plot the result of
 %ToDo: for plotting, do sliding window deltaf/f
 %ToDo: allow us to select the idxs of neurons to plot
 %ToDo: a version that just plots each individual neuron, we type 'Y' or 'N'
@@ -215,13 +236,19 @@ plotHoloStimTimeLock(holoActivity, voltageRec, 40, 100) % --> To plot the result
 %choose more than 4 neurons, and then re-run once you've chosen your 4.  
 %--------------------------------------------------------------------------
 % E2_base = sort([21    36   127   196], 'ascend')
-% E2_base = sort([158 74 77 147 113 149 65 191 60 108 69 98 116 164 161 129 26], 'ascend')
+% E2_base = sort([58 67 56 27 87 89 24 51 8 95 72 91 16 115 98 75 153], 'ascend')
 
-% E2_base =[26    60    65    69    74    77 ...
-%     98   108   113   116   129   147 ...
-%    149   158   161   164]; 
+% E2_base = ...
+%     [8 2 7 14 20 23 16];
 
-E2_base = [98   158   161   164]; 
+% E2_base = E2_base([3 5 7])
+
+E2_base = [7 20 16]; 
+ 
+%  E2_base = [7     6    47    24]; 
+% E2_base = sort([7     3    47    57], 'ascend')
+% E2_base = [3 7 47 57]; 
+% E2_base = [98   158   161   164]; 
 % E2_base = sort([14 10 26 9], 'ascend')
 
 %TODO: update protocol to iterate from E2_candidates to E2_base
@@ -275,62 +302,58 @@ imaging_reps = num_iter*time_bw_iter*30
 
 %% Power/Duration for each candidate neuron
 %Scratch to save the power/duration parameters.
-%1
-% p15,d20
-% pretty good, missed a couple stims, afraid it will green out
-%2 
-% p15, 220
-% very good, but very active
-%
-%3
-%ABORT
-%
-%4
-%p40,d20
-%pretty good, worried about over green
-%
-%5
-%ABORT
-%
-%6
-%ABORT
-%
-%7
-%Good
-%p15,d20
-%
-%8
-%NO
-%
-%9
-%NO just weird
-%
-%10
-%NO
-%
-%11
-%NO
-%
-%12
-%it seems to respond but veryyyy slowly...
-%
-%13
-%NO
-%
-%14
-%VERY NICE
-%p22, d20
-%
-%15
-%VERY NICE
-%p50, d30
-%
-%16
-%GOOD
-%p40, d30
+%{
+like:
 
-powerVector = [15 22 50 40];
-durationVector = [20 20 30 30];
+1
+NO
+
+2
+NO
+
+3
+GOOD
+p=15
+d=20
+
+4
+NO
+
+5
+yes
+p=15
+d=20
+
+6
+NO
+
+7
+YES
+p=35
+d=20
+
+%}
+%%
+% E2_base = E2_base([2 11 9 15])
+
+% 3
+% GOOD
+% p=15
+% d=20
+% 
+% 5
+% yes
+% p=15
+% d=20
+% 
+% 7
+% YES
+% p=35
+% d=20
+
+%%
+powerVector = .004*[15 15 35];
+durationVector = [20 20 20];
 
 %TODO: save the data of the single cell stim!!
 %%
@@ -358,7 +381,8 @@ clear s
 %--------------------------------------------------------------------------
 %DO: 
 %Remove Red Channel from Image Window 1 (prairie view).
-%0) put water
+%0) (zero pmt+power) put water
+% check FOV didn't move
 %1) start video
 %2) start load cells
 %3) start pyctrl
@@ -373,7 +397,8 @@ end
 
 
 % Baseline environment already removes MARKPOINTS and set the reps to 27000
-BaselineAcqnvsPrairie(folder, animal, day, AComp, holoMaskRedGreen, onacid_bool, frameRate);
+BaselineAcqnvsPrairie(folder, animal, day, AComp, holoMask, onacid_bool, frameRate);
+% BaselineAcqnvsPrairie(folder, animal, day, AComp, holoMaskRedGreen, onacid_bool, frameRate);
 % saves in [savePath, 'baselineActivity.dat'] the activity of all the
 % neurons of the mask (Acomp+red)
 % saves in baseOnline.mat the baseline activity
@@ -407,10 +432,10 @@ end
 
 % totalneurons = 40; 
 %Copy paste base_file path: 
-base_file = fullfile(savePath, 'BaselineOnline190521T222151.mat')
+base_file = fullfile(savePath, 'BaselineOnline190526T113422.mat')
 load(base_file); 
 % plotNeuronsBaseline(baseActivity, CComp, YrA, totalneurons)
-plotNeuronsBaseline(baseActivity, CComp, YrA, 20)
+plotNeuronsBaseline(baseActivity, CComp, YrA, 30)
 
 %TODO:  
 %ToDo: for plotting, do sliding window deltaf/f
@@ -424,8 +449,8 @@ plotNeuronsBaseline(baseActivity, CComp, YrA, 20)
 %--------------------------------------------------------------------------
 %%
 %Manually enter:
-E1_base = sort([64 19 141 83], 'ascend') %JUST NEEDS GCAMP
-% E2_base = sort([7 12 34 48], 'ascend')
+E1_base = sort([21 11 18], 'ascend') %JUST NEEDS GCAMP
+% E2_base = sort([35 37 13 4], 'ascend')
 
 
 %%
@@ -462,7 +487,7 @@ A_file = fullfile(savePath, 'red.mat');
 exist(A_file)
 onacid_bool = 0
 
-sec_per_reward_range = [120 100]; 
+sec_per_reward_range = [120 80]; 
 
 frames_per_reward_range = sec_per_reward_range*baseline_frameRate %[1 1.5]*60*frameRate
 %multiply by frames per minute to convert
@@ -486,10 +511,18 @@ close all
 %     prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, savePath, ...
 %     cursor_zscore_bool, f0_init_slide);
 
- baseline2target_vBMI(n_f_file, A_file, onacid_bool,  ...
+
+
+%  baseline2target_vBMI(n_f_file, A_file, onacid_bool,  ...
+%     E1_base, E2_base, frames_per_reward_range, target_on_cov_bool, ...
+%     prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, savePath, ...
+%     cursor_zscore_bool, f0_init_slide);
+
+baseline2target_vE1strict(n_f_file, A_file, onacid_bool,  ...
     E1_base, E2_base, frames_per_reward_range, target_on_cov_bool, ...
     prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, savePath, ...
-    cursor_zscore_bool, f0_init_slide);
+    cursor_zscore_bool, f0_init_slide)
+
 %ToDo: return the filename
 
 % baseline2target(n_f_file, A_file, onacid_bool, E1_base, E2_base, frames_per_reward_range, ...
@@ -506,11 +539,13 @@ close all
 %D0:
 %Note down: 
 % - T value
-% T: 0.6
-% num_valid_hits: 8
-% num_hits: 102
+% T: 0.54
+% num_valid_hits: 7
+% num_hits: 74
 %--------------------------------------------------------------------------
 
+% %%
+% t = load(fullfile(savePath, 'target_calibration_ALL_20190524T122903.mat'))
 
 %%
 %Power/Duration Reminder: 
@@ -538,12 +573,17 @@ savePrairieFiles(savePath, pl, 'connectivity_pre')
 % powerVector = [0.06 0.04 0.08 0.06]; %0.2 = 50
 
 %Manually Enter: 
-powerVector = .004*[15 22 50 40];
-durationVector = [20 20 30 30];
-spiralVector = [20 20 20 20];
+powerVector = .004*[15 15 35];
+durationVector = [20 20 20];
+
+% powerVector = .004*[15 50 15 15];
+% durationVector = [20 20 20 20];
+
+spiralVector = [20 20 20];
+% spiralVector = [20 20 20 20];
 initDelay = 5000;
 reps = 5;
-numberNeurons=4;
+numberNeurons=3; %4
 iterations = 1;
 
 createXmlFile(savePath, numberNeurons, reps, initDelay, durationVector, powerVector, spiralVector,iterations, 'connectivity_pre_', true)
@@ -554,7 +594,8 @@ pl.SendScriptCommands(loadCommand);
 %% Run 
 %--------------------------------------------------------------------------
 %D0:
-%1) Add water to imaging window if needed
+%1) (zero PMT, power) Add water to imaging window if needed
+%2) Load xml
 %--------------------------------------------------------------------------
 
 pl.SendScriptCommands("-ts"); 
@@ -566,7 +607,7 @@ pl.Disconnect()
 %% create stims for pretrain
 initDelay = 0;
 reps = 1;
-numberNeurons=4;
+numberNeurons=3;%4
 iterations = 121;
 createXmlFile(savePath, numberNeurons, reps, initDelay, durationVector, powerVector, spiralVector, iterations, 'preTrain', false)
 
@@ -588,7 +629,7 @@ IHSImean = 20;
 IHSIrange = 10; 
 [vectorHolo, ISI] = createVectorHolo(frameRate, expectedLengthExperiment, IHSImean, IHSIrange, false);
 
-seedBase = 1; %Set this to 1 if you will seed the baseline
+seedBase = 0; %Set this to 1 if you will seed the baseline
 if ~seedBase
     vectorHolo = vectorHolo + baseFrames;
 end
@@ -602,11 +643,11 @@ end
 % - if seedBase 0, we wait for baseline before starting stims
 %2) Copy-paste BMI_target_info filename (into 'pretrain_file')
 %--------------------------------------------------------------------------
-seedBase = 1; 
-baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan;
+seedBase = 0; 
+baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan
 if seedBase
     %TODO:
-    pretrain_file = 'BMI_online190521T224159'
+    pretrain_file = 'BMI_online190523T010653'
     load(fullfile(savePath, pretrain_file)); 
     pretrain_base = data.baseVector; 
     pretrain_base(:, isnan(pretrain_base(1,:))) = [];
@@ -616,19 +657,26 @@ end
 %%
 % Pre-training
 
+%--------------------------------------------------------------------------
+%D0:
+%
 %Copy Paste BMI_target_info_.mat
 %Change the Mark Points:
 %Clear Point Series, Load pretrain.xml
-%Make 120 reps, put "Wait for Trigger" = First Reptition, Trigger
-%Selection: Start with External, PFI1
+%Make 121 iterations, put "Wait for Trigger" = First Reptition, Trigger
+%Trigger Selection: Start with External, PFI1
+%
+%Change BOT to take only the E2 ensemble.  This lets us see the E2 neurons
+%better, online.
 
 % Then, before running cell:
 %1) start video
 %2) start load cells
 %3) start pyctrl
+%--------------------------------------------------------------------------
 
 clear s
-baselineCalibrationFile = 'BMI_target_info_20190521T224235.mat';
+baselineCalibrationFile = 'BMI_target_info_20190526T113926.mat';
 vectorVTA = []
 %expt_str: 
 %     expt_cell = {...
@@ -649,28 +697,35 @@ BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
 % BMIAcqnvsPrairienoTrialsHoloCL(folder, animal, day, expt_str, baselineCalibrationFile, baseline_frameRate, vectorHolo, vectorVTA, cursor_zscore_bool)
 
 
+%35 holo hits from pretrain 1
+%
+
+%--------------------------------------------------------------------------
+%D0:
 %Stop:
 %1) pyctrl
 %2) load cells
 %3) video
-
-
-%%
+%--------------------------------------------------------------------------
 
 %% run BMI
+%--------------------------------------------------------------------------
+%D0:
 %remember to set the markpoints to proper stim. Remove mark points!!!!
-
 % Then, before running cell:
+%0) put water under objective
 %1) start video
 %2) start load cells
 %3) start pyctrl
+%--------------------------------------------------------------------------
+
 
 %Get baseValSeed from HoloVTA_pretrain!  load file, take the last valid
 %baseVal
 % load_baseVal = 0; 
 % if load_baseVal
-baselineCalibrationFile = 'BMI_target_info_20190521T224235.mat';
-pretrain_file = 'BMI_online190521T232745'
+% baselineCalibrationFile = 'BMI_target_info_20190523T220638.mat';
+pretrain_file = 'BMI_online190524T131817'
 load(fullfile(savePath, pretrain_file)); 
 pretrain_base = data.baseVector; 
 pretrain_base(:, isnan(pretrain_base(1,:))) = [];
@@ -678,6 +733,9 @@ baseValSeed = pretrain_base(:,end)
 
 %%
 % baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan
+% baselineCalibrationFile = 'BMI_target_info_20190523T110626.mat';
+%%
+%  baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan
 vectorHolo = [];
 vectorVTA= []; 
 debug_bool = 0; 
@@ -703,8 +761,8 @@ pl.SendScriptCommands(loadCommand);
 savePrairieFiles(savePath, pl, 'connectivity_post')
 % numberNeurons, reps, power, varName, flagRandom)
 
-powerVector = .004*[15 22 50 40];
-durationVector = [20 20 30 30];
+powerVector = .004*[20 50 28 15];
+durationVector = [20 40 20 20];
 spiralVector = [20 20 20 20];
 initDelay = 5000;
 reps = 5;
@@ -720,34 +778,18 @@ pause(1);
 pl.Disconnect()
 
 %%
-%SAVE THIS Protocol script IN FOLDER (savePath)
-%collect load cell sensor baseline data
+%--------------------------------------------------------------------------
+%D0:
 
+%1) SAVE THE WORKSPACE IN FOLDER
+%2) SAVE THIS Protocol script IN FOLDER (savePath)
+%3) Start converting imaging data
+%3) Remove mouse
+%4) collect load cell sensor baseline data
+
+%--------------------------------------------------------------------------
 %%
 %NOTES:
-%In holostim video:
-%between 8500 and 9500 frames, I saw a wave of activity, maybe a seizure?
-%This video is interesting to analyze.
-%TODO: We need this stim to be closed loop so we don't waste stims...
-%
-%CHECK cell14 video
- %
-%One idea is to deliver low intensity stims until the target pattern is
-%reached, so we ensure a stim eventually leads to target hit.
-%
-%We should add time between rewards so one large transient can't cause
-%multiple rewards?
-
-%Noticed a motion before 26900 frames, so i adjusted manually.  
-%I'm running 40000 frames on F.  I'll have to run 32000 frames onto E
-
-%
-%can i script the image-block ripping utility?  
-%can i script the loadcell conversion?
-%%
-%BMIp2
-%BMIp1
-%pretrain
-
-%frame 25590, in BMIp2, the animal isn't even licking the sucrose.  it's
-%hanging on the spout.
+%first test of E1 threshold being more strict
+%did pretrain and fucked the cells up, bmi was weak can analyze effect of
+%fucked up cells

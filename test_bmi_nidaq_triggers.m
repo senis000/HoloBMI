@@ -32,14 +32,29 @@ disp ('end')
 %the sound is delivered...
 
 %%
+%--------------------------------------------------------------------------
+%Do: 
+%Check in Prairie View Voltage Recording
+%Start wtih Trigger: NONE
+%--------------------------------------------------------------------------
 disp('test frame trig!')
 outputSingleScan(s,ni_getimage); pause(0.001); outputSingleScan(s,ni_out);
 
-
-
 %%
+%--------------------------------------------------------------------------
+%Do: 
+%Unplug frame trig from AI7, plug in PFI1 (signal for triggering stim)
+%Voltage Recording (look at it)
+%--------------------------------------------------------------------------
 outputSingleScan(s,ni_holo); 
 pause(0.01); outputSingleScan(s,ni_out)
 disp('done!')
 % pause(0.001);outputSingleScan(s,ni_out)
 
+%--------------------------------------------------------------------------
+%Do: 
+%Replug PFI1, AI7
+%Voltage Recording: Start with Trigger: Next Scan
+%--------------------------------------------------------------------------
+%%
+clear s

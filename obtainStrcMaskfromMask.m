@@ -9,6 +9,7 @@ units => index of the neurons in the neuronMask
 %}
 
     for u = 1: max(max(mask))
+        u
         auxMask = mask;
         auxMask(auxMask~=u) = 0;
         posx = find(sum(auxMask,1)~=0);
