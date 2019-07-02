@@ -1,0 +1,14 @@
+function analyze_block_event(block_data, block_event)
+% -first half, last half # events
+% -cumulative # of hits over time
+% -hit rate with sliding window
+
+result = repmat(struct(...
+    'num_events', [], ...
+    'num_events_first_last', [], ...
+    'cum_perc', []), ); 
+
+%%
+num_files   = size(block_event,1);
+num_events  = size(block_event,2);
+

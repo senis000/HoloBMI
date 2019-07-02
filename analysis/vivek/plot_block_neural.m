@@ -177,10 +177,6 @@ function [h_cell] = plot_F_F0(E_id, t, f, f0, label, event_struct, save_dir, sav
     
 end
 
-
-%function [h_cell] = plot_F_F0(E_id, t, f, f0, label, event_struct, save_dir, save_bool, E_color)
-
-
 function [h_cell] = plot_n_0(E_id, t, n, label, event_struct, save_dir, save_bool, E_color, plot_big)
 %Plots time series 'n' and overlays a plot of horizontal line 0
 %     plot_big = 0; 
@@ -222,7 +218,7 @@ function [h_cell] = plot_n_0(E_id, t, n, label, event_struct, save_dir, save_boo
                 vline(event_struct(event_i).data); 
                 set(gca,'TickDir','out');
                 xlabel('time (min)'); 
-                title(event_struct(event_i).label);
+                title([label event_struct(event_i).label]);
                 if(plot_big)
                     set(gcf, 'Units', 'Normalized', 'OuterPosition', [0, 0.04, 1, 0.96]);
                 end
@@ -237,7 +233,7 @@ function [h_cell] = plot_n_0(E_id, t, n, label, event_struct, save_dir, save_boo
     end
     
     %Plot all events together: 
-    plot_name = [label '_all_events']; 
+    plot_name = [label ' all events']; 
     [h, offset_vec] = plot_E_activity_mult_trace(t_cell, n_cell, E_id, E_color);    
     num_event_types = length(event_struct); 
 
@@ -254,7 +250,7 @@ function [h_cell] = plot_n_0(E_id, t, n, label, event_struct, save_dir, save_boo
     h_cell{end+1} = h;
     set(gca,'TickDir','out');
     xlabel('time (min)'); 
-    title('all events');
+    title([label ' all events']);
     if(plot_big)
         set(gcf, 'Units', 'Normalized', 'OuterPosition', [0, 0.04, 1, 0.96]);
     end

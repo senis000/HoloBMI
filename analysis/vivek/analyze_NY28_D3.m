@@ -110,6 +110,7 @@ pretrain_file_cell = {...
 %Load data from files
 %--------------------------------------------------------------------------
 %im, base_raw, tinfo, base, bmi, pretrain
+% - each is a struct array, dimension: number of files
 clc
 %im
 for i=1:length(im_file_cell)
@@ -174,6 +175,7 @@ end
 %movingAverageFrames = 4; (from this version of BMI code)
 %ToDo: make these more explicitly passed from baseline to the BMI code.
 
+%---------------------------------------
 % sec_per_reward_range = [120 100]; 
 % 
 % frames_per_reward_range = sec_per_reward_range*baseline_frameRate %[1 1.5]*60*frameRate
@@ -197,11 +199,17 @@ end
 %     E1_base, E2_base, frames_per_reward_range, target_on_cov_bool, ...
 %     prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, savePath, ...
 %     cursor_zscore_bool, f0_init_slide);
+%---------------------------------------
 
 movingAverageFrames = 4; 
 cursor_zscore_bool = 0; 
 
 %%
+%base_est, pretrain_est, bmi_est
+%
+%collect data into format for analysis.  
+%reconstruct cursor from neural activity for confirmation
+
 %Baseline:
 %Push baseline data through same function, for parallel structure for plotting
 clear base_est
@@ -296,52 +304,21 @@ for i = 1:length(block_data)
     event_i = 0; 
     %Target Hit: 
     event_i     = event_i +1;
-    
     hit_idxs    = base(i).valid_hit_times; 
-%     cursor      = block_data(i).data_valid.cursor; 
-%     base_val    = block_data(i).bData.T1/2; 
-%     b2base_num_samples = 1; 
-%     
-%     length(hit_idxs)
-%     [valid_hit_idxs] = ...
-%         analyze_hits_from_cursor_base(cursor, hit_idxs, base_val, b2base_num_samples);    
-%     length(valid_hit_idxs)
     hit_time                    = time_scale*hit_idxs; 
-    
-    
     
     event_struct(i,event_i).data      = hit_time;     
     event_struct(i,event_i).label     = 'hit'; %hit_b2b'; 
     event_struct(i,event_i).valid     = 1;     
     event_struct(i,event_i).line      = '--k';
-    
-%     %STIM:
-%     event_i     = event_i +1;    
-%     
-%     valid_idxs                  = pretrain_est(i).data_valid.valid_idxs;
-%     stim_time                   = time_scale*find(pretrain(i).data.holoDelivery(valid_idxs)); 
-%     event_struct(i,event_i).data      = stim_time;     
-%     event_struct(i,event_i).label     = 'stim'; 
-%     event_struct(i,event_i).valid     = 1; 
-%     event_struct(i,event_i).line      = '--r'; 
-%     
-%     %STIM HIT:
-%     event_i     = event_i +1;
-%     
-%     valid_idxs                  = pretrain_est(i).data_valid.valid_idxs;
-%     stim_time                   = time_scale*find(pretrain(i).data.holoHits(valid_idxs)); 
-%     event_struct(i,event_i).data      = stim_time;     
-%     event_struct(i,event_i).label     = 'stim_hit'; 
-%     event_struct(i,event_i).valid     = 1;
-%     event_struct(i,event_i).line      = '--b'; 
-    
 end
 base_event = event_struct; 
-%
+%%
 win_zoom    = [0 5]; 
 save_dir    = plot_dir; 
-save_bool   = 1;  
-plot_block_neural(block_str, block_data, event_struct, frame_rate, win_zoom, save_dir, save_bool)
+save_bool   = 0;  
+plot_big    = 0; 
+plot_block_neural(block_str, block_data, event_struct, frame_rate, win_zoom, save_dir, save_bool, plot_big)
 
 
 %%
@@ -400,11 +377,12 @@ for i = 1:length(pretrain_est)
 end
 pretrain_event = event_struct; 
 
-%
+%%
 win_zoom    = [0 5]; 
 save_dir    = plot_dir; 
-save_bool   = 1; 
-plot_block_neural(block_str, block_data, event_struct, frame_rate, win_zoom, save_dir, save_bool)
+save_bool   = 0; 
+plot_big    = 0; 
+plot_block_neural(block_str, block_data, event_struct, frame_rate, win_zoom, save_dir, save_bool, plot_big)
 
 %%
 %BMI: 
@@ -425,193 +403,26 @@ for i = 1:length(block_data)
     event_i     = event_i +1;
     
     hit_idxs    = find(bmi(i).data.selfHits(valid_idxs)); 
-%     cursor      = block_data(i).data_valid.cursor; 
-%     base_val    = block_data(i).bData.T1/2; 
-%     b2base_num_samples = 1; 
-%     
-%     length(hit_idxs)
-%     [valid_hit_idxs] = ...
-%         analyze_hits_from_cursor_base(cursor, hit_idxs, base_val, b2base_num_samples);    
-%     length(valid_hit_idxs)
     hit_time                    = time_scale*hit_idxs; 
-    
-    
     
     event_struct(i,event_i).data      = hit_time;     
     event_struct(i,event_i).label     = 'hit'; %hit_b2b'; 
     event_struct(i,event_i).valid     = 1;     
     event_struct(i,event_i).line      = '--k';
-    
-%     %STIM:
-%     event_i     = event_i +1;    
-%     
-%     valid_idxs                  = pretrain_est(i).data_valid.valid_idxs;
-%     stim_time                   = time_scale*find(pretrain(i).data.holoDelivery(valid_idxs)); 
-%     event_struct(i,event_i).data      = stim_time;     
-%     event_struct(i,event_i).label     = 'stim'; 
-%     event_struct(i,event_i).valid     = 1; 
-%     event_struct(i,event_i).line      = '--r'; 
-%     
-%     %STIM HIT:
-%     event_i     = event_i +1;
-%     
-%     valid_idxs                  = pretrain_est(i).data_valid.valid_idxs;
-%     stim_time                   = time_scale*find(pretrain(i).data.holoHits(valid_idxs)); 
-%     event_struct(i,event_i).data      = stim_time;     
-%     event_struct(i,event_i).label     = 'stim_hit'; 
-%     event_struct(i,event_i).valid     = 1;
-%     event_struct(i,event_i).line      = '--b'; 
-    
 end
 bmi_event = event_struct; 
 
-%
+%%
 win_zoom    = [0 5]; 
 save_dir    = plot_dir; 
-save_bool   = 1; 
-plot_block_neural(block_str, block_data, event_struct, frame_rate, win_zoom, save_dir, save_bool)
+save_bool   = 0; 
+plot_big    = 0; 
+plot_block_neural(block_str, block_data, event_struct, frame_rate, win_zoom, save_dir, save_bool, plot_big)
 
 %%
-
-%%
-%Pretrain plot (f, f0, dff, dffz) events: (stim, hit): 
-%--------------------------------------------------------------------------
-for i=1:length(pretrain_est)
-    time_scale  =1/(30*60); 
-    %1) F F0
-    plot_name = ['pretrain' num2str(i) '_f_f0']; 
-    f   = pretrain_est.data_valid.bmiAct; 
-    f0  = pretrain_est.data_valid.baseVector;
-    n_cell = cell(num_BMI, 1); 
-    t_cell = cell(num_BMI, 1); 
-    for j =1:num_BMI
-        n_cell{j} = [f(j,:)' f0(j,:)']; 
-        t_cell{j} = (1:length(f(j,:)))*time_scale;
-    end
-    [h, offset_vec] = plot_E_activity_mult_trace(t_cell, n_cell, E_id, E_color)
-    xlabel('time (min)'); 
-    set(gcf, 'Units', 'Normalized', 'OuterPosition', [0, 0.04, 1, 0.96]);
-    export_fig(h, fullfile(plot_dir, [plot_name '.eps'])); 
-    export_fig(h, fullfile(plot_dir, [plot_name '.png']));
-    
-    %2) F F0 Stim
-    valid_idxs = pretrain_est(i).data_valid.valid_idxs;
-    stim_time = time_scale*find(pretrain(i).data.holoDelivery(valid_idxs)); 
-    
-    plot_name = ['pretrain' num2str(i) '_f_f0_stim']; 
-%     [h, offset_vec] = plot_E_activity_mult_trace(t_cell, n_cell, E_id, E_color)
-    vline(stim_time); 
-    xlabel('time (min)'); 
-    export_fig(h, fullfile(plot_dir, [plot_name '.eps'])); 
-    export_fig(h, fullfile(plot_dir, [plot_name '.png']));  
-    
-    %3) Zoom F F0 Stim
-    time_zoom = 5; 
-    num_samples = 5*30*60;
-    stim_zoom = stim_time(stim_time<=time_zoom);
-    
-    plot_name = ['pretrain' num2str(i) '_f_f0_stim_zoom' num2str(time_zoom)]; 
-    f   = pretrain_est.data_valid.bmiAct; 
-    f0  = pretrain_est.data_valid.baseVector;
-    n_cell = cell(num_BMI, 1); 
-    t_cell = cell(num_BMI, 1); 
-    for i =1:num_BMI
-        n_cell{i} = [f(i,1:num_samples)' f0(i,1:num_samples)']; 
-        t_cell{i} = (1:length(f(i,1:num_samples)))*time_scale;
-    end
-    [h, offset_vec] = plot_E_activity_mult_trace(t_cell, n_cell, E_id, E_color)
-    vline(stim_zoom); 
-    xlabel('time (min)'); 
-    set(gcf, 'Units', 'Normalized', 'OuterPosition', [0, 0.04, 1, 0.96]);
-    export_fig(h, fullfile(plot_dir, [plot_name '.eps'])); 
-    export_fig(h, fullfile(plot_dir, [plot_name '.png']));    
-
-    %4) dff
-    plot_name = ['pretrain' num2str(i) '_dff_stim']; 
-    n_plot = pretrain_est(i).dff.';
-    n_cell = cell(num_BMI, 1); 
-    t_cell = cell(num_BMI, 1); 
-    for j =1:num_BMI
-        y_j = n_plot(:,j);
-        n_cell{j} = [y_j zeros(size(y_j))]; 
-        t_cell{j} = (1:length(y_j))*time_scale;
-    end    
-    [h, offset_vec] = plot_E_activity_mult_trace(t_cell, n_cell, E_id, E_color)
-    title('pretrain dff'); 
-    xlabel('time (min)');     
-    vline(stim_time); 
-    set(gcf, 'Units', 'Normalized', 'OuterPosition', [0, 0.04, 1, 0.96]);
-    export_fig(h, fullfile(plot_dir, [plot_name '.eps'])); 
-    export_fig(h, fullfile(plot_dir, [plot_name '.png']));       
-    
-    %5) dff zoom
-    time_zoom = 5; 
-    num_samples = 5*30*60;
-    stim_zoom = stim_time(stim_time<=time_zoom);    
-    
-    plot_name = ['pretrain' num2str(i) '_dff_stim_zoom' num2str(time_zoom)]; 
-    n_plot = pretrain_est(i).dff.';
-    n_cell = cell(num_BMI, 1); 
-    t_cell = cell(num_BMI, 1); 
-    for j =1:num_BMI
-        y_j = n_plot(1:num_samples,j);
-        n_cell{j} = [y_j zeros(size(y_j))]; 
-        t_cell{j} = (1:length(y_j))*time_scale;
-    end    
-    [h, offset_vec] = plot_E_activity_mult_trace(t_cell, n_cell, E_id, E_color)
-    title('pretrain dff'); 
-    xlabel('time (min)');     
-    vline(stim_zoom); 
-    set(gcf, 'Units', 'Normalized', 'OuterPosition', [0, 0.04, 1, 0.96]);
-    export_fig(h, fullfile(plot_dir, [plot_name '.eps'])); 
-    export_fig(h, fullfile(plot_dir, [plot_name '.png']));  
-    
-    %6) dff zscore
-    plot_name = ['pretrain' num2str(i) '_dffz_stim']; 
-    n_plot = zscore(pretrain_est(i).dff.');
-    n_cell = cell(num_BMI, 1); 
-    t_cell = cell(num_BMI, 1); 
-    for j =1:num_BMI
-        y_j = n_plot(:,j);
-        n_cell{j} = [y_j zeros(size(y_j))]; 
-        t_cell{j} = (1:length(y_j))*time_scale;
-    end    
-    [h, offset_vec] = plot_E_activity_mult_trace(t_cell, n_cell, E_id, E_color)
-    title('pretrain dff zscore'); 
-    xlabel('time (min)');     
-    vline(stim_time); 
-    set(gcf, 'Units', 'Normalized', 'OuterPosition', [0, 0.04, 1, 0.96]);
-    export_fig(h, fullfile(plot_dir, [plot_name '.eps'])); 
-    export_fig(h, fullfile(plot_dir, [plot_name '.png']));     
-    
-    %7) dff zscore zoom    
-    time_zoom = 5; 
-    num_samples = 5*30*60;
-    stim_zoom = stim_time(stim_time<=time_zoom);     
-    
-    plot_name = ['pretrain' num2str(i) '_dffz_stim_zoom' num2str(time_zoom)]; 
-    n_plot = zscore(pretrain_est(i).dff.');
-    n_cell = cell(num_BMI, 1); 
-    t_cell = cell(num_BMI, 1); 
-    for j =1:num_BMI
-        y_j = n_plot(1:num_samples,j);
-        n_cell{j} = [y_j zeros(size(y_j))]; 
-        t_cell{j} = (1:length(y_j))*time_scale;
-    end    
-    [h, offset_vec] = plot_E_activity_mult_trace(t_cell, n_cell, E_id, E_color)
-    title('pretrain dff zscore zoom'); 
-    xlabel('time (min)');     
-    vline(stim_zoom); 
-    set(gcf, 'Units', 'Normalized', 'OuterPosition', [0, 0.04, 1, 0.96]);
-    export_fig(h, fullfile(plot_dir, [plot_name '.eps'])); 
-    export_fig(h, fullfile(plot_dir, [plot_name '.png']));        
-end
-
-%%
-%Plot baseline and target hit: 
-
-%%
-
+%1) 
+%base_event, pretrain_event, bmi_event
+%
 
 %%
 %1) Let's see baseline, pretrain, bmi distributions of E2-E1
