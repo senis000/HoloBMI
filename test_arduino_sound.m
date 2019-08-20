@@ -9,15 +9,19 @@ disp('arduino complete')
 %%
 tic
 pin = 'D3'
-frequency = 1000
+frequency = 6000
 duration = 0.3
 playTone(a,pin,frequency,duration)
 toc
+
+%%
+
+clear a
 %%
 duration = 0.1
 %%
 % freq_sweep = 1000:500:16000;
-freq_sweep = 6000:500:19000;
+freq_sweep = 5000:500:19000;
 
 freq_sweep = 6000:500:19000;
 

@@ -6,7 +6,7 @@ hIm = findobj(gca, 'Type', 'image');
 mou = catchMouseDrag(hIm, @DragStartFun, @CursorMotionFun, @DropFun);
 
 function hP = DragStartFun(hIm, hAx, currentPoint)
-    hP = patch(NaN, NaN, 'b', 'FaceColor', 'none', 'EdgeColor', [1 1 1]*0, 'LineWidth', 2, 'Tag', 'ROIPatch');
+    hP = patch(NaN, NaN, 'b', 'FaceColor', 'none', 'EdgeColor', [1 1 1]*0, 'LineWidth', 1, 'Tag', 'ROIPatch');
 end
     
 function CursorMotionFun(hIm, hAx, mouseTrace, hP)

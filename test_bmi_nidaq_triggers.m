@@ -23,6 +23,12 @@ outputSingleScan(s,ni_reward); pause(0.001); outputSingleScan(s,ni_out);
 %the sound is delivered...
 
 %%
+while(true)
+    outputSingleScan(s,ni_reward); pause(0.001); outputSingleScan(s,ni_out);
+    pause(0.5)
+end
+
+%%
 %--------------------------------------------------------------------------
 %Do: 
 %Check in Prairie View Voltage Recording

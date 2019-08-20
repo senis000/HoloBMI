@@ -1,7 +1,7 @@
 function [x,y]=findCenter(temp, mat, toplot)
 %{
 Function to find the center of mass for the detected cells
-temp is the template
+temp is the template / roi_mask 
 mat is the raw image
 toplot is a flag to allow plotting
 %}
@@ -11,28 +11,32 @@ toplot is a flag to allow plotting
     elseif nargin < 3
         toplot = true;
     end
-
-    y=zeros(max(max(temp)),1);
-    x=zeros(max(max(temp)),1);
-    for i=1:max(max(temp))
-        y(i)= round(mean(find(temp'==i))/size(temp,2));
-        x(i)= round(mean(find(temp==i))/size(temp,1));
+    cell_ind = unique(temp(:));
+    cell_ind(cell_ind==0) = []; 
+    num_cells = length(cell_ind);
+    y=zeros(num_cells,1);
+    x=zeros(num_cells,1);
+    for i=1:num_cells
+        y(i)= round(mean(find(temp'==cell_ind(i)))/size(temp,2));
+        x(i)= round(mean(find(temp ==cell_ind(i)))/size(temp,1));
     end
 
     if toplot
         figure ,
         if ~isempty(y)
             subplot (1,2,1)
-            imagesc(temp), colormap bone, caxis([0 1]), hold on, scatter (x,fliplr(y), 'filled', 'r'), hold off
+            imagesc(temp), colormap bone, caxis([0 1]), hold on, scatter (x,y, 'filled', 'r'), hold off, axis square            
+%             imagesc(temp), colormap bone, caxis([0 1]), hold on, scatter (x,fliplr(y), 'filled', 'r'), hold off, axis square
 
             subplot (1,2,2)
-            imagesc(mat), colormap bone, caxis([-0 nanmean(nanmean(mat))*4]), hold on, scatter (x,fliplr(y), 'filled', 'r'), hold off
+            imagesc(mat), colormap bone, caxis([-0 nanmean(nanmean(mat(:)))*4]), hold on, scatter (x,y, 'filled', 'r'), hold off, axis square            
+%             imagesc(mat), colormap bone, caxis([-0 nanmean(nanmean(mat))*4]), hold on, scatter (x,fliplr(y), 'filled', 'r'), hold off, axis square
         else
             subplot (1,2,1)
             imagesc(temp), colormap bone, caxis([0 1])
 
             subplot (1,2,2)
-            imagesc(mat), colormap bone, caxis([-0 nanmean(nanmean(mat))*4])
+            imagesc(mat), colormap bone, caxis([-0 nanmean(nanmean(mat(:)))*4])
 
         end
     end

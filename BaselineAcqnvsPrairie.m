@@ -1,4 +1,4 @@
-function BaselineAcqnvsPrairie(folder, animal, day, AComp, holoMask, onacid_bool, frameRate)
+function [mat_path, dat_path] = BaselineAcqnvsPrairie(folder, animal, day, AComp, roi_mask, task_settings)
  %{
 Function to acquire the baseline in a prairie scope
 animal -> animal for the experiment
@@ -7,21 +7,27 @@ neuronMask -> matrix for spatial filters with px*py*unit
 
 %}
 
-    if nargin<6
-        onacid_bool = false;
-    end
-
     %%
     %**********************************************************
     %****************  PARAMETERS  ****************************
     %**********************************************************
-    expectedLengthExperiment = 27000 * 3%ceil(3*60*frameRate); % in frames
+    frameRate = task_settings.frameRate; 
+    dilation_factor = 3; 
+    expectedLengthExperiment = ...
+        ceil(task_settings.calibration.baseline_len*task_settings.frameRate*dilation_factor); 
+    %in frames
     
+    %save directory: 
     savePath = fullfile(folder, animal,  day);
     if ~exist(savePath, 'dir')
         mkdir(savePath);
     end
-
+    %memmap file: 
+    dat_path = fullfile(savePath, ['BaselineOnline' datestr(datetime('now'), 'yymmddTHHMMSS') '.dat']);
+    %mat file: 
+    mat_path = ...
+        fullfile(savePath, ['BaselineOnline' datestr(datetime('now'), 'yymmddTHHMMSS') '.mat']);
+    
     %prairie view parameters
     chanIdx = 2; % green channel
 
@@ -33,7 +39,7 @@ neuronMask -> matrix for spatial filters with px*py*unit
     global pl baseActivity
     
     %% Cleaning 
-    finishup = onCleanup(@() cleanMeUp(savePath));  %in case of ctrl-c it will lunch cleanmeup
+    finishup = onCleanup(@() cleanMeUp(mat_path));  %in case of ctrl-c it will launch cleanmeup
 
     %% Prepare the nidaq
     s = daq.createSession('ni');
@@ -69,33 +75,32 @@ neuronMask -> matrix for spatial filters with px*py*unit
     lastFrame = zeros(px, py); % to compare with new incoming frames
 
     % set the environment for the Time Series in PrairieView
-    loadCommand = "-tsl " + fullfile('F:/VivekNuria/utils', "Tseries_VivekNuria_15.env");
+    loadCommand = "-tsl " + task_settings.baseline_env
     pl.SendScriptCommands(loadCommand);  
     
     %% Load Baseline variables
 
     % create smaller versions of the spatial filter
-    if onacid_bool
+    if task_settings.onacid_bool
         numberNeurons = size(AComp,2);
         strcMask = obtainStrcMask(AComp, px, py);
     else
-        numberNeurons = max(max(holoMask));
-        strcMask = obtainStrcMaskfromMask(holoMask);
+        numberNeurons = max(max(roi_mask));
+        strcMask = obtainStrcMaskfromMask(roi_mask);
     end
     
     
     %% Create the file where to store the baseline
     baseActivity = zeros(numberNeurons, expectedLengthExperiment) + nan;
-    fileName = fullfile(savePath, 'baselineActivity.dat');
     % creates a file with the correct shape
-    fileID = fopen(fileName,'w');
-    if ~exist(fileName, 'file')
+    fileID = fopen(dat_path,'w');
+    if ~exist(dat_path, 'file')
         disp('file does not exist. Memmap will not be saved')
     end
     fwrite(fileID, baseActivity,'double');
     fclose(fileID);
     % maps the file into memory
-    m = memmapfile(fileName, 'Format',{'double',size(baseActivity),'baseAct'}, 'repeat', 1); 
+    m = memmapfile(dat_path, 'Format',{'double',size(baseActivity),'baseAct'}, 'repeat', 1); 
     m.Writable = true;
     %%
     %************************************************************************
@@ -103,9 +108,11 @@ neuronMask -> matrix for spatial filters with px*py*unit
     %************************************************************************
     frame = 1; % initialize frames
     %start the time_series scan
+    %May need to put a break point on the next line, sometimes prairie
+    %won't start scanning on it:
     pl.SendScriptCommands("-ts");  
-    disp('sent -ts'); 
-    pause(2);  %empirically discovered time for the prairie to start gears
+    disp('sent -ts, pausing'); 
+    pause(5);  %empirically discovered time for the prairie to start gears
     counterSame = 0;
     disp('Starting baseline acquisition')
     while counterSame < 500
@@ -133,16 +140,27 @@ neuronMask -> matrix for spatial filters with px*py*unit
 
 end
 
-function cleanMeUp(savePath)
+function cleanMeUp(mat_path)
     global pl baseActivity
     disp('cleaning')
     % evalin('base','save baseVars.mat'); %do we want to save workspace?
     % saving the global variables
-    save(fullfile(savePath, "BaselineOnline" + datestr(datetime('now'), 'yymmddTHHMMSS') + ".mat"), 'baseActivity')
+    save(mat_path, 'baseActivity')
     if pl.Connected()
         pl.Disconnect();
     end
 end
+
+% function cleanMeUp(savePath)
+%     global pl baseActivity
+%     disp('cleaning')
+%     % evalin('base','save baseVars.mat'); %do we want to save workspace?
+%     % saving the global variables
+%     save(fullfile(savePath, "BaselineOnline" + datestr(datetime('now'), 'yymmddTHHMMSS') + ".mat"), 'baseActivity')
+%     if pl.Connected()
+%         pl.Disconnect();
+%     end
+% end
 
 
 

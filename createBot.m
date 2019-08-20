@@ -9,7 +9,7 @@ posx,posy  -> position of the neurons
     height = 8; %half the height
     
     %% print the first part of the text
-    fileID = fopen(fullfile(savePath, 'Bot.cfg'),'wt');
+    fileID = fopen(savePath,'wt');
     fprintf(fileID,'<?xml version="1.0" encoding="utf-8"?>\n');
     fprintf(fileID,'<PVBOTs>\n');
     

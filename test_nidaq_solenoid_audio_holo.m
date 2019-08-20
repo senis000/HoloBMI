@@ -14,6 +14,17 @@ disp('reward delivery!')
 outputSingleScan(s,ni_reward); pause(0.001); outputSingleScan(s,ni_out);
 
 %%
+for i = 1:100
+    disp(num2str(i))
+    outputSingleScan(s,ni_reward); pause(0.001); outputSingleScan(s,ni_out);    
+    pause(0.15);
+end
+%Want 5ul = .005g of liquid per pulse
+%100*.005 = .5g
+
+2.178
+
+%%
 disp('test frame trig!')
 outputSingleScan(s,ni_getimage); pause(0.001); outputSingleScan(s,ni_out);
 
