@@ -10,7 +10,7 @@ for plot_i=1:length(plot_images)
     im_plot = plot_images(plot_i).im; 
     im_title = plot_images(plot_i).label; 
     h = figure('Position', [screen_size(3)/2 1 screen_size(3)/2 screen_size(4)]);
-    imagesc(im_plot); axis square; colormap bone; title(im_title);    
+    imagesc(im_plot); axis square; colormap('gray'); title(im_title);    
 end
 
 %Ask for user input on idxs to delete
@@ -83,10 +83,13 @@ function del_data = delete_rois(roi_data, del_idxs)
         %3b) r
         %3c) g
     
-    del_data = roi_data; 
-    del_data.roi_bin_cell(del_idxs)  = []; 
-    del_data.chan_logical(:,del_idxs)    = []; 
-    del_data.num_rois = length(del_data.roi_bin_cell); 
+    del_data = roi_data;
+    del_data.roi_bin_cell(del_idxs)         = []; 
+    del_data.chan_logical(:,del_idxs)       = []; 
+    del_data.x(del_idxs)                    = []; 
+    del_data.y(del_idxs)                    = []; 
+    del_data.r(del_idxs)                    = []; 
+    del_data.num_rois                       = length(del_data.roi_bin_cell); 
     
     %Rebuild: 
     %im_roi, im_roi_rg, roi_mask, roi_mask_bin
@@ -97,7 +100,7 @@ function del_data = delete_rois(roi_data, del_idxs)
     
     for i = 1:del_data.num_rois
         roi_i = del_data.roi_bin_cell{i};
-        size(roi_i)
+%         size(roi_i)
         roi_idxs = find(roi_i);
         
         del_data.roi_mask(roi_idxs)        = i;

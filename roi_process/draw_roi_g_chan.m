@@ -1,4 +1,4 @@
-function [roi_data] = draw_roi_2chan(plot_images, roi_data)
+function [roi_data] = draw_roi_g_chan(plot_images, roi_data)
 %TODO: DATA FOR TWO CHANNELS:
 %Allows user to draw shapes onto an image
 %roi_data fields: 
@@ -103,6 +103,11 @@ while(~roi_complete_bool)
             roi_data.num_rois = roi_data.num_rois+1; 
             %This ROI mask binary:
             roi_data.roi_bin_cell{roi_data.num_rois}      = rois;
+            %Update x,y,r: 
+            [roi_ctr] = roi_bin_cell2center_radius({rois});
+            roi_data.x = [roi_data.x roi_ctr.x];
+            roi_data.y = [roi_data.y roi_ctr.y];
+            roi_data.r = [roi_data.r roi_ctr.r]; 
             
             roi_idxs = find(rois);
             roi_data.roi_mask(roi_idxs)        = roi_data.num_rois;
@@ -112,23 +117,12 @@ while(~roi_complete_bool)
             %Update channel information: 
             chan_selected_bool = 0;
             while(~chan_selected_bool)
-                title('Color?  r/g:'); 
-                in = lower(input('Color? r/g: ', 's'));
-                if(strcmp(in, 'r'))
-                    chan_vec = [1; 0]; 
-                    roi_data.chan_logical = [roi_data.chan_logical chan_vec]; 
-                    r_mod = squeeze(roi_data.im_roi_rg(:,:,1));
-                    r_mod(roi_idxs) = 1;
-                    roi_data.im_roi_rg(:,:,1) = r_mod;                  
-                    chan_selected_bool = 1; 
-                elseif(strcmp(in, 'g'))
-                    chan_vec = [0; 1]; 
-                    roi_data.chan_logical = [roi_data.chan_logical chan_vec];                     
-                    g_mod = squeeze(roi_data.im_roi_rg(:,:,2));
-                    g_mod(roi_idxs) = 1;
-                    roi_data.im_roi_rg(:,:,2) = g_mod;
-                    chan_selected_bool = 1; 
-                end
+                chan_vec = [0; 1]; 
+                roi_data.chan_logical = [roi_data.chan_logical chan_vec];                     
+                g_mod = squeeze(roi_data.im_roi_rg(:,:,2));
+                g_mod(roi_idxs) = 1;
+                roi_data.im_roi_rg(:,:,2) = g_mod;
+                chan_selected_bool = 1; 
             end            
         end
     else

@@ -1,5 +1,6 @@
 function [roi_data] = roi_data2chan(roi_data)
-num_chan = 2; 
+% num_chan = 2; 
+num_chan = length(roi_data.chan);
 for chan_i = 1:num_chan
     roi_data.chan(chan_i).idxs      = find(roi_data.chan_logical(chan_i,:)); 
     roi_data.chan(chan_i).num_rois  = length(roi_data.chan(chan_i).idxs); 

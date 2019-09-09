@@ -43,12 +43,19 @@ duration of stim
 %put objective
 %--------------------------------------------------------------------------
 
+addpath(genpath('G:\VivekNuria\Code\dex')); 
+addpath(genpath('G:\VivekNuria\Code\Kenichi')); 
+addpath('G:\VivekNuria\Code\HoloBMI\baseline_target_calibration'); 
+addpath('G:\VivekNuria\Code\HoloBMI\matlab_exchange'); 
+
 % define Animal, day and folder where to save
 animal = 'NY35'; day = 'D1_test';
-folder = 'E:\vivek\190822';
+folder = 'E:\vivek\190906';
 
 % define posz TODO can we get this from prairie?
 posz = 0;
+px = 512; 
+py = 512;
 frameRate = 29.989;
 
 onacid_bool = false;
@@ -79,8 +86,52 @@ end
 %--[holoMaskRedGreen, ~,~] = addcell (Img, holoMask,9);
 %--[holoMaskRedGreen, ~,~] = addcell (Img, holoMaskRedGreen,9);
 %--------------------------------------------------------------------------
+green_path    = fullfile('E:\vivek\190822\NY35\D1_test', 'green_mean.tif'); 
+exist(green_path)
+green_im = imread(green_path); 
+holoMask = zeros(size(green_im)); 
 
+%%
+red_im = green_im; 
 
+%Initialize data structure to save overlays:
+rg_struct = struct(...
+    'im', [], ...
+    'rg_minmax', [], ...
+    'rg_minmax_perc', [], ...
+    'r_min', [], ...
+    'r_min_perc', [], ...
+    'g_min', [], ...
+    'g_min_perc', [], ...
+    'r_max', [], ...
+    'r_max_perc', [], ...
+    'g_max', [], ...
+    'g_max_perc', []...
+    ); 
+num_overlays = 0;
+
+[rg_struct, num_overlays] = pick_rg_overlay(red_im, green_im, rg_struct, num_overlays)
+
+%%
+% [mask, ~] = imFindCellsTM (Img, 9, 0.5, 15, 1, 0); %parameters depend on each image
+% %displays the mask to see if we agree
+% findCenter (mask, Img);
+% holoMask = bwlabel(holoMask);
+
+%%
+im_bg = rg_struct(end).im; 
+plot_images = struct('im', [], 'label', ''); 
+plot_images(1).im = Img; 
+plot_images(1).label = 'Green Std';
+
+roi_init_bool = 1; %Initializes an empty roi_data structure
+if(roi_init_bool)
+    roi_data = init_roi_data(im_bg); 
+end
+disp('Adding ROIs to image!'); 
+[roi_data] = draw_roi_2chan(plot_images, roi_data);
+
+%%
 [holoMask, Im, Img, px, py] = makeMasksPrairie(0.7);
 % it returns the mask that will be used for the holostim
 
@@ -115,10 +166,16 @@ holoMask = deleteMask(Im, holoMask, 7);  % third var is the number of areas to d
 
 %%
 %See the holoMask:
+holoMask = roi_data.roi_mask; 
 h = figure;
 imshow(holoMask)
 
 %% Save the holoMask
+%ToDo: update with roi data:
+Im = red_im; 
+Img = green_im; 
+holoMaskRedGreen = holoMask;
+
 [x,y] = findCenter(holoMask);
 [xrg,yrg] = findCenter(holoMaskRedGreen);
 red = [x';y'];
@@ -130,19 +187,29 @@ Img = double(Img);
 filetosave = fullfile(savePath, 'red.mat');
 save(filetosave,'Im', 'Img', 'red', 'redGreen', 'holoMask', 'holoMaskRedGreen')
 
+%%
+filetosave = fullfile(savePath, 'red.mat');
+load(filetosave)
+h = figure;
+imshow(holoMask)
+
 %% prepare HOLO STIM of individual neurons
 %Create gpl, xml files for individual points
 
 % load environment
+env_path = fullfile('G:\VivekNuria\utils', "Tseries_VivekNuria_holo_all.env")
+exist(env_path)
+
+%%
 pl = actxserver('PrairieLink.Application');
 pl.Connect();
-loadCommand = "-tsl " + fullfile('F:/VivekNuria/utils', "Tseries_VivekNuria_holo_all.env");
+loadCommand = "-tsl " + env_path;
 pl.SendScriptCommands(loadCommand);
 pl.Disconnect()
 
+%%
 % creates holos with the mask of the red components as input
 createGplFile(savePath, holoMask, posz, px)
-
 
 %define where to save the file
 savePrairieFilesHolo(savePath)
@@ -153,7 +220,7 @@ num_neurons_stim = max(max(holoMask));
 numberNeurons=max(max(holoMask));
 power = 0.2; 
 duration = 30; 
-numSpirals = 20; 
+numSpirals = 10; 
 
 powerVector = power*ones(1,numberNeurons); %*0.1; %0.2 = 50, 0.1=25
 durationVector = duration*ones(1,numberNeurons);
@@ -163,6 +230,7 @@ iterations = 1;
 reps = 1;
 
 createXmlFile(savePath, numberNeurons, reps, initDelay, durationVector, powerVector, spiralVector, iterations, '', false)
+% createXmlFile(savePath, numberNeurons, reps, power, varName, flagRandom)
 
 % Update prairie view repetitions based on num neurons to stim
 num_stim_neurons = max(max(holoMask));
