@@ -1,6 +1,7 @@
 function savePrairieFilesHolo(savePath)
 % function to set the paths for saving the holo_stim_test
-
+%savePathPrairie = savePath + im
+%savePathPrairieHolo = savePath + im + holostim
     pl = actxserver('PrairieLink.Application');
     pl.Connect();
     pause(2);

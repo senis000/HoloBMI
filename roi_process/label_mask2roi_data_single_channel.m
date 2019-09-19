@@ -3,7 +3,12 @@ function roi_data = label_mask2roi_data_single_channel(im_bg, label_mask, chan_d
 %im_bg: num_row X num_col X 1
 %TODO: generalize to multi channel
 %INPUT:
-%label_mask - matrix of size(im_bg), with ROI's going from 1 to num_roi's
+%label_mask - comes from automatic ROI detection. 
+%EG:
+%    [mask_intermediate, ~] = imFindCellsTM (im_bg, template_diam, thres, cell_diam, finemode, temmode);
+%     init_roi_mask = bwlabel(mask_intermediate);
+% matrix of size(im_bg), with ROI's going from 1 to num_roi's
+
 screen_size = get(0,'ScreenSize');
 num_chan = length(chan_data);
 
@@ -56,9 +61,11 @@ end
 %
 h = figure('Position', [screen_size(3)/2 1 screen_size(3)/2 screen_size(4)]);
 imagesc(roi_data.im_bg); axis square
+title('Background Image'); 
 %
 h = figure('Position', [screen_size(3)/2 1 screen_size(3)/2 screen_size(4)]);
 imagesc(roi_data.im_roi); axis square
+title(['Num ROI: ' num2str(roi_data.num_rois)]); 
 
 % roi_data.chan_logical   = ones(1, roi_data.num_rois); 
 % roi_data.chan = repmat(struct(...

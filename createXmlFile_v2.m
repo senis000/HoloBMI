@@ -1,4 +1,5 @@
-function createXmlFile(savePath, numberNeurons, reps, power, varName, flagRandom)
+function createXmlFile_v2(savePath, numberNeurons, reps, initDelay, durationVector, powerVector, spiralVector, iterations, varName, flagRandom)
+
 %{
 Function to create a xml file to be uploaded to the prairie view
 savePAth --> path where to save the .xml file
@@ -22,7 +23,7 @@ power 0.4 is a 100 in the gui
     IterDelay = 1000.00;
     UncagingLaser = "Monaco";
     UncagingLaserPower = power;
-    InitialDelay = 2000;
+    InitialDelay = initDelay;
     InterPointDelay =  0.12;
     Duration = 40;
     SpiralRevolutions = 20; 
@@ -49,7 +50,7 @@ power 0.4 is a 100 in the gui
     fprintf(fileID,'<PVSavedMarkPointSeriesElements Iterations="%d" IterationDelay="%.2f">\n', Iter, IterDelay);
     
     % print for each point
-    formatSpec1 = ['  <PVMarkPointElement Repetitions="%d" UncagingLaser="%s" UncagingLaserPower="%.3f"', ...
+    formatSpec1 = ['  <PVMarkPointElement Repetitions="%d" UncagingLaser="%s" UncagingLaserPower="%.1f"', ...
         ' TriggerFrequency="None" TriggerSelection="None" TriggerCount="1"', ...
         ' AsyncSyncFrequency="None" VoltageOutputCategoryName="None" VoltageRecCategoryName="None"', ...
         ' parameterSet="CurrentSettings">\n'];

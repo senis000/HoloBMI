@@ -42,74 +42,89 @@ duration of stim
 %adjust spout so mouse can lick
 %put objective
 %--------------------------------------------------------------------------
+
+%% DEFINE PATHS
+%--------------------------------------------------------------------------
+%DO:
+%Input 'folder', as directory to write to.
+%--------------------------------------------------------------------------
+
+%DEFINE PATH_DATA: 
+%
+%LOAD PATHS: 
+load_path = define_and_load_bmi_paths()
+
+%SAVE PATHS: 
 home_dir = 'G:\VivekNuria\Code\HoloBMI'
 cd(home_dir)
-addpath('G:\VivekNuria\Code\HoloBMI\roi_process'); 
-addpath('G:\VivekNuria\Code\HoloBMI\baseline_target_calibration'); 
-addpath('G:\VivekNuria\Code\HoloBMI\matlab_exchange'); 
-addpath(genpath('G:\VivekNuria\Code\dex')); 
-addpath(genpath('G:\VivekNuria\Code\Kenichi')); 
-
+env_dir = 'G:\VivekNuria\utils'
 
 % define Animal, day and folder where to save
 animal = 'NY35'; day = 'D1_test';
 folder = 'E:\vivek\190907';
-
-% define posz TODO can we get this from prairie?
-posz = 0;
-
-pl = actxserver('PrairieLink.Application');
-pl.Connect(); disp('Connecting to prairie');
-% Prairie variables
-px = pl.PixelsPerLine();
-py = pl.LinesPerFrame();
-
-micronsPerPixel.x = str2double(pl.GetState('micronsPerPixel', 'XAxis')); 
-micronsPerPixel.y = str2double(pl.GetState('micronsPerPixel', 'YAxis')); 
-
-pl.Disconnect();
-
-% px = 512; 
-% py = 512;
-frameRate = 29.989;
-
-chan_data = struct(...
-    'label', 'g', ...
-    'chan_idx', 2); %in RGB, G is 2nd
-
-onacid_bool = false;
-
 savePath = fullfile(folder, animal,  day);
 if ~exist(savePath, 'dir')
     mkdir(savePath);
 end
+path_data.load_path = load_path; 
+path_data.home_dir = home_dir; %home_dir
+path_data.env_dir = env_dir; %contains env files for prairie
+path_data.savePath = savePath; 
+path_data.im = fullfile(savePath, 'im'); %directory for imaging data
+if ~exist(path_data.im, 'dir')
+    mkdir(path_data.im);
+end
+
+%%
+% define posz TODO can we get this from prairie?
+posz = 0;
+pl = actxserver('PrairieLink.Application');
+pl.Connect(); disp('Connecting to prairie...');
+% Prairie variables
+px = pl.PixelsPerLine();
+py = pl.LinesPerFrame();
+micronsPerPixel.x = str2double(pl.GetState('micronsPerPixel', 'XAxis')); 
+micronsPerPixel.y = str2double(pl.GetState('micronsPerPixel', 'YAxis')); 
+pl.Disconnect();
+disp('Disconnected from prairie');
+% px = 512; 
+% py = 512;
+frameRate = 29.989;
+chan_data = struct(...
+    'label', 'g', ...
+    'chan_idx', 2); %in RGB, G is 2nd
+num_chan = length(chan_data); 
+onacid_bool = false;
 
 %%
 %--------------------------------------------------------------------------
 %DO:
+%SUMMARY: Take 1000 frame video, calc mean, stddev images, use for
+%selecting ROI's.
+%
 %find FOV
 %-disable the motor control!!!!
-%-set imaging FOV.  Use High Power to calc image for holoMask
-%-lower imaging power back to normal
-%TODO: have the script take a 1000 frame video and calculate the mean
+%take 1000 frame video
+%convert it using image-block ripping utility
+%load the converted tif into imagej
+% [mean, std dev image]: Image->Stack->ZProject, choose mean, choose std
+% dev.  
+% Put the path into:
+%   im_summary_path
+%TODO: make an acquisition for this.
 %--------------------------------------------------------------------------
-%% Select gcamp neurons
+%% Select + Scale summary image (to choose ROI)
 %--------------------------------------------------------------------------
 %DO:
-%-mainMasksPrairie, make holoMask
-%-deleteMask, delete bad neurons.  
-%-addcell, add neurons
-%-add green cells: 
-%--[holoMaskRedGreen, ~,~] = addcell (Img, holoMask,9);
-%--[holoMaskRedGreen, ~,~] = addcell (Img, holoMaskRedGreen,9);
+%-Input 'im_summary_path'
+%-Run 'scale_im_interactive' : choose percentiles for scaling image
 %--------------------------------------------------------------------------
-im_summary_path    = fullfile('G:\vivek\190822_NY35_good_stim_tests\NY35\D1_test', 'green_std.tif'); 
+im_summary_path    = ...
+    fullfile('G:\vivek\190822_NY35_good_stim_tests\NY35\D1_test', 'green_std.tif'); 
 % fullfile('E:\vivek\190822\NY35\D1_test', 'chan_mean.tif'); 
 exist(im_summary_path)
 im_summary = imread(im_summary_path); 
-% holoMask = zeros(size(green_im)); 
 
-%%
 %Scale the image, in order to help see ROIs better.
 %If no modification to original image needed, just run code, in 
 % 'scale_im_interactive' set min_perc = 0, max_perc = 100
@@ -125,33 +140,34 @@ num_im_sc = 0;
 [im_sc_struct, num_im_sc] = scale_im_interactive(im_summary, im_sc_struct, num_im_sc);
 
 %%
-%INITIALIZE ROI DATA
 %--------------------------------------------------------------------------
 %DO:
-%find FOV
-%-choose im_bg, set the index of 'im_sc_struct' 
+%-Input index to 'im_sc_struct'
 %--------------------------------------------------------------------------
-
-%CHOOSE IM_BG
+%Can input a different index to choose as the Image for choosing ROI
+%Defaults to the last image in 'im_sc_struct'
 im_bg = im_sc_struct(end).im; 
-
 h = figure;
 imagesc(im_bg); 
 axis square
 colormap('gray'); 
 title('selected background image for identifying ROI'); 
-
-%plot_images contains a set of images so user can tell if ROI selection is
+%PLOT_IMAGES data:
+%'plot_images' contains a set of images so user can tell if ROI selection is
 %appropriate.
 plot_images = struct('im', [], 'label', ''); 
 plot_images(1).im = im_summary; 
 plot_images(1).label = 'green std';
-
 plot_images(2).im = im_bg; 
 plot_images(2).label = 'scaled';
 
-%%
-%INIT ROI_DATA
+%% INIT ROI_DATA
+%--------------------------------------------------------------------------
+%DO:
+%-Confirm parameters for automatically identifying ROI
+%-Run this cell
+%-if template matching sucks, can set 'auto_init' to 0
+%--------------------------------------------------------------------------
 auto_init = 1;  %initializes roi_data using automatic cell detection: 
 %Parameters for auto cell detection:
 %Following were for zoom=2 on bruker:
@@ -167,71 +183,81 @@ if auto_init
     findCenter (init_roi_mask, im_bg);
     roi_data = label_mask2roi_data_single_channel(im_bg, init_roi_mask, chan_data);
 else
-    roi_data = init_roi_data(im_bg); 
+    roi_data = init_roi_data(im_bg, num_chan, chan_data);
 end
 
-%%
-%FOR TESTING: 
-roi_data = label_mask2roi_data_single_channel(im_bg, init_roi_mask, chan_data);
+% screen_size = get(0,'ScreenSize');
+% h = figure('Position', [screen_size(3)/2 1 screen_size(3)/2 screen_size(4)]);
+% % hold on;
+% imagesc(roi_data.im_roi); %colormap('gray');  
+% axis square;
+% title('ROI footprint overlay in blue'); 
+% % scatter(roi_data.x, roi_data.y, pi*roi_data.r.^2, 'r'); 
 
-%%
-%FOR TESTING:
-[roi_ctr] = roi_bin_cell2center_radius(roi_data.roi_bin_cell);
+%TESTS
+% roi_data = label_mask2roi_data_single_channel(im_bg, init_roi_mask, chan_data);
+% [roi_ctr] = roi_bin_cell2center_radius(roi_data.roi_bin_cell);
 
-%%
-
-
-%%
-%FOR TESTING: 
-screen_size = get(0,'ScreenSize');
-h = figure('Position', [screen_size(3)/2 1 screen_size(3)/2 screen_size(4)]);
-% hold on;
-imagesc(roi_data.im_roi); %colormap('gray');  
-axis square;
-% scatter(roi_data.x, roi_data.y, pi*roi_data.r.^2, 'r'); 
-
-%%
+%% Delete ROI if needed
+%--------------------------------------------------------------------------
+%DO:
+%-If auto detected ROI suck, delete ROI
+%--------------------------------------------------------------------------
 %Delete ROI if needed: 
 disp('Deleting ROIs from image!');
 [roi_data] = delete_roi_2chan(plot_images, roi_data);
 
-%%
+%% Add ROI if needed
+%--------------------------------------------------------------------------
+%DO:
+%-Run cell to manually draw additional ROI
+%--------------------------------------------------------------------------
 disp('Adding ROIs to image!'); 
 [roi_data] = draw_roi_g_chan(plot_images, roi_data);
 
-%%
-%See the holoMask:
-holoMask = roi_data.roi_mask; 
-h = figure;
-imshow(holoMask)
+%% SEE ROI if needed
+see_roi_data = 1; 
+if see_roi_data
+    %HoloMask
+    holoMask = roi_data.roi_mask; 
+    screen_size = get(0,'ScreenSize');
+    h = figure('Position', [screen_size(3)/2 1 screen_size(3)/2 screen_size(4)]);    
+    imagesc(holoMask)
+    axis square; 
+    title(['holoMask num roi: ' num2str(roi_data.num_rois)]); 
+    
+    %im_roi:
+    screen_size = get(0,'ScreenSize');
+    h = figure('Position', [screen_size(3)/2 1 screen_size(3)/2 screen_size(4)]);
+    % hold on;
+    imagesc(roi_data.im_roi); %colormap('gray');  
+    axis square;
+    title(['ROI footprint overlay in blue.  Num ROI: ' num2str(roi_data.num_rois)]);
+end
 
 %% Save roi_data
 %TODO: 
+%Change filename, 
+%Doublecheck data structures
 
-%%
-filetosave = fullfile(savePath, 'red.mat');
-load(filetosave)
-h = figure;
-imshow(holoMask)
+% filetosave = fullfile(savePath, 'red.mat');
+% load(filetosave)
+% h = figure;
+% imshow(holoMask)
 
-%% prepare HOLO STIM of individual neurons
-%Create gpl, xml files for individual points
-
+%% prepare SEQUENTIAL HOLO STIM of individual neurons
+%Load environment to prairie
 % load environment
-env_path = fullfile('G:\VivekNuria\utils', "Tseries_VivekNuria_holo_all.env")
+env_path = fullfile(env_dir, "Tseries_VivekNuria_holo_all.env")
 exist(env_path)
-
-
-%%
 pl = actxserver('PrairieLink.Application');
 pl.Connect();
 loadCommand = "-tsl " + env_path;
 pl.SendScriptCommands(loadCommand);
 pl.Disconnect()
 
-%%
-%Darcy recommends 5-10 spirals
-% size_um = roi_data.
+%% %Create gpl, xml files for individual points
+%DEFINE GPL FILE
 spiral_size_conversion = 1/49; 
 %a coefficient needed to accurately load desired ROI size
 %Empirically measured
@@ -240,43 +266,68 @@ init_markpoints = struct(...
     'Duration', 100, ...
     'SpiralSize', 0.7, ...
     'SpiralRevolutions', 10); 
+%Darcy recommends 5-10 spirals
+
 markpoints_data = repmat(init_markpoints, [roi_data.num_rois 1]); 
 for roi_i = 1:roi_data.num_rois
     spiral_size_um  = 2*roi_data.r(roi_i)*micronsPerPixel.x;
     spiral_size     = spiral_size_conversion*spiral_size_um;
     markpoints_data(roi_i).SpiralSize = spiral_size; %double(ceil(10*spiral_size)/10);
 end
-%%
 % creates holos
 createGplFile_v2(savePath, markpoints_data, roi_data.x, roi_data.y, posz, roi_data.r, px)
-
+%%
 %define where to save the file
 %TODO: fix this code
 savePrairieFilesHolo(savePath)
 
-% create the stim train for prairie
-num_neurons_stim = roi_data.num_rois; %max(max(holoMask));
+%% XML: Sequential Single Cell Stim
+xml_seq_path = fullfile(savePath, 'seq_single_stim.xml'); 
 
-numberNeurons=max(max(holoMask));
-power = 0.2; 
-duration = 30; 
-numSpirals = 10; 
 
-initDelay = 2000; %(ms) time bw stim delivery
-iterations = 1;
-reps = 1;
+numberNeurons= roi_data.num_rois; %max(max(holoMask));
+% numberNeurons=max(max(holoMask));
+num_sequences = 1;
+stim_sequence = repmat(1:numberNeurons, [1 num_sequences]); 
 
-powerVector = power*ones(1,numberNeurons); %*0.1; %0.2 = 50, 0.1=25
-durationVector = duration*ones(1,numberNeurons);
-spiralVector = numSpirals*ones(1,numberNeurons);
+power_conversion = 0.004; %0.2 -> 50, 0.4->100
 
-createXmlFile(savePath, numberNeurons, reps, initDelay, durationVector, powerVector, spiralVector, iterations, '', false)
-% createXmlFile(savePath, numberNeurons, reps, power, varName, flagRandom)
+seq_stim_params.UncagingLaser = "Monaco"; 
+seq_stim_params.AllPointsAtOnce = "False"
+seq_stim_params.Iter = 1; %how many times to go through and stim each cell.
+seq_stim_params.IterDelay = 1000; %Time (ms) between iterations
+%
+InitialDelay = 2000; %(ms) time bw stim delivery
+seq_stim_params.InitialDelayVector = InitialDelay*ones(1,numberNeurons);
+%
+power = 30;
+power_converted = power*power_conversion;
+seq_stim_params.PowerVector = power_converted*ones(1,numberNeurons);
+%2
+Duration = 30;
+seq_stim_params.DurationVector = Duration*ones(1,numberNeurons);
+% 
+numSpirals = 10;
+seq_stim_params.SpiralVector = numSpirals*ones(1,numberNeurons);
+%
+Repetitions = 1;
+seq_stim_params.RepetitionsVector = Repetitions*ones(1,numberNeurons);
+%Darcy sometimes recommends increasing 'Repetitions' and decreasing
+%Duration.  This changes the distribution of the spirals in time over the
+%cell.
+%
+InterPointDelay =  0.12;
+seq_stim_params.InterPointDelayVector = InterPointDelay*ones(1,numberNeurons); 
+
+% seq_stim_params
+createXmlFile_sequential_single_cell(xml_seq_path, seq_stim_params, stim_sequence);
 
 % Update prairie view repetitions based on num neurons to stim
-num_stim_neurons = max(max(holoMask));
-stim_time_per_neuron = 2.1;
-disp(num_stim_neurons*stim_time_per_neuron*frameRate)
+stim_time_per_neuron = InitialDelay/1000+InterPointDelay;
+num_reps_seq_stim = ceil(numberNeurons*stim_time_per_neuron*frameRate)
+len_seq_stim = numberNeurons*stim_time_per_neuron/60
+disp(['Number of Repetitions in PrairieView: ' num2str(num_reps_seq_stim)])
+disp(['Length (min): ' num2str(len_seq_stim)])
 
 %--------------------------------------------------------------------------
 %DO: 
@@ -284,6 +335,7 @@ disp(num_stim_neurons*stim_time_per_neuron*frameRate)
 % upload .xml in MarkPoints (Bot half)
 % update T-series repetitions in Prairie View with above number
 % Make sure Voltage Recording has all channels enabled
+% TODO: automate uploading
 %--------------------------------------------------------------------------
 
 %% Run HOLO STIM to check stim-able neurons
@@ -294,16 +346,20 @@ disp(num_stim_neurons*stim_time_per_neuron*frameRate)
 %--------------------------------------------------------------------------
 
 clear s
-HoloAcqnvsPrairie(folder, animal, day, holoMask)
-%WE WANT RED+GREEN FOR THIS
+expt_str = 'holostim_seq'; %previously 'holostim' 
+expectedLengthExperiment = ceil(num_reps_seq_stim*1.5); 
+HoloAcqnvsPrairie_v2(path_data, expt_str, mask, expectedLengthExperiment)
+% HoloAcqnvsPrairie(folder, animal, day, holoMask)
 %TODO: make this closed loop, and wait for the neurons to be inactive
 %before stimming them.
 
 %--------------------------------------------------------------------------
 %DO: 
 %Image-block ripping utility: Convert the holostim acqn
-%Load holoOnlineX.mat and voltage recording for plotting
-%(Import csv to matlab: output type is Numeric Matrix.  Name it "voltageRec")
+%Load holostim_seqX.mat
+%Load voltage recording for plotting.  
+%Use 'Import Data'
+%Import csv to matlab: output type is Numeric Matrix.  Name it "voltageRec")
 %--------------------------------------------------------------------------
 
 %% Obtain spatial components
@@ -329,7 +385,11 @@ HoloAcqnvsPrairie(folder, animal, day, holoMask)
 %%
 %(Image-Block Ripping Utility) Convert holostim file with bruker converter 
 % load the VoltageRec to check the results of holoStim
-plotHoloStimTimeLock(holoActivity, voltageRec, 40, 1000) % --> To plot the result of
+min_duration = 40; %stims can't occur within this number of samples of voltageRec
+plot_win = 1000; 
+plotHoloStimTimeLock(holoActivity, voltageRec, min_duration, plot_win) % --> To plot the result of
+%
+
 %ToDo: for plotting, do sliding window deltaf/f
 %ToDo: allow us to select the idxs of neurons to plot
 %ToDo: a version that just plots each individual neuron, we type 'Y' or 'N'
@@ -338,26 +398,14 @@ plotHoloStimTimeLock(holoActivity, voltageRec, 40, 1000) % --> To plot the resul
 %%
 %--------------------------------------------------------------------------
 %DO: 
-%Select E2_base, choose neurons which appear to be stimmed well.  You can
-%choose more than 4 neurons, and then re-run once you've chosen your 4.  
+%Select E2_base, choose neurons which appear to be stimmed well.  
+% I often choose more than 4 neurons, manually stim the neurons.
+% then re-run once you've chosen your 4.  
 %--------------------------------------------------------------------------
-% E2_base = sort([21    36   127   196], 'ascend')
-% E2_base = sort([58 67 56 27 87 89 24 51 8 95 72 91 16 115 98 75 153], 'ascend')
-
-% E2_base = ...
-%     [8 2 7 14 20 23 16];
-
-% E2_base = E2_base([3 5 7])
 
 E2_base = [7 20 16]; 
+% E2_base = sort([21    36   127   196], 'ascend')
  
-%  E2_base = [7     6    47    24]; 
-% E2_base = sort([7     3    47    57], 'ascend')
-% E2_base = [3 7 47 57]; 
-% E2_base = [98   158   161   164]; 
-% E2_base = sort([14 10 26 9], 'ascend')
-
-%TODO: update protocol to iterate from E2_candidates to E2_base
 
 %% Holo stim of Ensemble (only stim cells)
 %TODO create file + creating the xml etc
