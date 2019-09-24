@@ -2,6 +2,7 @@ function baseline2target_vBMI(n_f_file, Acomp_file, onacid_bool,  ...
     E1_base, E2_base, frames_per_reward_range, target_on_cov_bool, ...
     prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, save_dir, ...
     cursor_zscore_bool, f0_init_slide)
+%NOTE THIS GOT FUCKED UP IN A MERGE!!!  
 %4.18.19
 %inputs:
 %n_f_file - contains matrix, neural fluorescence from baseline file, num_samples X num_neurons_baseline 
@@ -270,7 +271,7 @@ if(f0_win_bool)
         f0 = zeros(num_samples-f0_win+1, num_neurons); 
         f0(1,:) = mean(f_raw(1:f0_win, :), 1);
         for i = 2:length(f0)
-            f0(i,:) = f0(i-1)*((f0_win-1)/f0_win) + f_raw((i+f0_win-1), :)/f0_win; 
+            f0(i,:) = f0(i-1,:)*((f0_win-1)/f0_win) + f_raw((i+f0_win-1), :)/f0_win; 
         end
         %Truncate data based on the f0_win:
         f_postf0 = f_raw(f0_win:end, :); 
