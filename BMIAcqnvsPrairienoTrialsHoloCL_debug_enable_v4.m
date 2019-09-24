@@ -357,8 +357,14 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v3(folder, animal, day, ...
                 
                 % calculate F0 baseline activity 
                 if data.frame == initFrameBase
-%                     baseval = single(ones(numberNeurons,1)).*unitVals;
-                    baseval = single(ones(numberNeurons,1)).*unitVals/baseFrames;
+                    if ~isnan(sum(baseValSeed))
+                        baseBuffer_full = 1; 
+                        baseval = baseValSeed; 
+                        disp('baseBuffer seeded!'); 
+                    else
+%                         baseval = single(ones(numberNeurons,1)).*unitVals;
+                        baseval = single(ones(numberNeurons,1)).*unitVals/baseFrames;                        
+                    end
                     %---
                 elseif ~baseBuffer_full && data.frame <= (initFrameBase+baseFrames)
 %                     baseval = base(baseval*(data.frame - 1) + signal)./data.frame;
@@ -368,7 +374,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v3(folder, animal, day, ...
                         baseBuffer_full = 1;
                         disp('baseBuffer FULL!'); 
                     end
-                elseif data.frame > (initFrameBase+baseFrames)
+                else %data.frame > (initFrameBase+baseFrames)
                     baseval = (baseval*(baseFrames - 1) + unitVals)./baseFrames;
                 end
                 data.baseVector(:,data.frame) = baseval;
