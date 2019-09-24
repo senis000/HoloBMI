@@ -1,11 +1,13 @@
-function createGplFile_v2(savePath, params, posx, posy, posz_scalar, r, num_pixels, varName)
+function [save_file] = createGplFile_v2(savePath, params, posx, posy, posz_scalar, r, num_pixels, zoom, varName)
 %{
 Function to create a gpl file to be uploaded to the prairie view
 savePath --> path where to save the .gpl file
-holoMask -> mask of the red neurons to be activated
+posx --> vector of x coordinates
+poxy --> vector of y coordinates
+r --> vector of roi size
 %}
 
-    if nargin <8
+    if nargin <9
         varName = '';
     end
 
@@ -14,8 +16,16 @@ holoMask -> mask of the red neurons to be activated
 %     Duration = 100;
 %     SpiralSize = 0.3;
 %     SpiralRevolutions = 5; 
-    
-    conversionValue = 5.06666666666667;
+    if(zoom == 1.5)
+        conversionValue = 5.06666666666667;
+    elseif(zoom == 2)
+        conversionValue = 3.8;
+        disp('zoom2');
+        %512 > 3.8
+        %0 -> -3.8
+    else
+        print('please calibrate the zoom')
+    end
     
     %% prepare file
     
@@ -24,7 +34,8 @@ holoMask -> mask of the red neurons to be activated
     posy = -2*conversionValue/num_pixels*posy + conversionValue;
     
     % print the first part of the text
-    fileID = fopen(fullfile(savePath, [varName, 'holoMask.gpl']),'wt');
+    save_file = fullfile(savePath, [varName, 'holoMask.gpl']);
+    fileID = fopen(save_file,'wt');
     fprintf(fileID,'<?xml version="1.0" encoding="utf-8"?>\n');
     fprintf(fileID,'<PVGalvoPointList>\n');
     

@@ -4,7 +4,7 @@ function [h, offset_vec] = plot_E_activity(t,n, E_id, E_color, offset)
 %E_id - vector of 1's and 2's, indicating membership to E1 or E2
 %E_color - cell array of colors for E1 and E2
 num_neurons = size(n,2); 
-if nargin < 4
+if nargin < 5
     offset = 0;
 end
 offset_vec = [offset]; 

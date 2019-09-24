@@ -30,12 +30,15 @@ duration of stim
 % Voltage Recording: All Inputs Active (check 6+7)
 %
 %Fill syringe with sucrose cuz of gravity
-%Run test_bmi_nidaq_triggers.m
-%   check triggers for 1) get image, 2) trig photostim, 3) trig reward
-%calibrate solenoid opening time
+%Run 'main_test_190923.m'
+%   check nidaq pulses are received in voltage_rec: 1) frame trigger, 2) trig photostim (monaco), 3)
+%   trig reward (bmi solenoid / arduino)
+%   calibrate solenoid opening time
 %
 %load pyctrl expt for the mouse
-%collect load cell sensor baseline data
+%In load cell: remove offset. Collect sensor baseline data
+% convert to csv
+% put the file in pre folder
 %
 %Put mouse in
 %put gel from headbar to ear
@@ -48,7 +51,9 @@ duration of stim
 %DO:
 %Input 'folder', as directory to write to.
 %--------------------------------------------------------------------------
-
+fb_bool = 0;
+[task_settings] = define_BMI_task_settings(fb_bool);
+cd G:\VivekNuria\Code\HoloBMI
 %DEFINE PATH_DATA: 
 %
 %LOAD PATHS: 
@@ -60,8 +65,8 @@ cd(home_dir)
 env_dir = 'G:\VivekNuria\utils'
 
 % define Animal, day and folder where to save
-animal = 'NY35'; day = 'D1_test';
-folder = 'E:\vivek\190907';
+animal = 'NY35'; day = 'D3_test';
+folder = 'E:\vivek\190924';
 savePath = fullfile(folder, animal,  day);
 if ~exist(savePath, 'dir')
     mkdir(savePath);
@@ -75,8 +80,11 @@ if ~exist(path_data.im, 'dir')
     mkdir(path_data.im);
 end
 
+connectivity_bool = 0;
+
 %%
-% define posz TODO can we get this from prairie?
+%DO: enter zoom (either 1.5 or 2)
+zoom = 2; 
 posz = 0;
 pl = actxserver('PrairieLink.Application');
 pl.Connect(); disp('Connecting to prairie...');
@@ -96,14 +104,22 @@ chan_data = struct(...
 num_chan = length(chan_data); 
 onacid_bool = false;
 
+
 %%
+%{
 %--------------------------------------------------------------------------
 %DO:
-%SUMMARY: Take 1000 frame video, calc mean, stddev images, use for
+%SUMMARY: 
+Option 1:
+Turn up imaging power, turn on average of 32 frames, save the image
+Option2:
+%Take 1000 frame video, calc mean, stddev images, use for
 %selecting ROI's.
 %
 %find FOV
 %-disable the motor control!!!!
+%Option 1 instructiosn: TODO
+%Option 2 instructions:
 %take 1000 frame video
 %convert it using image-block ripping utility
 %load the converted tif into imagej
@@ -111,19 +127,32 @@ onacid_bool = false;
 % dev.  
 % Put the path into:
 %   im_summary_path
+
 %TODO: make an acquisition for this.
 %--------------------------------------------------------------------------
+%}
 %% Select + Scale summary image (to choose ROI)
 %--------------------------------------------------------------------------
 %DO:
 %-Input 'im_summary_path'
 %-Run 'scale_im_interactive' : choose percentiles for scaling image
 %--------------------------------------------------------------------------
-im_summary_path    = ...
-    fullfile('G:\vivek\190822_NY35_good_stim_tests\NY35\D1_test', 'green_std.tif'); 
-% fullfile('E:\vivek\190822\NY35\D1_test', 'chan_mean.tif'); 
-exist(im_summary_path)
-im_summary = imread(im_summary_path); 
+
+option1_bool = 1; 
+if option1_bool
+    pl = actxserver('PrairieLink.Application');
+    pl.Connect();
+    disp('Connecting to prairie')
+    pause(2);    
+    im_summary = pl.GetImage_2(2, px, py);
+    pl.Disconnect();
+else
+    im_summary_path    = ...
+        fullfile('G:\vivek\190822_NY35_good_stim_tests\NY35\D1_test', 'green_std.tif'); 
+    % fullfile('E:\vivek\190822\NY35\D1_test', 'chan_mean.tif'); 
+    exist(im_summary_path)
+    im_summary = imread(im_summary_path); 
+end
 
 %Scale the image, in order to help see ROIs better.
 %If no modification to original image needed, just run code, in 
@@ -138,6 +167,9 @@ im_sc_struct = struct(...
     'max_perc', []); 
 num_im_sc = 0; 
 [im_sc_struct, num_im_sc] = scale_im_interactive(im_summary, im_sc_struct, num_im_sc);
+close all;
+
+%% REMEMBER TO TURN OFF PHASE OFFSET
 
 %%
 %--------------------------------------------------------------------------
@@ -157,7 +189,7 @@ title('selected background image for identifying ROI');
 %appropriate.
 plot_images = struct('im', [], 'label', ''); 
 plot_images(1).im = im_summary; 
-plot_images(1).label = 'green std';
+plot_images(1).label = 'green mean';
 plot_images(2).im = im_bg; 
 plot_images(2).label = 'scaled';
 
@@ -169,13 +201,18 @@ plot_images(2).label = 'scaled';
 %-if template matching sucks, can set 'auto_init' to 0
 %--------------------------------------------------------------------------
 auto_init = 1;  %initializes roi_data using automatic cell detection: 
-%Parameters for auto cell detection:
-%Following were for zoom=2 on bruker:
+% Parameters for auto cell detection:
+% Following were for zoom=2 on bruker soma:
 template_diam = 25; %diamter of difference of Gaussians in pixels
 thres = 0.5; %cell detection threshold as correlation coefficient
 cell_diam = 7; %CELL_DIAM is diameter used for dilation.
 finemode = 1; %imTemplateMatch will be used instead of normxcorr2. It will be slower.
-temmode = 0; 
+temmode = 0;  % 0 is for full circle (soma) 1 is for donuts (membrane)
+% template_diam = 13; %diamter of difference of Gaussians in pixels
+% thres = 0.5; %cell detection threshold as correlation coefficient
+% cell_diam = 11; %CELL_DIAM is diameter used for dilation.
+% finemode = 1; %imTemplateMatch will be used instead of normxcorr2. It will be slower.
+% temmode = 1;  % 0 is for full circle (soma) 1 is for donuts (membrane)
 if auto_init
     %FIND ROI AUTOMATICALLY 
     [mask_intermediate, ~] = imFindCellsTM (im_bg, template_diam, thres, cell_diam, finemode, temmode);
@@ -186,13 +223,23 @@ else
     roi_data = init_roi_data(im_bg, num_chan, chan_data);
 end
 
-% screen_size = get(0,'ScreenSize');
-% h = figure('Position', [screen_size(3)/2 1 screen_size(3)/2 screen_size(4)]);
-% % hold on;
-% imagesc(roi_data.im_roi); %colormap('gray');  
-% axis square;
-% title('ROI footprint overlay in blue'); 
-% % scatter(roi_data.x, roi_data.y, pi*roi_data.r.^2, 'r'); 
+%%
+%Visualize: 
+screen_size = get(0,'ScreenSize');
+h = figure('Position', [screen_size(3)/2 1 screen_size(3)/2 screen_size(4)]);
+hold on;
+imagesc(roi_data.im_roi); %colormap('gray');  
+axis square;
+title('ROI footprint overlay in blue'); 
+% scatter(roi_data.x, roi_data.y, pi*roi_data.r.^2, 'r'); 
+
+%
+h = figure('Position', [screen_size(3)/2 1 screen_size(3)/2 screen_size(4)]);
+% hold on;
+imagesc(roi_data.roi_mask); %colormap('gray');  
+axis square;
+title('ROI Mask'); 
+% scatter(roi_data.x, roi_data.y, pi*roi_data.r.^2, 'r'); 
 
 %TESTS
 % roi_data = label_mask2roi_data_single_channel(im_bg, init_roi_mask, chan_data);
@@ -203,9 +250,11 @@ end
 %DO:
 %-If auto detected ROI suck, delete ROI
 %--------------------------------------------------------------------------
+close all;
 %Delete ROI if needed: 
 disp('Deleting ROIs from image!');
 [roi_data] = delete_roi_2chan(plot_images, roi_data);
+close all;
 
 %% Add ROI if needed
 %--------------------------------------------------------------------------
@@ -236,9 +285,10 @@ if see_roi_data
 end
 
 %% Save roi_data
-%TODO: 
-%Change filename, 
-%Doublecheck data structures
+
+roi_data_file = fullfile(savePath, 'roi_data.mat'); 
+roi_mask = roi_data.roi_mask;
+save(roi_data_file, 'roi_mask', 'plot_images', 'im_sc_struct', 'roi_data'); 
 
 % filetosave = fullfile(savePath, 'red.mat');
 % load(filetosave)
@@ -275,7 +325,7 @@ for roi_i = 1:roi_data.num_rois
     markpoints_data(roi_i).SpiralSize = spiral_size; %double(ceil(10*spiral_size)/10);
 end
 % creates holos
-createGplFile_v2(savePath, markpoints_data, roi_data.x, roi_data.y, posz, roi_data.r, px)
+createGplFile_v2(savePath, markpoints_data, roi_data.x, roi_data.y, posz, roi_data.r, px, zoom)
 %%
 %define where to save the file
 %TODO: fix this code
@@ -283,7 +333,20 @@ savePrairieFilesHolo(savePath)
 
 %% XML: Sequential Single Cell Stim
 xml_seq_path = fullfile(savePath, 'seq_single_stim.xml'); 
+%{
+Params Summary:
+-num_sequences
 
+-Initial Delay: time (ms) between each stimulation
+-power
+-numSpirals
+-Repetitions
+-Iter - number of iterations
+-IterDelay - time beteen iterations
+-InterPointDelay
+-
+
+%}
 
 numberNeurons= roi_data.num_rois; %max(max(holoMask));
 % numberNeurons=max(max(holoMask));
@@ -300,7 +363,7 @@ seq_stim_params.IterDelay = 1000; %Time (ms) between iterations
 InitialDelay = 2000; %(ms) time bw stim delivery
 seq_stim_params.InitialDelayVector = InitialDelay*ones(1,numberNeurons);
 %
-power = 30;
+power = 40;
 power_converted = power*power_conversion;
 seq_stim_params.PowerVector = power_converted*ones(1,numberNeurons);
 %2
@@ -324,9 +387,12 @@ createXmlFile_sequential_single_cell(xml_seq_path, seq_stim_params, stim_sequenc
 
 % Update prairie view repetitions based on num neurons to stim
 stim_time_per_neuron = InitialDelay/1000+InterPointDelay;
-num_reps_seq_stim = ceil(numberNeurons*stim_time_per_neuron*frameRate)
-len_seq_stim = numberNeurons*stim_time_per_neuron/60
+num_reps_seq_stim = ceil(numberNeurons*stim_time_per_neuron*frameRate);
+len_seq_stim = numberNeurons*stim_time_per_neuron/60;
+
 disp(['Number of Repetitions in PrairieView: ' num2str(num_reps_seq_stim)])
+disp(['Stim time per neuron (s): ' num2str(stim_time_per_neuron)]); 
+disp(['Num neurons: ' num2str(numberNeurons)]); 
 disp(['Length (min): ' num2str(len_seq_stim)])
 
 %--------------------------------------------------------------------------
@@ -335,6 +401,7 @@ disp(['Length (min): ' num2str(len_seq_stim)])
 % upload .xml in MarkPoints (Bot half)
 % update T-series repetitions in Prairie View with above number
 % Make sure Voltage Recording has all channels enabled
+% Make sure you turn on the laser power and pmt's
 % TODO: automate uploading
 %--------------------------------------------------------------------------
 
@@ -347,210 +414,199 @@ disp(['Length (min): ' num2str(len_seq_stim)])
 
 clear s
 expt_str = 'holostim_seq'; %previously 'holostim' 
+mask = roi_data.roi_mask;
 expectedLengthExperiment = ceil(num_reps_seq_stim*1.5); 
 HoloAcqnvsPrairie_v2(path_data, expt_str, mask, expectedLengthExperiment)
 % HoloAcqnvsPrairie(folder, animal, day, holoMask)
 %TODO: make this closed loop, and wait for the neurons to be inactive
 %before stimming them.
-
+%{
 %--------------------------------------------------------------------------
 %DO: 
-%Image-block ripping utility: Convert the holostim acqn
+%Image-block ripping utility: Convert the holostim acqn (2 files)
 %Load holostim_seqX.mat
 %Load voltage recording for plotting.  
-%Use 'Import Data'
-%Import csv to matlab: output type is Numeric Matrix.  Name it "voltageRec")
+%   Use 'Import Data' in matlab
+%   Import csv to matlab: output type is Numeric Matrix.  
+%   Name it "voltageRec")
 %--------------------------------------------------------------------------
+%}
 
-%% Obtain spatial components
-% run OnAcidPrairieNotebook.ipynb 
-%TODO: We still have to confirm if onacid on holostim gives same spatial 
-%components as onacid on baseline
-
-%COPY THE FOLLOWING LINES INTO ANACONDA:
-
-% obtain A from onacid, compare to red neurons and bring it to matlab
-% in python run OnAcid_Prairie_holo and obtain_components
-% "obtain_componenents.py" -> 
-%         'AComp' : sparse matrix with the spatial filters,
-%         'CComp' : temporal filters
-%         'com' : position of neurons,
-%         'redlabel': labels with true on red neurons,
-%         'redIm' : image of the red channel,
-%         'baseIm' : background of the image given by caiman
-% it also saves figures for sanity check
-
-% while onacid does its magic 
 
 %%
 %(Image-Block Ripping Utility) Convert holostim file with bruker converter 
 % load the VoltageRec to check the results of holoStim
 min_duration = 40; %stims can't occur within this number of samples of voltageRec
 plot_win = 1000; 
-plotHoloStimTimeLock(holoActivity, voltageRec, min_duration, plot_win) % --> To plot the result of
+plotHoloStimTimeLock(holoActivity, voltageRec, min_duration, plot_win)
 %
 
-%ToDo: for plotting, do sliding window deltaf/f
 %ToDo: allow us to select the idxs of neurons to plot
+%ToDo: for plotting, do sliding window deltaf/
 %ToDo: a version that just plots each individual neuron, we type 'Y' or 'N'
 %to make it a candidate
 
 %%
 %--------------------------------------------------------------------------
 %DO: 
-%Select E2_base, choose neurons which appear to be stimmed well.  
-% I often choose more than 4 neurons, manually stim the neurons.
-% then re-run once you've chosen your 4.  
+%Summary: choose good candidate stim neurons based on single stim.
+%Enter E2_base
+% (I often choose more than 4 neurons, manually stim the neurons.
+% then re-run once you've chosen your 4.)
 %--------------------------------------------------------------------------
-
-E2_base = [7 20 16]; 
+E2_candidate = unique([21 34 41 48]); %unique also sorts
 % E2_base = sort([21    36   127   196], 'ascend')
- 
 
-%% Holo stim of Ensemble (only stim cells)
-%TODO create file + creating the xml etc
-% create the masks for holo stim the 4 ensemble neurons
-if onacid_bool
-    StimMask=deleteNonEnsemble (AComp, E2_base, px, py);
-else
-    StimMask = holoMaskRedGreen;
-    StimMask(~ismember(StimMask,E2_base))= 0;
-end
-figure;
-imshow(StimMask); 
+%% Holo stim of Ensemble neurons
+% Make GPL (points), BOT (measure activity)
+% -select markpoints_data for 
+sel_idxs = unique(E2_candidate); 
+[sel_roi_data, sel_idxs] = select_roi_data(roi_data, sel_idxs); 
+sel_markpoints_data = markpoints_data(sel_idxs); 
 
-%%
+%--
 %GPL for Stim Ensemble
+% savePrairieFiles(savePath, pl, 'GPL_candidates_')
+% creates holos
+gpl_candidates_path = createGplFile_v2(savePath, sel_markpoints_data, sel_roi_data.x, sel_roi_data.y, posz, sel_roi_data.r, px, zoom, 'GPL_candidates_');
+% createGplFile(savePath, StimMask, posz, px, 'ensemble_')
+%BOT
+bot_candidates_path = fullfile(savePath, 'BOT_candidates.cfg'); 
+createBot_v2(botPath, sel_roi_data.x, sel_roi_data.y, sel_roi_data.r)
+% createBot(savePath, x(E2_base),y(E2_base))
+%NOTE: 
+%If it can't be loaded in prairie because prairie says the file is in use
+%by another program, it can be because matlab didn't release the file.
+%Re run, saving to a different filenaem
+
+%XML:
+numberNeurons = length(E2_candidate);
+ens_default_params.numberNeurons = numberNeurons;
+%SPECIFY:
+ens_default_params.PowerVector          = 30*power_conversion*ones(1,numberNeurons);
+ens_default_params.DurationVector       = 20*ones(1,numberNeurons);
+ens_default_params.RepetitionsVector    = 1*ones(1,numberNeurons);
+ens_default_params.SpiralVector         = 10*ones(1,numberNeurons);
+%Don't Change:
+ens_default_params.InitialDelayVector   = 0*ones(1,numberNeurons);
+ens_default_params.UncagingLaser        = "Monaco"; 
+ens_default_params.AllPointsAtOnce      = "False"
+ens_default_params.Iter                 = 1; %how many times to go through and stim each cell.
+ens_default_params.IterDelay            = 0; %Time (ms) between iterations
+InterPointDelay                         =  0.12;
+ens_default_params.InterPointDelayVector = InterPointDelay*ones(1,numberNeurons);
+xml_candidates_path = fullfile(savePath, 'XML_candidates.xml'); 
+createXmlFile_basic(xml_candidates_path, ens_default_params);
+
 pl = actxserver('PrairieLink.Application');
 pl.Connect();
-savePrairieFiles(savePath, pl, '4neurons_together')
-createGplFile(savePath, StimMask, posz, px, 'ensemble_')
-
-createBot(savePath, x(E2_base),y(E2_base))
-
-loadCommand = "-tsl " + fullfile('F:/VivekNuria/utils', "Tseries_VivekNuria_holo_4.env");
+loadCommand = "-tsl " + fullfile(path_data.env_dir, "Tseries_VivekNuria_holo_4.env");
 pl.SendScriptCommands(loadCommand);
-
-%laser power 50, 4 iterations with
-% 10 sec bw
-% CHANGE NUMBER OF REPS IN T-SERIES:
-%4 iterations of 10 sec = 4*10*30
-num_iter = 4
-time_bw_iter = 10
-imaging_reps = num_iter*time_bw_iter*30
+pl.Disconnect();
 
 
 %--------------------------------------------------------------------------
 %DO: 
 %1) upload the GPL file
-%2) add points to Point series
+%2) upload XML file
 %3) Click BOT in Image Window, load BOT.cfg, only display ROI of interest
-%4) Run BOT, and adjust (duration, power) of each neuron's stim
+%4) Run BOT, and adjust (duration, power, repetitions) of each neuron's stim
+%5) Note down below the params for each neuron
 %--------------------------------------------------------------------------
-%TODO: a better automated way of determining the stim-able neurons
 
-%% Power/Duration for each candidate neuron
-%Scratch to save the power/duration parameters.
+%%
 %{
-like:
-
-1
-NO
-
-2
-NO
-
-3
-GOOD
-p=15
-d=20
-
-4
-NO
-
-5
-yes
-p=15
-d=20
-
-6
-NO
-
-7
-YES
-p=35
-d=20
-
+%DO:
+%In the GUI Mark Points Series, remove bad neurons 
+%   1) from Points/Groups, 
+    2) from Mark Point Series
+    3) from BOT 
+%For chosen neurons, Enter Stim Parameters you like in GUI.
+EXPORT each of the above, with the following names: 
 %}
-%%
-% E2_base = E2_base([2 11 9 15])
 
-% 3
-% GOOD
-% p=15
-% d=20
+%%
+%--------------------------------------------------------------------------
+%DO: 
+%1) Choose E2_base, if different than E2_candidate
+%2) Specify: PowerVector, DurationVector, RepetitionsVector, SpiralVector 
+% else:
+
+gpl_path = fullfile(savePath, 'GPL_ens.gpl');
+xml_path = fullfile(savePath, 'XML_ens.xml');
+bot_path = fullfile(savePath, 'BOT_ens.cfg');
+
+copyfile(gpl_candidates_path, gpl_path)
+copyfile(bot_candidates_path, bot_path)
+copyfile(xml_candidates_path, xml_path)
+
+
+%--------------------------------------------------------------------------
+% % E2_base = E2_base([2 11 9 15])
+E2_base = E2_candidate; 
+% %GPL (define the points):
+% sel_idxs = unique(E2_base); 
+% [stim_roi_data, stim_idxs] = select_roi_data(roi_data, sel_idxs);
+% stim_markpoints_data = markpoints_data(stim_idxs); 
+% StimMask = stim_roi_data.roi_mask;
+% numberNeurons = length(E2_base);
+% createGplFile_v2(savePath, stim_markpoints_data, ...
+%     stim_roi_data.x, stim_roi_data.y, posz, stim_roi_data.r, px, 'GPL_ens_')
 % 
-% 5
-% yes
-% p=15
-% d=20
+% %XML:
+% ens_stim_params.numberNeurons = length(E2_base);
+% %SPECIFY:
+% ens_stim_params.PowerVector = [15 35]*power_conversion;
+% ens_stim_params.DurationVector = [20 20];
+% ens_stim_params.RepetitionsVector = 1*[1 1];
+% ens_stim_params.SpiralVector = [10 10];
+% %Don't Change:
+% ens_stim_params.InitialDelayVector = 0*ones(1,numberNeurons);
+% ens_stim_params.UncagingLaser = "Monaco"; 
+% ens_stim_params.AllPointsAtOnce = "False"
+% ens_stim_params.Iter = 1; %how many times to go through and stim each cell.
+% ens_stim_params.IterDelay = 0; %Time (ms) between iterations
+% InterPointDelay =  0.12;
+% ens_stim_params.InterPointDelayVector = InterPointDelay*ones(1,numberNeurons);
+% xml_ens_path = fullfile(savePath, 'XML_ens.xml'); 
+% createXmlFile_basic(xml_ens_path, ens_stim_params);
 % 
-% 7
-% YES
-% p=35
-% d=20
+% %BOT
+% botPath = fullfile(savePath, 'BOT_ens.cfg'); 
+% createBot_v2(botPath, stim_roi_data.x, stim_roi_data.y, stim_roi_data.r)
 
-%%
-powerVector = .004*[15 15 35];
-durationVector = [20 20 20];
 
-%TODO: save the data of the single cell stim!!
-%%
-s = daq.createSession('ni');
-addDigitalChannel(s,'dev5','Port0/Line0:2','OutputOnly');
-ni_out = [0 0 0]; 
-outputSingleScan(s,ni_out);%set   
-ni_getimage = [1 0 0]; 
-ni_reward   = [0 1 0]; 
-ni_holo     = [0 0 1]; 
-%%
-outputSingleScan(s,ni_holo);
-pause(0.01); outputSingleScan(s,ni_out)
 
-%% Run 4 masks together (obsolete)
-% pl.SendScriptCommands("-ts"); 
-% pause(1);
 
-%%
-clear s
 %% Baseline acquisition
 %Note: loads the result of OnAcid / holoMask
 %Do this after we confirm we can stim some cells
-
 %--------------------------------------------------------------------------
 %DO: 
 %Remove Red Channel from Image Window 1 (prairie view).
 %0) (zero pmt+power) put water
 % check FOV didn't move
+close all
+imshow(im_bg)
 %1) start video
 %2) start load cells
-%3) start pyctrl
-%4) Run this cell
-%--------------------------------------------------------------------------
+%3) run and start pyctrl
+%4) Run following cell
 
+%% --------------------------------------------------------------------------
 if ~onacid_bool
     AComp = 0;
 else
-    load(fullfile(savePath,'redcomp.mat'));
+    load(roi_data_file);
 end
-
-
 % Baseline environment already removes MARKPOINTS and set the reps to 27000
-BaselineAcqnvsPrairie(folder, animal, day, AComp, holoMask, onacid_bool, frameRate);
+holoMask = roi_data.roi_mask;
+[base_mat_path, base_dat_path] = ...
+    BaselineAcqnvsPrairie(folder, animal, day, AComp, holoMask, task_settings);
 % BaselineAcqnvsPrairie(folder, animal, day, AComp, holoMaskRedGreen, onacid_bool, frameRate);
 % saves in [savePath, 'baselineActivity.dat'] the activity of all the
 % neurons of the mask (Acomp+red)
-% saves in baseOnline.mat the baseline activity
+% saves in baseOnline.mat the baseline activityim_bg
 
 %--------------------------------------------------------------------------
 %D0:
@@ -565,48 +621,34 @@ BaselineAcqnvsPrairie(folder, animal, day, AComp, holoMask, onacid_bool, frameRa
 %% Selection of neurons
 % plots neurons so we can select which ones we like the most 
 
-%--------------------------------------------------------------------------
-%D0:
-%1) Copy paste base_file name 'BaselineOnlineX.mat'
-%--------------------------------------------------------------------------
-
-% load by hand! --> (you can blame Vivek for this :P load(fullfile(savePath,'BaselineOnline.mat'));
+%Copy paste base_file path: 
+base_file = base_mat_path; 
+%Can manually enter a previous path: 
+% base_file = fullfile(savePath, 'BaselineOnline190526T113422.mat')
 if onacid_bool
     totalneurons = min(size(AComp,2), 20);
 else
-    totalneurons = max(max(holoMaskRedGreen));
+    totalneurons = max(max(roi_data.num_rois));
     CComp = [];
     YrA = []; 
 end
-
-% totalneurons = 40; 
-%Copy paste base_file path: 
-base_file = fullfile(savePath, 'BaselineOnline190526T113422.mat')
 load(base_file); 
+% totalneurons = 40; 
 % plotNeuronsBaseline(baseActivity, CComp, YrA, totalneurons)
 plotNeuronsBaseline(baseActivity, CComp, YrA, 30)
-
 %TODO:  
 %ToDo: for plotting, do sliding window deltaf/f
-%ToDo: allow us to select the idxs of neurons to plot (so we can show the
-%neurons we chose for the BMI)
-%ToDo: a version that just plots each individual neuron, we type 'Y' or 'N'
-%to make it a candidate
+%%
 %--------------------------------------------------------------------------
 %D0:
 %1) Choose E1_base
 %--------------------------------------------------------------------------
-%%
-%Manually enter:
-E1_base = sort([21 11 18], 'ascend') %JUST NEEDS GCAMP
-% E2_base = sort([35 37 13 4], 'ascend')
-
-% E1_base = sort([64 19 141 83], 'ascend') %JUST NEEDS GCAMP
-% E2_base = sort([7 12 34 48], 'ascend')
-
+%
+%Manually enter and confirm the BMI neurons:
+% E2_candidate = unique([9 15 23 29]); %unique also sorts
+E1_base = sort([8 19 35 38], 'ascend')
 ensembleNeurons = [E1_base, E2_base];
-plotNeuronsEnsemble(baseActivity, ensembleNeurons)
-
+plotNeuronsEnsemble(baseActivity, ensembleNeurons, [ones(1,length(E1_base)) 2*ones(1,length(E2_base))])
 % E2_candidates = [39 45 59 37 88 6 26 46 78 48 22 20 33]
 
 %%
@@ -617,13 +659,13 @@ plotNeuronsEnsemble(baseActivity, ensembleNeurons)
 % bmi_base = fullfile(savePath, ['base_' 'BMI_online190515T010526.mat']);
 % baseActivity = bmi_data.data.bmiAct(:, ~isnan(bmi_data.data.bmiAct(1,:))); 
 % save(bmi_base, 'baseActivity'); 
-% 
+%
 % E1_base = [1 2 3 4]; 
 % E2_base = [5 6 7 8]; 
 
 %% Calibrate Target with Baseline simulation
 %--------------------------------------------------------------------------
-%D0:
+%D0: (nothing)
 %1) Parameters: 
 % - sec_per_reward_range
 % - f0_win (F0: how many frames to average over)
@@ -635,19 +677,23 @@ plotNeuronsEnsemble(baseActivity, ensembleNeurons)
 
 exist(base_file)
 n_f_file = base_file;
-exist(n_f_file)
 ndata = load(n_f_file);
 num_base_samples = sum(~isnan(ndata.baseActivity(1,:))); 
 baseline_frameRate = num_base_samples/(15*60);
-A_file = fullfile(savePath, 'red.mat'); 
+A_file = roi_data_file; %fullfile(savePath, 'red.mat'); 
 exist(A_file)
 onacid_bool = 0
 
 sec_per_reward_range = [120 80]; 
 
-frames_per_reward_range = sec_per_reward_range*baseline_frameRate %[1 1.5]*60*frameRate
-%multiply by frames per minute to convert
-%to 
+
+frames_per_reward_range = sec_per_reward_range*baseline_frameRate;
+disp('Time (s) per reward range: '); 
+disp(sec_per_reward_range); 
+disp('Frames per reward range: '); 
+disp(frames_per_reward_range)
+% sec_per_reward_range must be higher than 80seconds (to keep the
+% occurence of artificial vs natural higher than 80% 
 
 target_on_cov_bool = 0
 prefix_win = 40
@@ -662,32 +708,13 @@ cursor_zscore_bool = 0;
 f0_init_slide = 0; 
 
 close all
-%  baseline2target_vBMI(n_f_file, A_file, onacid_bool,  ...
-%     [1 2 3 4], [5 6 7 8], frames_per_reward_range, target_on_cov_bool, ...
-%     prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, savePath, ...
-%     cursor_zscore_bool, f0_init_slide);
-
-
-
-%  baseline2target_vBMI(n_f_file, A_file, onacid_bool,  ...
-%     E1_base, E2_base, frames_per_reward_range, target_on_cov_bool, ...
-%     prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, savePath, ...
-%     cursor_zscore_bool, f0_init_slide);
-
-baseline2target_vE1strict(n_f_file, A_file, onacid_bool,  ...
+[target_info_path, target_cal_ALL_path] = baseline2target_vE1strict(n_f_file, A_file, onacid_bool,  ...
     E1_base, E2_base, frames_per_reward_range, target_on_cov_bool, ...
     prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, savePath, ...
-    cursor_zscore_bool, f0_init_slide)
+    cursor_zscore_bool, f0_init_slide);
 
 %ToDo: return the filename
-
-% baseline2target(n_f_file, A_file, onacid_bool, E1_base, E2_base, frames_per_reward_range, ...
-%     target_on_cov_bool, prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, savePath)
-
-
 % run the simulation of baseline
-% frames_per_reward_range must be higher than 80seconds (to keep the
-% occurence of artificial vs natural higher than 80% 
 %To Do: Show the percent correct of the pretrain period, based on the
 %calibration. 
 
@@ -695,61 +722,10 @@ baseline2target_vE1strict(n_f_file, A_file, onacid_bool,  ...
 %D0:
 %Note down: 
 % - T value
-% T: 0.54
-% num_valid_hits: 7
-% num_hits: 74
+% T: 0.11
+% num_valid_hits: 1
+% num_hits: 1
 %--------------------------------------------------------------------------
-
-% %%
-% t = load(fullfile(savePath, 'target_calibration_ALL_20190524T122903.mat'))
-
-if onacid_bool
-    StimMask=deleteNonEnsemble (AComp, E2_base, px, py);
-else
-    StimMask = holoMaskRedGreen;
-    StimMask(~ismember(StimMask,E2_base))= 0;
-end
-
-figure;
-imshow(StimMask); 
-
-pl = actxserver('PrairieLink.Application');
-pl.Connect();
-savePrairieFiles(savePath, pl, '4neurons_together')
-createGplFile(savePath, StimMask, posz, px, 'ensemble_')
-
-createBot(savePath, x(E2_base),y(E2_base))
-
-loadCommand = "-tsl " + fullfile('F:/VivekNuria/utils', "Tseries_VivekNuria_holo_4.env");
-pl.SendScriptCommands(loadCommand);
-
-%ACTIONS:
-% SELECT BOT on image window
-% upload the GPL file
-% upload the BOT file
-% Manually sselect neurons, make group, laser power 50, 4 iterations with
-% 10 sec bw
-% CHANGE NUMBER OF REPS IN T-SERIES
-%% Run 4 masks together
-
-pl.SendScriptCommands("-ts"); 
-pause(1);
-
-%%
-%Power/Duration Reminder: 
-%
-%idx1: i_base = 7
-% p15,d20
-%
-% id2: i_base= 12
-%p10, d10
-%
-% id3, i_base = 34
-%p10, d20
-
-% id3, i_base = 48
-%p10, d10
-%ToDo: automatically convert to power setting
 %% Holo stim checking connectivity
 % create randomize run for each individual neuron of the ensemple
 %--------------------------------------------------------------------------
@@ -757,49 +733,61 @@ pause(1);
 %-Manually enter: powerVector, durationVector
 %--------------------------------------------------------------------------
 
-%TODO: streamline the saving of stim parameters
 %% Runs connectivity
-%define where to save the file
-if pl.Connected()
+%--------------------------------------------------------------------------
+%D0:
+% choose 'num_conn' = number of times to stim each neuron
+%--------------------------------------------------------------------------
+if connectivity_bool
+    if pl.Connected()
+        pl.Disconnect();
+    end
+    savePrairieFiles(savePath, pl, 'connectivity_pre')
+    numberNeurons = stim_roi_data.num_rois;
+    num_conn = 10;
+    conn_sequence = repmat(1:numberNeurons, [1 num_conn]);  
+    %Randomize order:
+    conn_sequence = conn_sequence(randperm(length(conn_sequence))); 
+    
+    ens_conn_params = ens_stim_params; 
+    ens_conn_params.IterDelay = 3000; %Time (ms) between iterations    
+    InitialDelay = 3000; %(ms) time bw stim delivery
+    ens_conn_params.InitialDelayVector = InitialDelay*ones(1,numberNeurons);    
+    
+    % seq_stim_params
+    xml_conn_pre_path = fullfile(savePath, 'conn_pre.xml');     
+    createXmlFile_sequential_single_cell(xml_conn_pre_path, ens_conn_params, conn_sequence);
+
+    pl = actxserver('PrairieLink.Application');
+    pl.Connect();
+    loadCommand = "-tsl " + fullfile(path_data.env_dir, "Tseries_VivekNuria_holo_4.env");
+    pl.SendScriptCommands(loadCommand);
     pl.Disconnect();
 end
-savePrairieFiles(savePath, pl, 'connectivity_pre')
 
-%Manually Enter: 
-powerVector = .004*[15 15 35];
-durationVector = [20 20 20];
-
-% powerVector = .004*[15 50 15 15];
-% durationVector = [20 20 20 20];
-
-spiralVector = [20 20 20];
-% spiralVector = [20 20 20 20];
-initDelay = 5000;
-reps = 5;
-numberNeurons=3; %4
-iterations = 1;
-
-createXmlFile(savePath, numberNeurons, reps, initDelay, durationVector, powerVector, spiralVector,iterations, 'connectivity_pre_', true)
-% loadCommand = "-lmp " + fullfile(savepath, "connectivty_holostim.xml");
-
-loadCommand = "-tsl " + fullfile('F:/VivekNuria/utils', "Tseries_VivekNuria_holo_4.env");
-pl.SendScriptCommands(loadCommand);
 %% Run 
 %--------------------------------------------------------------------------
 %D0:
 %1) (zero PMT, power) Add water to imaging window if needed
 %2) Load xml
 %--------------------------------------------------------------------------
-clear s
-ConnectivityAcqnvsPrairie(folder, animal, day, StimMask, 'PRE')
-
+if connectivity_bool
+    clear s
+    StimMask = stim_roi_data.roi_mask; %reload just in case
+    expectedLengthExperiment = 3*7000;
+    ConnectivityAcqnvsPrairie_v2(savePath, expectedLengthExperiment, StimMask, 'PRE')
+end
 
 %% create stims for pretrain
-initDelay = 0;
-reps = 1;
-numberNeurons=3;%4
-iterations = 121;
-createXmlFile(savePath, numberNeurons, reps, initDelay, durationVector, powerVector, spiralVector, iterations, 'preTrain', false)
+%DO:
+%Change iterations to 121 in the mark point series
+
+% iterations              = 121;
+% pretrain_xml_path       = fullfile(path_data.savePath, 'XML_pretrain.xml'); 
+% pretrain_params         = ens_stim_params; 
+% pretrain_params.Iter    = iterations; 
+% createXmlFile_basic(pretrain_xml_path, pretrain_params);
+% createXmlFile(savePath, numberNeurons, reps, initDelay, durationVector, powerVector, spiralVector, iterations, 'preTrain', false)
 
 %%
 %Compute vectorHolo
@@ -825,19 +813,21 @@ if ~seedBase
 end
 % num imaging reps should be 75600 = 72000+3600
 
-%% create masks bot and image to check during experiment
-createBot(savePath, x(ensembleNeurons),y(ensembleNeurons))
-ensembleMask = holoMaskRedGreen;
-ensembleMask(~ismember(ensembleMask,ensembleNeurons))= 0;
-figure('Position', [600,300, 256, 256])
-imshow(ensembleMask);
+%% Load Ensemble BOT:  create masks bot and image to check during experiment
+%In BOT, load 'BOT_ens.cfg'
+%If it was some how modified:
+make_ens_bot = 0; 
+if make_ens_bot 
+    BOT_ens_path = fullfile(path_data.savePath, 'BOT_ens.cfg'); 
+    createBot_v2(BOT_ens_path, stim_roi_data.x,stim_roi_data.y,stim_roi_data.r);
+end
 
 %% run Pre-training
 
 %%
 %Seed BMI baseVal using Pretrain
 %--------------------------------------------------------------------------
-%D0:
+%D0: (only seeded)
 %1) seedBase - if we will seed the baseline, then set to 1. 
 % - if seedBase 0, we wait for baseline before starting stims
 %2) Copy-paste BMI_target_info filename (into 'pretrain_file')
@@ -859,14 +849,14 @@ end
 %--------------------------------------------------------------------------
 %D0:
 %
-%Copy Paste BMI_target_info_.mat
-%Change the Mark Points:
-%Clear Point Series, Load pretrain.xml
-%Make 121 iterations, put "Wait for Trigger" = First Reptition, Trigger
+%Confirm 'target_info_path'
+% %Change the Mark Points:
+% %Clear Point Series, Load pretrain.xml
+%Make 121 iterations, 
+
+% IMPORTANT put "Wait for Trigger" = First Reptition, Trigger
 %Trigger Selection: Start with External, PFI1
 %
-%Change BOT to take only the E2 ensemble.  This lets us see the E2 neurons
-%better, online.
 
 % Then, before running cell:
 %1) start video
@@ -875,7 +865,7 @@ end
 %--------------------------------------------------------------------------
 
 clear s
-baselineCalibrationFile = 'BMI_target_info_20190526T113926.mat';
+baselineCalibrationFile = target_info_path;
 vectorVTA = []
 %expt_str: 
 %     expt_cell = {...
@@ -889,15 +879,16 @@ debug_bool = 0;
 debug_input = []; 
 
 
-BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
+BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v3(folder, animal, day, ...
     expt_str, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
-    cursor_zscore_bool, debug_bool, debug_input, baseValSeed);
+    cursor_zscore_bool, debug_bool, debug_input);
+%TODO: add seed functionality
+%
+% BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v2(path_data.savePath, path_data.env_dir, ...
+%     expt_str, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
+%     cursor_zscore_bool, debug_bool, debug_input, baseValSeed);
 %saves filename with expt_str
 % BMIAcqnvsPrairienoTrialsHoloCL(folder, animal, day, expt_str, baselineCalibrationFile, baseline_frameRate, vectorHolo, vectorVTA, cursor_zscore_bool)
-
-
-%35 holo hits from pretrain 1
-%
 
 %--------------------------------------------------------------------------
 %D0:
@@ -910,7 +901,7 @@ BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
 %% run BMI
 %--------------------------------------------------------------------------
 %D0:
-%remember to set the markpoints to proper stim. Remove mark points!!!!
+% Remove mark points!!!!
 % Then, before running cell:
 %0) put water under objective
 %1) start video
@@ -919,16 +910,16 @@ BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
 %--------------------------------------------------------------------------
 
 
-%Get baseValSeed from HoloVTA_pretrain!  load file, take the last valid
-%baseVal
-% load_baseVal = 0; 
-% if load_baseVal
-% baselineCalibrationFile = 'BMI_target_info_20190523T220638.mat';
-pretrain_file = 'BMI_online190524T131817'
-load(fullfile(savePath, pretrain_file)); 
-pretrain_base = data.baseVector; 
-pretrain_base(:, isnan(pretrain_base(1,:))) = [];
-baseValSeed = pretrain_base(:,end)
+% %Get baseValSeed from HoloVTA_pretrain!  load file, take the last valid
+% %baseVal
+% % load_baseVal = 0; 
+% % if load_baseVal
+% % baselineCalibrationFile = 'BMI_target_info_20190523T220638.mat';
+% pretrain_file = 'BMI_online190524T131817'
+% load(fullfile(savePath, pretrain_file)); 
+% pretrain_base = data.baseVector; 
+% pretrain_base(:, isnan(pretrain_base(1,:))) = [];
+% baseValSeed = pretrain_base(:,end)
 
 %%
 % baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan
@@ -940,9 +931,15 @@ vectorVTA= [];
 debug_bool = 0; 
 debug_input = []; 
 cursor_zscore_bool = 0; 
-BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
+
+BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v3(folder, animal, day, ...
     'BMI', baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
-    cursor_zscore_bool, debug_bool, debug_input, baseValSeed)
+    cursor_zscore_bool, debug_bool, debug_input);
+
+
+% BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v2(path_data.savePath, path_data.env_dir, ...
+%     'BMI', baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
+%     cursor_zscore_bool, debug_bool, debug_input, baseValSeed)
 
 %Stop:
 %1) pyctrl
@@ -951,33 +948,40 @@ BMIAcqnvsPrairienoTrialsHoloCL_debug_enable(folder, animal, day, ...
 
 
 %% Holo stim checking connectivity
-if pl.Connected()
+if connectivity_bool
+    if pl.Connected()
+        pl.Disconnect();
+    end
+    savePrairieFiles(savePath, pl, 'connectivity_post')
+    numberNeurons = stim_roi_data.num_rois;
+    num_conn = 10;
+    conn_sequence = repmat(1:numberNeurons, [1 num_conn]);  
+    %Randomize order:
+    conn_sequence = conn_sequence(randperm(length(conn_sequence))); 
+    
+    ens_conn_params = ens_stim_params; 
+    ens_conn_params.IterDelay = 5000; %Time (ms) between iterations    
+    InitialDelay = 5000; %(ms) time bw stim delivery
+    ens_conn_params.InitialDelayVector = InitialDelay*ones(1,numberNeurons);    
+    
+    % seq_stim_params
+    xml_conn_post_path = fullfile(savePath, 'conn_post.xml');     
+    createXmlFile_sequential_single_cell(xml_conn_post_path, ens_conn_params, conn_sequence);
+
+    pl = actxserver('PrairieLink.Application');
+    pl.Connect();
+    loadCommand = "-tsl " + fullfile(path_data.env_dir, "Tseries_VivekNuria_holo_4.env");
+    pl.SendScriptCommands(loadCommand);
     pl.Disconnect();
 end
-% create randomize run for each individual neuron of the ensemple
-savePrairieFiles(savePath, pl, 'connectivity_post')
-% numberNeurons, reps, power, varName, flagRandom)
 
-powerVector = .004*[20 50 28 15];
-durationVector = [20 40 20 20];
-spiralVector = [20 20 20 20];
-initDelay = 5000;
-reps = 5;
-numberNeurons=4;
-iterations = 1;
-
-createXmlFile(savePath, numberNeurons, reps, initDelay, durationVector, powerVector, spiralVector, iterations, 'connectivity_post_', true)
-
-pl = actxserver('PrairieLink.Application');
-pl.Connect();
-loadCommand = "-tsl " + fullfile('F:/VivekNuria/utils', "Tseries_VivekNuria_holo_all.env");
-pl.SendScriptCommands(loadCommand);
-pl.Disconnect()
-
-%% run
-
-clear s
-ConnectivityAcqnvsPrairie(folder, animal, day, ensembleMask, 'POST')
+%%
+if connectivity_bool
+    clear s
+    StimMask = stim_roi_data.roi_mask; %reload just in case
+    expectedLengthExperiment = 3*7000;
+    ConnectivityAcqnvsPrairie_v2(savePath, expectedLengthExperiment, StimMask, 'POST')
+end
 %% end
 
 

@@ -1,4 +1,4 @@
-function baseline2target_vE1strict(n_f_file, Acomp_file, onacid_bool,  ...
+function [target_info_path, target_cal_ALL_path] = baseline2target_vE1strict(n_f_file, Acomp_file, onacid_bool,  ...
     E1_base, E2_base, frames_per_reward_range, target_on_cov_bool, ...
     prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, save_dir, ...
     cursor_zscore_bool, f0_init_slide)
@@ -175,12 +175,11 @@ if onacid_bool
     load(Acomp_file, 'AComp');
     AComp_BMI = AComp(:, E_base_sel);
     strcMask = obtainStrcMask(AComp_BMI, px, py);
-    save(fullfile(save_dir, 'redcompBMI.mat'), 'strcMask', 'E_base_sel', 'E_id');
+    save(fullfile(save_dir, 'strcMask.mat'), 'strcMask', 'E_base_sel', 'E_id');
 else
     AComp_BMI = []
-    load(Acomp_file, 'holoMaskRedGreen'); 
-    holoMask = holoMaskRedGreen;
-%     load(fullfile(savePath, 'red.mat'), 'holoMask'); 
+    load(Acomp_file, 'roi_mask'); 
+    holoMask = roi_mask; 
     EnsembleMask = zeros(size(holoMask));
     for indn = 1:length(E1_base)
         auxmask = holoMask;
@@ -195,7 +194,7 @@ else
         EnsembleMask = auxmask + EnsembleMask;
     end
     strcMask = obtainStrcMaskfromMask(EnsembleMask);
-    save(fullfile(save_dir, 'redcompBMI.mat'), 'strcMask', 'E_base_sel', 'E_id'); 
+    save(fullfile(save_dir, 'strcMask.mat'), 'strcMask', 'E_base_sel', 'E_id'); 
 end
 
 %%
@@ -261,7 +260,8 @@ end
 %--------------------------------------------------------------------------
 %raw data plot: 
 if(plot_raw_bool)
-    [h, offset_vec] = plot_E_activity(f_postf0, E_id, E_color);
+    t_plot = 1:length(f_postf0);
+    [h, offset_vec] = plot_E_activity(t_plot, f_postf0, E_id, E_color);
     
 %     h = figure;
 %     hold on; 
@@ -359,7 +359,8 @@ n_std = nanstd(dffc, 0, 1); %var(dffc, 0, 1).^(1/2); %1 x num_neurons
 dff_z = dffc./repmat(n_std, [size(dff,1) 1]); 
 if(plot_dff_bool)
     %plot dff
-    h = plot_E_activity(dff, E_id, E_color);
+    t_plot = 1:length(dff); 
+    h = plot_E_activity(t_plot, dff, E_id, E_color);
     xlabel('frame'); 
     ylabel('dff'); 
     title('dff'); 
@@ -367,7 +368,8 @@ if(plot_dff_bool)
     saveas(h, im_path);
     
     %plot dffz
-    h = plot_E_activity(dff_z, E_id, E_color);
+    t_plot = 1:length(dff_z); 
+    h = plot_E_activity(t_plot, dff_z, E_id, E_color);
     xlabel('frame'); 
     ylabel('dff_z');    
     title('zscore dff'); 
@@ -714,11 +716,13 @@ saveas(h, fullfile(plotPath, 'PSTH_locked_to_hit_baseline.png'));
 clear h
 date_str = datestr(datetime('now'), 'yyyymmddTHHMMSS'); 
 save_path = fullfile(save_dir, ['target_calibration_ALL_' date_str '.mat']); 
+target_cal_ALL_path = save_path; 
 save(save_path); 
 
 %2)Just the target parameters for running BMI
 target_info_file = ['BMI_target_info_' date_str '.mat'];
 save_path = fullfile(save_dir, target_info_file); 
+target_info_path = save_path; 
 %Change variable names for BMI code:
 T1 = T; %Change to T1, as this is what BMI expects
 save(save_path, 'AComp_BMI', 'n_mean', 'n_std', 'decoder', 'E_id', 'E1_sel_idxs', 'E2_sel_idxs', 'E1_base', 'E2_base', 'T1', 'E1_thresh', 'E1_coeff', 'E1_std', 'E2_subord_thresh', 'E2_coeff', 'E2_subord_mean', 'E2_subord_std'); 

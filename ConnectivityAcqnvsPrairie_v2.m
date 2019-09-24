@@ -1,9 +1,6 @@
-function HoloAcqnvsPrairie_v2(path_data, expt_str, mask, expectedLengthExperiment)
-%path_data.savePath
-%path_data.im
-% HoloAcqnvsPrairie_v2(folder, animal, day, mask)
+function ConnectivityAcqnvsPrairie_v2(savePath, expectedLengthExperiment, mask, varname)
  %{
-Function to acquire the holostim in a prairie scope
+Function to acquire the connecstivity in a prairie scope
 animal -> animal for the experiment
 day -> day for the experiment
 neuronMask -> matrix for spatial filters with px*py*unit 
@@ -14,7 +11,7 @@ neuronMask -> matrix for spatial filters with px*py*unit
     %**********************************************************
     %****************  PARAMETERS  ****************************
     %**********************************************************
-%     expectedLengthExperiment = 3*7000%ceil(3*60*frameRate); % in frames
+
     %prairie view parameters
     chanIdx = 2; % green channel
 %     envPath = fullfile(folder,"utils", "Tseries_VivekNuria_15.env")  ;%TODO set environment 
@@ -24,14 +21,10 @@ neuronMask -> matrix for spatial filters with px*py*unit
     %******************  INITIALIZE  ***********************************
     %*********************************************************************
 
-    global pl holoActivity
+    global pl connecActivity
     
     %% Cleaning 
-    finishup = onCleanup(@() cleanMeUp(path_data.savePath, expt_str));  %in case of ctrl-c it will lunch cleanmeup
-
-    %% Prepare the nidaq
-%     s = daq.createSession('ni');
-%     addDigitalChannel(s,'dev5','Port0/Line0:0','OutputOnly');
+    finishup = onCleanup(@() cleanMeUp(savePath, varname));  %in case of ctrl-c it will lunch cleanmeup
 
 
     %% Prepare for Prairie
@@ -49,16 +42,8 @@ neuronMask -> matrix for spatial filters with px*py*unit
     % Prairie commands
     pl.SendScriptCommands("-srd True 0");
     pl.SendScriptCommands("-lbs True 0");
-    
-    %define where to save the file
-%     savePathPrairie = path_data.im;
-    savePrairieFiles_v2(path_data, pl, expt_str)
 
     lastFrame = zeros(px, py); % to compare with new incoming frames
-
-    % set the environment for the Time Series in PrairieView
-%     tslCommand = "-tsl " + envPath;
-%     pl.SendScriptCommands(tslCommand);  
     
     %% Load variables
 
@@ -74,19 +59,18 @@ neuronMask -> matrix for spatial filters with px*py*unit
     outputSingleScan(s,ni_out);%set   
     ni_getimage = [1 0 0]; 
     
-    %% Create the file where to store the holostim
-    holoActivity = zeros(numberNeurons, expectedLengthExperiment) + nan;
-    fileName = fullfile(path_data.savePath, [expt_str '.dat']);
-%     fileName = fullfile(savePath, 'holoActivity.dat');
+    %% Create the file where to store the connecstim
+    connecActivity = zeros(numberNeurons, expectedLengthExperiment) + nan;
+    fileName = fullfile(savePath, varname + "_connecActivity.dat");
     % creates a file with the correct shape
     fileID = fopen(fileName,'w');
     if ~exist(fileName, 'file')
         disp('file does not exist. Memmap will not be saved')
     end
-    fwrite(fileID, holoActivity,'double');
+    fwrite(fileID, connecActivity,'double');
     fclose(fileID);
     % maps the file into memory
-    m = memmapfile(fileName, 'Format',{'double',size(holoActivity),'holoAct'}, 'repeat', 1); 
+    m = memmapfile(fileName, 'Format',{'double',size(connecActivity),'connecAct'}, 'repeat', 1); 
     m.Writable = true;
     %%
     %************************************************************************
@@ -95,9 +79,9 @@ neuronMask -> matrix for spatial filters with px*py*unit
     frame = 1; % initialize frames
     %start the time_series scan
     pl.SendScriptCommands("-ts"); 
-    pause(1);  %empirically discovered time for the prairie to start gears
+    pause(2);  %empirically discovered time for the prairie to start gears
 
-    disp('Starting holo acquisition')
+    disp('Starting connectivity acquisition')
     counterSame = 0;
     while counterSame < 500
         Im = pl.GetImage_2(chanIdx, px, py);
@@ -107,8 +91,8 @@ neuronMask -> matrix for spatial filters with px*py*unit
             outputSingleScan(s,ni_getimage); pause(0.001); outputSingleScan(s,[0 0 0]);
             
             unitVals = obtainRoi(Im, strcMask); % function to obtain Rois values 
-            holoActivity(:,frame) = unitVals;
-            m.Data.holoAct(:,frame) = unitVals; % 1 ms
+            connecActivity(:,frame) = unitVals;
+            m.Data.connecAct(:,frame) = unitVals; % 1 ms
             frame = frame + 1;
             counterSame = 0;
             t = toc;
@@ -124,13 +108,12 @@ neuronMask -> matrix for spatial filters with px*py*unit
 
 end
 
-function cleanMeUp(savePath, expt_str)
-    global pl holoActivity
+function cleanMeUp(savePath, varname)
+    global pl connecActivity
     disp('cleaning')
     % evalin('base','save baseVars.mat'); %do we want to save workspace?
     % saving the global variables
-%     save(fullfile(savePath, "holoOnline" + datestr(datetime('now'), 'yymmddTHHMMSS') + ".mat"), 'holoActivity')
-    save(fullfile(savePath, [expt_str datestr(datetime('now'), 'yymmddTHHMMSS') '.mat']), 'holoActivity')
+    save(fullfile(savePath, "connectivity_Online_" + varname + "_" + datestr(datetime('now'), 'yymmddTHHMMSS') + ".mat"), 'connecActivity')
     if pl.Connected()
         pl.Disconnect();
     end

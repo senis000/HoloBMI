@@ -4,7 +4,7 @@
 
 %%
 
-a = arduino('COM11', 'Mega2560')
+a = arduino('COM12', 'Mega2560')
 disp('arduino complete')
 %%
 tic

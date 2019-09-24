@@ -9,9 +9,11 @@ ni_getimage = [1 0 0];
 ni_reward   = [0 1 0]; 
 ni_holo     = [0 0 1]; 
 
-%Sound setup:
-xrnd = randn(1000,1);
-reward_sound = audioplayer(xrnd, 10000); %Play sound using: play()
+% %Sound setup:
+% xrnd = randn(1000,1);
+% reward_sound = audioplayer(xrnd, 10000); %Play sound using: play()
+%%
+
 %%
 %Sound + Reward
 disp('reward delivery!')

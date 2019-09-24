@@ -1,12 +1,12 @@
-function [task_settings] = define_BMI_task_settings()
+function [task_settings] = define_BMI_task_settings(fb_bool)
 
 task_settings.frameRate = 29.989; 
 %Imaging environment file for baseline acquisition
 task_settings.baseline_env = ...
-    fullfile('F:/VivekNuria/utils', "Tseries_VivekNuria_15.env");
+    fullfile('G:\VivekNuria\utils', "Tseries_VivekNuria_15.env");
 %Imaging environment file for BMI acquisition
 task_settings.bmi_env = ...
-    fullfile('F:/VivekNuria/utils', "Tseries_VivekNuria_40.env");
+    fullfile('G:\VivekNuria\utils', "Tseries_VivekNuria_40.env");
 %TODO: BaselineAcqnvsPrairie to take this as input
 %TODO: BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable to take this as input
 
@@ -51,7 +51,7 @@ task_settings.b2base_coeff              = 0.5;
 %a frame counts as back2base if cursor < b2base_coeff*T, where T is target cursor value.  
 
 %feedback: 
-task_settings.fb.fb_bool                = 1; 
+task_settings.fb.fb_bool                = fb_bool; 
 task_settings.fb.target_low_freq        = 1; 
 %Set the target cursor value to be the low frequency
 task_settings.fb.freq_min               = 6000; 
