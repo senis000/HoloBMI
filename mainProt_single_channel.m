@@ -65,8 +65,8 @@ cd(home_dir)
 env_dir = 'G:\VivekNuria\utils'
 
 % define Animal, day and folder where to save
-animal = 'NVI16'; day = 'D0';
-folder = 'E:\holobmi_E\190925';
+animal = 'NVI13'; day = 'D1';
+folder = 'E:\holobmi_E\190926';
 savePath = fullfile(folder, animal,  day);
 if ~exist(savePath, 'dir')
     mkdir(savePath);
@@ -452,7 +452,7 @@ plotHoloStimTimeLock(holoActivity, voltageRec, min_duration, plot_win)
 % (I often choose more than 4 neurons, manually stim the neurons.
 % then re-run once you've chosen your 4.)
 %--------------------------------------------------------------------------
-E2_candidate = unique([31 34 39 66]); %unique also sorts
+E2_candidate = unique([17 45 46 52]); %unique also sorts
 % E2_base = sort([21    36   127   196], 'ascend')
 
 %% Holo stim of Ensemble neurons
@@ -645,7 +645,7 @@ plotNeuronsBaseline(baseActivity, CComp, YrA, 30)
 %
 %Manually enter and confirm the BMI neurons:
 % E2_candidate = unique([9 15 23 29]); %unique also sorts
-E1_base = sort([ 28 53 36 26], 'ascend')
+E1_base = sort([ 5 34 8 35], 'ascend')
 ensembleNeurons = [E1_base, E2_base];
 plotNeuronsEnsemble(baseActivity, ensembleNeurons, [ones(1,length(E1_base)) 2*ones(1,length(E2_base))])
 select_roi_data(roi_data, [E2_base, unique(E1_base)]); 
@@ -722,9 +722,9 @@ close all
 %D0:
 %Note down: 
 % - T value
-% T: 0.11
-% num_valid_hits: 1
-% num_hits: 1
+% T: 0.40  
+% num_valid_hits: 10
+% num_hits: 33
 %--------------------------------------------------------------------------
 %% Holo stim checking connectivity
 % create randomize run for each individual neuron of the ensemple
@@ -859,6 +859,7 @@ end
 %
 
 % Then, before running cell:
+%0) zero pmt, laser.  put water under objective.
 %1) start video
 %2) start load cells
 %3) start pyctrl
@@ -958,6 +959,82 @@ BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
 %2) load cells
 %3) video
 
+%%
+%DO: random reward
+%Clear vectorVTA
+%Clear vectorHolo
+bmi_no_reward_bool = 1; 
+
+if bmi_no_reward_bool
+
+    close all
+    imshow(im_bg)
+     baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan
+    vectorHolo = [];
+    vectorVTA= []; 
+    debug_bool = 0; 
+    debug_input = []; 
+    cursor_zscore_bool = 0; 
+
+    %T1 = 0.27
+
+    expt_str = 'BMI_no_reward'; 
+    BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
+        expt_str, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
+        cursor_zscore_bool, debug_bool, debug_input, baseValSeed)
+    % BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v3(folder, animal, day, ...
+    %     'BMI', baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
+    %     cursor_zscore_bool, debug_bool, debug_input);
+
+
+    % BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v2(path_data.savePath, path_data.env_dir, ...
+    %     'BMI', baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
+    %     cursor_zscore_bool, debug_bool, debug_input, baseValSeed)
+
+    %Stop:
+    %1) pyctrl
+    %2) load cells
+    %3) video
+end
+
+%%
+%DO: random reward
+%Define vectorVTA
+%Clear vectorHolo
+random_reward_bool = 1; 
+
+if random_reward_bool
+
+    close all
+    imshow(im_bg)
+    %  baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan
+%     vectorHolo = [];
+%     vectorVTA= []; 
+    debug_bool = 0; 
+    debug_input = []; 
+    cursor_zscore_bool = 0; 
+
+    %T1 = 0.27
+
+    expt_str = 'VTA_pretrain'; 
+    BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
+        expt_str, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
+        cursor_zscore_bool, debug_bool, debug_input, baseValSeed)
+    % BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v3(folder, animal, day, ...
+    %     'BMI', baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
+    %     cursor_zscore_bool, debug_bool, debug_input);
+
+
+    % BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v2(path_data.savePath, path_data.env_dir, ...
+    %     'BMI', baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
+    %     cursor_zscore_bool, debug_bool, debug_input, baseValSeed)
+
+    %Stop:
+    %1) pyctrl
+    %2) load cells
+    %3) video
+end
+
 
 %% Holo stim checking connectivity
 if connectivity_bool
@@ -1010,6 +1087,10 @@ end
 %--------------------------------------------------------------------------
 %%
 %NOTES:
-%first test of E1 threshold being more strict
-%did pretrain and fucked the cells up, bmi was weak can analyze effect of
-%fucked up cells
+% Pretrain was BMI without reward.
+% Then he did random reward every 20-30 sec
+% he stopped drinking water at 15000 frames 
+% he drunk again (once and again, but not constantly when he received reward)
+% at 38000 frames aprox
+% at 59 he started licking for each reward, activity on the bhrain also
+% seemed more active and he stopped again

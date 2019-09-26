@@ -6,6 +6,13 @@ function [flagBMI, flagVTAtrig, flagHolosched, flagVTAsched] = ...
 %         for now actions are just to possibly send VTA stim
 %         in future, actions can include sending task feedback signal
 %     flagHolo = false; flagVTAsched = false;
+
+% elseif(strcmp(expt_str, 'BMI_no_reward'))
+%     flagBMI         = true;
+%     flagVTAtrig     = false;
+%     flagHolosched   = false;
+%     flagVTAsched    = false; 
+
 % 1) Pre-train (Holo -> VTA)
 % flagVTAtrig = true; flagHolosched = true;
 % This follows the vectorHolo schedule. If target pattern achieved,
@@ -55,7 +62,12 @@ if(strcmp(expt_str, 'BMI'))
     flagBMI         = true;
     flagVTAtrig     = true;
     flagHolosched   = false;
-    flagVTAsched    = false;     
+    flagVTAsched    = false;    
+elseif(strcmp(expt_str, 'BMI_no_reward'))
+    flagBMI         = true;
+    flagVTAtrig     = false;
+    flagHolosched   = false;
+    flagVTAsched    = false; 
 elseif(strcmp(expt_str, 'HoloVTA_pretrain'))
     flagBMI         = false;
     flagVTAtrig     = true;

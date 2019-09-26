@@ -465,7 +465,17 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
                                 data.selfHits(data.frame) = 1;
                                 m.Data.selfHits(data.frame) =1;
                                 disp('self hit')
-                                if(flagBMI && flagVTAtrig)
+                                if(flagBMI)
+                                    if(flagVTAtrig)
+                                        deliver_reward = 1;
+                                        data.selfTargetVTACounter = data.selfTargetVTACounter + 1;
+                                        data.selfVTA(data.frame) = 1;
+                                        m.Data.selfVTA(data.frame) = 1;
+                                        disp(['Trial: ', num2str(data.trialCounter), 'VTA STIMS: ', num2str(data.holoTargetVTACounter + data.selfTargetVTACounter)]);
+                                    else
+                                        disp(['Trial: ', num2str(data.trialCounter), 'Num Self Hits: ', num2str(data.selfTargetCounter)]); 
+                                    end
+                                    
                                     nonBufferUpdateCounter = shutterVTA;
                                     disp('Target Achieved! (self-target)')
                                     disp('RewardTone delivery!')
@@ -473,16 +483,8 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
 %                                         play(reward_sound);
                                     end                                        
                                     rewardDelayCounter = rewardDelayFrames; 
-                                    deliver_reward = 1;                                         
-%                                         outputSingleScan(s,ni_reward); pause(0.001); outputSingleScan(s,ni_out);                                    
-
-                                    data.selfTargetVTACounter = data.selfTargetVTACounter + 1;
-                                    data.selfVTA(data.frame) = 1;
-                                    m.Data.selfVTA(data.frame) = 1;                                    
-
                                     BufferUpdateCounter = relaxationFrames; 
                                     backtobaselineFlag = 1;
-                                    disp(['Trial: ', num2str(data.trialCounter), 'VTA STIMS: ', num2str(data.holoTargetVTACounter + data.selfTargetVTACounter)]);
                                     % update trials and hits vector
                                     trialFlag = 1;                                    
                                 else
