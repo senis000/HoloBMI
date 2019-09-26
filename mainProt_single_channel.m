@@ -65,8 +65,8 @@ cd(home_dir)
 env_dir = 'G:\VivekNuria\utils'
 
 % define Animal, day and folder where to save
-animal = 'NY35'; day = 'D3_test';
-folder = 'E:\vivek\190924';
+animal = 'NVI16'; day = 'D0';
+folder = 'E:\holobmi_E\190925';
 savePath = fullfile(folder, animal,  day);
 if ~exist(savePath, 'dir')
     mkdir(savePath);
@@ -170,6 +170,7 @@ num_im_sc = 0;
 close all;
 
 %% REMEMBER TO TURN OFF PHASE OFFSET
+%% TURN OFF THE MANIPULATOR 
 
 %%
 %--------------------------------------------------------------------------
@@ -203,16 +204,16 @@ plot_images(2).label = 'scaled';
 auto_init = 1;  %initializes roi_data using automatic cell detection: 
 % Parameters for auto cell detection:
 % Following were for zoom=2 on bruker soma:
-template_diam = 25; %diamter of difference of Gaussians in pixels
-thres = 0.5; %cell detection threshold as correlation coefficient
-cell_diam = 7; %CELL_DIAM is diameter used for dilation.
-finemode = 1; %imTemplateMatch will be used instead of normxcorr2. It will be slower.
-temmode = 0;  % 0 is for full circle (soma) 1 is for donuts (membrane)
-% template_diam = 13; %diamter of difference of Gaussians in pixels
+% template_diam = 25; %diamter of difference of Gaussians in pixels
 % thres = 0.5; %cell detection threshold as correlation coefficient
-% cell_diam = 11; %CELL_DIAM is diameter used for dilation.
+% cell_diam = 7; %CELL_DIAM is diameter used for dilation.
 % finemode = 1; %imTemplateMatch will be used instead of normxcorr2. It will be slower.
-% temmode = 1;  % 0 is for full circle (soma) 1 is for donuts (membrane)
+% temmode = 0;  % 0 is for full circle (soma) 1 is for donuts (membrane)
+template_diam = 15; %diamter of difference of Gaussians in pixels
+thres = 0.6; %cell detection threshold as correlation coefficient
+cell_diam = 13; %CELL_DIAM is diameter used for dilation.
+finemode = 1; %imTemplateMatch will be used instead of normxcorr2. It will be slower.
+temmode = 1;  % 0 is for full circle (soma) 1 is for donuts (membrane)
 if auto_init
     %FIND ROI AUTOMATICALLY 
     [mask_intermediate, ~] = imFindCellsTM (im_bg, template_diam, thres, cell_diam, finemode, temmode);
@@ -263,6 +264,7 @@ close all;
 %--------------------------------------------------------------------------
 disp('Adding ROIs to image!'); 
 [roi_data] = draw_roi_g_chan(plot_images, roi_data);
+close all
 
 %% SEE ROI if needed
 see_roi_data = 1; 
@@ -326,10 +328,6 @@ for roi_i = 1:roi_data.num_rois
 end
 % creates holos
 createGplFile_v2(savePath, markpoints_data, roi_data.x, roi_data.y, posz, roi_data.r, px, zoom)
-%%
-%define where to save the file
-%TODO: fix this code
-savePrairieFilesHolo(savePath)
 
 %% XML: Sequential Single Cell Stim
 xml_seq_path = fullfile(savePath, 'seq_single_stim.xml'); 
@@ -454,12 +452,13 @@ plotHoloStimTimeLock(holoActivity, voltageRec, min_duration, plot_win)
 % (I often choose more than 4 neurons, manually stim the neurons.
 % then re-run once you've chosen your 4.)
 %--------------------------------------------------------------------------
-E2_candidate = unique([21 34 41 48]); %unique also sorts
+E2_candidate = unique([31 34 39 66]); %unique also sorts
 % E2_base = sort([21    36   127   196], 'ascend')
 
 %% Holo stim of Ensemble neurons
 % Make GPL (points), BOT (measure activity)
 % -select markpoints_data for 
+close all
 sel_idxs = unique(E2_candidate); 
 [sel_roi_data, sel_idxs] = select_roi_data(roi_data, sel_idxs); 
 sel_markpoints_data = markpoints_data(sel_idxs); 
@@ -472,7 +471,7 @@ gpl_candidates_path = createGplFile_v2(savePath, sel_markpoints_data, sel_roi_da
 % createGplFile(savePath, StimMask, posz, px, 'ensemble_')
 %BOT
 bot_candidates_path = fullfile(savePath, 'BOT_candidates.cfg'); 
-createBot_v2(botPath, sel_roi_data.x, sel_roi_data.y, sel_roi_data.r)
+createBot_v2(bot_candidates_path, sel_roi_data.x, sel_roi_data.y, sel_roi_data.r)
 % createBot(savePath, x(E2_base),y(E2_base))
 %NOTE: 
 %If it can't be loaded in prairie because prairie says the file is in use
@@ -646,9 +645,10 @@ plotNeuronsBaseline(baseActivity, CComp, YrA, 30)
 %
 %Manually enter and confirm the BMI neurons:
 % E2_candidate = unique([9 15 23 29]); %unique also sorts
-E1_base = sort([8 19 35 38], 'ascend')
+E1_base = sort([ 28 53 36 26], 'ascend')
 ensembleNeurons = [E1_base, E2_base];
 plotNeuronsEnsemble(baseActivity, ensembleNeurons, [ones(1,length(E1_base)) 2*ones(1,length(E2_base))])
+select_roi_data(roi_data, [E2_base, unique(E1_base)]); 
 % E2_candidates = [39 45 59 37 88 6 26 46 78 48 22 20 33]
 
 %%
@@ -684,7 +684,7 @@ A_file = roi_data_file; %fullfile(savePath, 'red.mat');
 exist(A_file)
 onacid_bool = 0
 
-sec_per_reward_range = [120 80]; 
+sec_per_reward_range = [120 100]; 
 
 
 frames_per_reward_range = sec_per_reward_range*baseline_frameRate;
@@ -863,7 +863,8 @@ end
 %2) start load cells
 %3) start pyctrl
 %--------------------------------------------------------------------------
-
+close all
+imshow(im_bg)
 clear s
 baselineCalibrationFile = target_info_path;
 vectorVTA = []
@@ -878,10 +879,13 @@ expt_str = 'HoloVTA_pretrain';
 debug_bool = 0; 
 debug_input = []; 
 
-
-BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v3(folder, animal, day, ...
+BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
     expt_str, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
-    cursor_zscore_bool, debug_bool, debug_input);
+    cursor_zscore_bool, debug_bool, debug_input, baseValSeed)
+
+% BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v3(folder, animal, day, ...
+%     expt_str, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
+%     cursor_zscore_bool, debug_bool, debug_input);
 %TODO: add seed functionality
 %
 % BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v2(path_data.savePath, path_data.env_dir, ...
@@ -922,9 +926,11 @@ BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v3(folder, animal, day, ...
 % baseValSeed = pretrain_base(:,end)
 
 %%
-% baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan
-% baselineCalibrationFile = 'BMI_target_info_20190523T110626.mat';
+baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan
+baselineCalibrationFile = target_info_path;
 %%
+close all
+imshow(im_bg)
 %  baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan
 vectorHolo = [];
 vectorVTA= []; 
@@ -932,9 +938,15 @@ debug_bool = 0;
 debug_input = []; 
 cursor_zscore_bool = 0; 
 
-BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v3(folder, animal, day, ...
-    'BMI', baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
-    cursor_zscore_bool, debug_bool, debug_input);
+%T1 = 0.27
+
+expt_str = 'BMI'; 
+BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
+    expt_str, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
+    cursor_zscore_bool, debug_bool, debug_input, baseValSeed)
+% BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v3(folder, animal, day, ...
+%     'BMI', baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
+%     cursor_zscore_bool, debug_bool, debug_input);
 
 
 % BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v2(path_data.savePath, path_data.env_dir, ...

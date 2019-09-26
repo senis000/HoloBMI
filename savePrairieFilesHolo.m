@@ -9,10 +9,10 @@ function savePrairieFilesHolo(savePath)
     if ~exist(savePathPrairie, 'dir')
         mkdir(savePathPrairie);
     end
-%     savePathPrairieHolo = fullfile(savePathPrairie, "holostim"); 
-%     if ~exist(savePathPrairie, 'dir')
-%         mkdir(savePathPrairie);
-%     end
+    savePathPrairieHolo = fullfile(savePathPrairie, "holostim"); 
+    if ~exist(savePathPrairie, 'dir')
+        mkdir(savePathPrairie);
+    end
     saveCommand = "-p " + savePathPrairieHolo;
     pl.SendScriptCommands(saveCommand);
     saveFilePrairie = "-fn Tseries " + "testholo_" + datestr(datetime('now'), 'yymmddTHHMMSS');

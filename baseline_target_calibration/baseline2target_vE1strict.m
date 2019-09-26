@@ -574,8 +574,7 @@ saveas(h, fullfile(plotPath, 'target_val_over_calibration.png'));
 
 %%
 %Plot the hits on actual data: 
-disp('T'); 
-T
+
 %data: 2.29
 cursor_obs = n_analyze*decoder; 
 c1 = find(cursor_obs >= T); 
@@ -727,6 +726,8 @@ target_info_path = save_path;
 T1 = T; %Change to T1, as this is what BMI expects
 save(save_path, 'AComp_BMI', 'n_mean', 'n_std', 'decoder', 'E_id', 'E1_sel_idxs', 'E2_sel_idxs', 'E1_base', 'E2_base', 'T1', 'E1_thresh', 'E1_coeff', 'E1_std', 'E2_subord_thresh', 'E2_coeff', 'E2_subord_mean', 'E2_subord_std'); 
 
+disp('T'); 
+T
 %%
 %ToDo: re-add target_on_cov_bool functionality:
 % if(target_on_cov_bool)
