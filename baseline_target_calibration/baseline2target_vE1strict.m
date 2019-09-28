@@ -1,7 +1,7 @@
 function [target_info_path, target_cal_ALL_path] = baseline2target_vE1strict(n_f_file, Acomp_file, onacid_bool,  ...
     E1_base, E2_base, frames_per_reward_range, target_on_cov_bool, ...
     prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, save_dir, ...
-    cursor_zscore_bool, f0_init_slide)
+    cursor_zscore_bool, f0_init_slide, E2mE1_prctile)
 %4.18.19
 %inputs:
 %n_f_file - contains matrix, neural fluorescence from baseline file, num_samples X num_neurons_baseline 
@@ -458,14 +458,15 @@ E2_subord_mean_analyze          = (E2_sum_analyze - E2_dom_samples)/(num_E2-1);
 %neural activity
 
 %T:
+min_prctile         = E2mE1_prctile; %A good default is 98
 T0                  = max(cursor_obs);
 T                   = T0; 
-T_min               = 0;
+T_min               = prctile(cursor_obs, min_prctile);
 
 %E2:
 E2_coeff0           = 0.5;
 E2_coeff            = E2_coeff0; %multiplies the std dev, for figuring out E2_subord_thresh
-E2_coeff_min        = 0.3; 
+E2_coeff_min        = 0.05; 
 E2_subord_thresh    = E2_subord_mean+E2_subord_std*E2_coeff;
 
 %E1:
