@@ -1,25 +1,19 @@
-function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
+function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4_OLD_TEST(folder, animal, day, ...
     expt_str, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
     cursor_zscore_bool, debug_bool, debug_input, baseValSeed)
     %{
     Function to acquire the BMI in a prairie scope
     animal -> animal for the experiment
     day -> day for the experiment
-    
-    debug_input: num_neurons x num_samples
-
     baselineCalibrationFile:
     %AComp_BMI: matrix for spatial filters with px*py*unit
     %zscore parameters: n_mean, n_std
     %cursor parameters: decoder
     %target parameters: 'T1', 'E1_thresh', 'E2_subord_thresh'
-
     vectorHolo -> vector of scheduled holo stims
-
     Flag description:
     flagHolosched = false;
     flagVTAsched = false;
-
     flagBMI: 
         determines if code detects self-generated target neural
     patterns
@@ -29,20 +23,17 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
         determines if holo stim will be delivered on a schedule
     flagVTAsched: 
         determines if VTA stim is delivered on a schedule
-
     expt_str --> Experiments:
     0) BMI
     flagBMI = true; (use self-generated hits to perform actions 
         for now actions are just to possibly send VTA stim
         in future, actions can include sending task feedback signal
     flagHolo = false; flagVTAsched = false;
-
     1) Pre-train (Holo -> VTA)
     flagVTAtrig = true; flagHolosched = true;
     This follows the vectorHolo schedule. If target pattern achieved,
     deliver VTA.
     flagBMI = false; flagVTAsched = false;
-
     2) No pre-training
     flagBMI = true; flagVTAtrig = false; flagHolosched=false;
     set experiment length to be length of pretrain + BMI
@@ -53,25 +44,20 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
     Pre-train E3: 
     flagVTAtrig = true; flagHolosched = true; flagBMI = false;
     flagVTAsched = false;
-
     Test E2:
     flagVTAtrig = true; flagHolosched = false; flagBMI = true;
     flagVTAsched = false;
-
     4) Pre-train orthogonal
     baseline calibrate E2-E1 shuffle, and E2-E1
     Pretrain E2-E1 shuffle:
     flagVTAtrig = true; flagHolosched = true; flagBMI = false;
     flagVTAsched = false;
-
     Test E2-E1: 
     flagVTAtrig = true; flagHolosched = false; flagBMI = true;
     flagVTAsched = false;
-
     5) Pre-train holo only
     flagVTA = false; flagHolo = true; flagBMI = false; 
     flagVTAsched = false;
-
     6) Random VTA
     flagVTAsched = true; flagVTAtrig = false; 
     flagBMI = false; flagHolosched = false;
@@ -148,7 +134,6 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
     %% Load BMI parameters from baseline calibration
     bData = load(fullfile(baselineCalibrationFile));
     back2Base = 1/2*bData.T1; % cursor must be under this value to be able to hit again
-%     single_bool = 1; 
 
     %Fields: 
     %'n_mean', 'n_std',
@@ -167,12 +152,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
     numberNeurons = length(bData.E_id);
     
     %pre-allocating arrays
-    single_bool = 1; 
-    if single_bool
-        Fbuffer = single(nan(numberNeurons, movingAverageFrames));  %define a windows buffer
-    else
-        Fbuffer = double(nan(numberNeurons, movingAverageFrames));  %define a windows buffer
-    end
+    Fbuffer = single(nan(numberNeurons, movingAverageFrames));  %define a windows buffer
     data.cursor = double(nan(1,ceil(expectedLengthExperiment)));  %define a very long vector for cursor
     data.bmiAct = double(nan(numberNeurons, ceil(expectedLengthExperiment)));
 %     data.bmidffz = double(nan(numberNeurons, ceil(expectedLengthExperiment)));
@@ -187,22 +167,8 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
     data.timeVector = double(nan(1,ceil(expectedLengthExperiment)));  %define a very long vector for cursor
     data.vectorHolo = vectorHolo; 
     data.vectorHoloCL = vectorHolo;     
-    data.vectorVTA = vectorVTA;
+    data.vectorVTA = vectorVTA; 
     
-    if(debug_bool)
-        if single_bool
-            data.fsmooth    = single(nan(numberNeurons, ceil(expectedLengthExperiment)));
-        else
-            data.fsmooth    = double(nan(numberNeurons, ceil(expectedLengthExperiment)));
-        end
-        data.dff        = double(nan(numberNeurons, ceil(expectedLengthExperiment)));
-        data.c1_bool    = double(nan(1, ceil(expectedLengthExperiment)));
-        data.c2_val     = double(nan(1, ceil(expectedLengthExperiment)));
-        data.c2_bool    = double(nan(1, ceil(expectedLengthExperiment)));
-        data.c3_val     = double(nan(1, ceil(expectedLengthExperiment)));
-        data.c3_bool    = double(nan(1, ceil(expectedLengthExperiment)));        
-    end
-
     %initializing general flags and counters 
     data.selfTargetCounter = 0; 
     data.holoTargetCounter = 0; 
@@ -349,7 +315,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
     baseBuffer_full = 0; %bool indicating the Fbuffer filled
     %---
     disp('baseBuffer filling!...')
-    while (~debug_bool && counterSame < counterSameThresh) || (debug_bool && data.frame <= size(debug_input,2)) %while data.frame <= expectedLengthExperiment
+    while (~debug_bool && counterSame < counterSameThresh) || (debug_bool && data.frame < size(debug_input,2)) %while data.frame <= expectedLengthExperiment
         if ~debug_bool
             Im = pl.GetImage_2(chanIdx, px, py);
         else
@@ -363,7 +329,6 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
                 outputSingleScan(s,ni_getimage); pause(0.001); outputSingleScan(s,[0 0 0]);
             end
             
-%             if nonBufferUpdat
             if nonBufferUpdateCounter == 0
                 % obtain value of the neurons fluorescence
                 if(~debug_bool)
@@ -385,11 +350,8 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
                         baseval = baseValSeed; 
                         disp('baseBuffer seeded!'); 
                     else
-                        if single_bool
-                            baseval = single(ones(numberNeurons,1)).*unitVals/baseFrames;
-                        else
-                            baseval = double(ones(numberNeurons,1)).*unitVals/baseFrames;                        
-                        end
+%                         baseval = single(ones(numberNeurons,1)).*unitVals;
+                        baseval = single(ones(numberNeurons,1)).*unitVals/baseFrames;                        
                     end
                     %---
                 elseif ~baseBuffer_full && data.frame <= (initFrameBase+baseFrames)
@@ -407,15 +369,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
                 m.Data.baseVector(:,data.frame) = baseval; % saving in memmap
                 
                 %Smooth F
-                if single_bool
-                    Fsmooth = single(nanmean(Fbuffer, 2));
-                else
-                    Fsmooth = double(nanmean(Fbuffer, 2));
-                end
-                
-                if debug_bool
-                    data.fsmooth(:,data.frame) = Fsmooth;
-                end
+                Fsmooth = single(nanmean(Fbuffer, 2));                
                 
                 if baseBuffer_full
                     %----------------------------------------------------------
@@ -423,20 +377,11 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
                     % calculate (smoothed) DFF
                     dff = (Fsmooth - baseval) ./ baseval;
                     %Passing smoothed dff to "decoder"
-                    [~, cursor_i, target_hit, c1_bool, c2_val, c2_bool, c3_val, c3_bool] = ...
-                        dff2cursor_target(dff, bData, cursor_zscore_bool);
+                    [~, cursor_i, target_hit, c1_bool, ~, c2_bool, ~, c3_bool] = ...
+                        dff2cursor_target_OLD_TEST(dff, bData, cursor_zscore_bool);
 %                     data.bmidffz(:,data.frame) = dff_z;
                     data.cursor(data.frame) = cursor_i;
                     m.Data.cursor(data.frame) = data.cursor(data.frame); % saving in memmap
-                    if debug_bool
-                        data.dff(:,data.frame)      = dff;
-                        data.c1_bool(data.frame)    = c1_bool; 
-                        data.c2_val(data.frame)     = c2_val;
-                        data.c2_bool(data.frame)    = c2_bool;
-                        data.c3_val(data.frame)     = c3_val;
-                        data.c3_bool(data.frame)    = c3_bool;
-                    end
-                    
                     disp(['Cursor: ' num2str(cursor_i)]); 
 %                     disp(['Target : ' num2str(target_hit)]); 
 %                     disp(['C1 - cursor: ' num2str(c1_bool)]); 
@@ -602,7 +547,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
             data.frame = data.frame + 1;
             data.timeVector(data.frame) = toc;
             counterSame = 0;
-            if (~debug_bool && data.timeVector(data.frame) < 1/(frameRate*1.2))
+            if ~debug_bool && data.timeVector(data.frame) < 1/(frameRate*1.2)
                 pause(1/(frameRate*1.2) - data.timeVector(data.frame))
             end
         else
@@ -626,4 +571,3 @@ function cleanMeUp(savePath, bData, debug_bool)
         end
     end
 end
-

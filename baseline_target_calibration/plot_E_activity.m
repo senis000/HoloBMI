@@ -18,5 +18,7 @@ for i=1:num_neurons
         offset_vec = [offset_vec offset]; 
     end
     y_plot = y_plot-offset;
+%     size(t)
+%     size(y_plot)
     plot(t,y_plot, 'Color', E_color{E_id(i)}); 
 end

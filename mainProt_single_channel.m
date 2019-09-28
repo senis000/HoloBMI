@@ -696,6 +696,7 @@ disp(frames_per_reward_range)
 % sec_per_reward_range must be higher than 80seconds (to keep the
 % occurence of artificial vs natural higher than 80% 
 
+E2mE1_prctile = 98; 
 target_on_cov_bool = 0
 prefix_win = 40
 f0_win_bool = 1
@@ -712,7 +713,7 @@ close all
 [target_info_path, target_cal_ALL_path] = baseline2target_vE1strict(n_f_file, A_file, onacid_bool,  ...
     E1_base, E2_base, frames_per_reward_range, target_on_cov_bool, ...
     prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, savePath, ...
-    cursor_zscore_bool, f0_init_slide);
+    cursor_zscore_bool, f0_init_slide, E2mE1_prctile);
 
 %ToDo: return the filename
 % run the simulation of baseline

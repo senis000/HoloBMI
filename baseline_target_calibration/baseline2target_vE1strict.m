@@ -1,7 +1,7 @@
 function [target_info_path, target_cal_ALL_path] = baseline2target_vE1strict(n_f_file, Acomp_file, onacid_bool,  ...
     E1_base, E2_base, frames_per_reward_range, target_on_cov_bool, ...
     prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, save_dir, ...
-    cursor_zscore_bool, f0_init_slide)
+    cursor_zscore_bool, f0_init_slide, E2mE1_prctile)
 %4.18.19
 %inputs:
 %n_f_file - contains matrix, neural fluorescence from baseline file, num_samples X num_neurons_baseline 
@@ -140,7 +140,7 @@ mkdir(plotPath);
 load(n_f_file); 
 f_base = baseActivity; 
 f_base(:,isnan(f_base(1,:))) = [];
-f_base = f_base.';
+f_base = f_base.'; %num_samples X num_neurons
 
 % f_base = f_base(1:1000, :); %debugging input data with nans... 
 %Assume variable is called f_base
@@ -385,10 +385,10 @@ else
     n_analyze = dff;
 end
  
-valid_idxs = find(~isnan(n_analyze(:,1)));
-n_analyze = n_analyze(valid_idxs, :); 
+valid_idxs  = find(~isnan(n_analyze(:,1)));
+n_analyze   = n_analyze(valid_idxs, :); 
 analyze_cov = cov(n_analyze);
-analyze_mean = nanmean(n_analyze); 
+analyze_mean = nanmean(n_analyze); %takes mean along dim 1.  n_analyze is num_samples X num_neurons.
 if(plot_cov_bool)
     h = figure;
     imagesc(analyze_cov); 
@@ -423,19 +423,19 @@ cursor_cov = decoder'*analyze_cov*decoder;
 %Inputs: 
 %frames_per_reward_range
 %cov_bool
-reward_per_frame_range = 1./frames_per_reward_range;
-E1_mean = mean(analyze_mean(E1_sel));
-E1_std = sqrt((E1_sel/num_E1)'*analyze_cov*(E1_sel/num_E1));
-E2_subord_mean = zeros(num_E2,1);
-E2_subord_std = zeros(num_E2,1); 
-E1_analyze = n_analyze(:,E1_sel); 
-E2_analyze = n_analyze(:,E2_sel); 
+reward_per_frame_range  = 1./frames_per_reward_range;
+E1_mean                 = mean(analyze_mean(E1_sel));
+E1_std                  = sqrt((E1_sel/num_E1)'*analyze_cov*(E1_sel/num_E1));
+E2_subord_mean          = zeros(num_E2,1);
+E2_subord_std           = zeros(num_E2,1); 
+E1_analyze              = n_analyze(:,E1_sel); 
+E2_analyze              = n_analyze(:,E2_sel); 
 for E2_i = 1:num_E2
-    subord_sel = E2_sel;
-    subord_sel(E2_sel_idxs(E2_i)) = 0; 
-    E2_subord_mean(E2_i) = mean(analyze_mean(subord_sel));     
-    var_i = subord_sel'*analyze_cov*subord_sel; 
-    E2_subord_std(E2_i) = sqrt(var_i);     
+    subord_sel                      = E2_sel;
+    subord_sel(E2_sel_idxs(E2_i))   = 0; 
+    E2_subord_mean(E2_i)            = mean(analyze_mean(subord_sel));     
+    var_i                           = subord_sel'*analyze_cov*subord_sel; 
+    E2_subord_std(E2_i)             = sqrt(var_i);     
 end
 
 E2_sum_analyze = sum(E2_analyze,2); 
@@ -458,20 +458,21 @@ E2_subord_mean_analyze          = (E2_sum_analyze - E2_dom_samples)/(num_E2-1);
 %neural activity
 
 %T:
-T0 = max(cursor_obs);
-T = T0; 
-T_min = 0;
+min_prctile         = E2mE1_prctile; %A good default is 98
+T0                  = max(cursor_obs);
+T                   = T0; 
+T_min               = prctile(cursor_obs, min_prctile);
 
 %E2:
-E2_coeff0 = 0.5;
-E2_coeff = E2_coeff0; %multiples the std dev, for figuring out E2_subord_thresh
-E2_coeff_min = 0.3; 
-E2_subord_thresh = E2_subord_mean+E2_subord_std*E2_coeff;
+E2_coeff0           = 0.5;
+E2_coeff            = E2_coeff0; %multiplies the std dev, for figuring out E2_subord_thresh
+E2_coeff_min        = 0.05; 
+E2_subord_thresh    = E2_subord_mean+E2_subord_std*E2_coeff;
 
 %E1:
-E1_coeff0 = 0;
-E1_coeff = E1_coeff0;
-E1_thresh = E1_mean + E1_coeff*E1_std; %E1_mean_max; %E1_mean;
+E1_coeff0           = 0;
+E1_coeff            = E1_coeff0;
+E1_thresh           = E1_mean + E1_coeff*E1_std; %E1_mean_max; %E1_mean;
 
 
 T_delta = 0.05;

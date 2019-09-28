@@ -39,9 +39,10 @@ num_E2 = length(bData.E2_sel_idxs);
 
 %z-score:
 dff = dff(:).';
-dff_z = (dff-bData.n_mean)./bData.n_std;
-dff_z = dff_z(:).'; %set dff_z to be a row
+dff_z = dff; 
 if(cursor_zscore_bool)
+    dff_z = (dff-bData.n_mean)./bData.n_std;
+    dff_z = dff_z(:).'; %set dff_z to be a row    
     n_analyze = dff_z;
 else
     n_analyze = dff;
@@ -59,11 +60,12 @@ E1_mean = mean(E1);
 c2_val = E1_mean;
 
 %c3: E2_subord
-E2_sum = sum(E2); 
-[~, E2_dom_sel]    = max(E2, [], 2); %E2_dom  CAREFUL THIS MAY BRING TWO!!
-E2_dom_samples = dff(E2_dom_sel(1));
-E2_subord_mean          = (E2_sum - E2_dom_samples)/(num_E2-1);
-c3_val = E2_subord_mean;
+E2_sum                          = sum(E2); 
+[E2_dom_samples, E2_dom_sel]    = max(E2, [], 2); %E2_dom  CAREFUL THIS MAY BRING TWO!!
+% E2_dom_samples = n_analyze(E2_dom_sel(1));
+E2_subord_mean                  = (E2_sum - E2_dom_samples)/(num_E2-1);
+
+c3_val  = E2_subord_mean;
 
 c1_bool = cursor >= bData.T1; 
 c2_bool = E1_mean <= bData.E1_thresh;

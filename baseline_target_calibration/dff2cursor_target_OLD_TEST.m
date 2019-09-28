@@ -1,11 +1,8 @@
-function [cursor, target_hit, c1_bool, c2_val, c2_bool, c3_val, c3_bool] = ...
-    dff2cursor_target_v2(dff, cal) 
+function [dff_z, cursor, target_hit, c1_bool, c2_val, c2_bool, c3_val, c3_bool] = ...
+    dff2cursor_target_OLD_TEST(dff, bData, cursor_zscore_bool) 
 %4.19.19
-%INPUT: 
-%dff: smoothed dff
-%cal: calibration settings
-%FUNCTION:
-%1) z-score dff. ASSUMPTION: dff is only ONE TIME SAMPLE. 
+%INPUT: smoothed dff
+%1) z-score dff
 %2) calculate cursor value
 %3) determine if target is hit
 % OUTPUT: 
@@ -38,22 +35,23 @@ function [cursor, target_hit, c1_bool, c2_val, c2_bool, c3_val, c3_bool] = ...
 % E2_sel_idxs = find(E2_sel); 
 % num_E2 = length(E2_sel_idxs); 
 
-num_E2 = cal.neurons.num_E2; %length(bData.E2_sel_idxs); 
-dff = dff(:).';
+num_E2 = length(bData.E2_sel_idxs); 
+
 %z-score:
-if(cal.cursor_zscore_bool)
-    dff_z = (dff-cal.target.n_mean)./cal.target.n_std;
-    dff_z = dff_z(:).'; %set dff_z to be a row
+dff = dff(:).';
+dff_z = (dff-bData.n_mean)./bData.n_std;
+dff_z = dff_z(:).'; %set dff_z to be a row
+if(cursor_zscore_bool)
     n_analyze = dff_z;
 else
     n_analyze = dff;
 end
 
-E1 = n_analyze(cal.neurons.E1_sel_idxs); 
-E2 = n_analyze(cal.neurons.E2_sel_idxs); 
+E1 = n_analyze(bData.E1_sel_idxs); 
+E2 = n_analyze(bData.E2_sel_idxs); 
 
 %c1: cursor
-cursor = n_analyze*cal.decoder;
+cursor = n_analyze*bData.decoder;
 c1_val = cursor; 
 
 %c2: E1_mean
@@ -62,17 +60,14 @@ c2_val = E1_mean;
 
 %c3: E2_subord
 E2_sum = sum(E2); 
-[E2_dom_samples, E2_dom_sel]    = max(E2, [], 2); %E2_dom  CAREFUL THIS MAY BRING TWO!!
-% E2_dom_samples = dff(E2_dom_sel(1));
+[~, E2_dom_sel]    = max(E2, [], 2); %E2_dom  CAREFUL THIS MAY BRING TWO!!
+E2_dom_samples = dff(E2_dom_sel(1));
 E2_subord_mean          = (E2_sum - E2_dom_samples)/(num_E2-1);
 c3_val = E2_subord_mean;
 
-c1_bool = ...
-    cursor >= cal.target.T; 
-c2_bool = ...
-    E1_mean <= cal.target.E1_thresh;
-c3_bool = ...
-    E2_subord_mean >= cal.target.E2_subord_thresh(E2_dom_sel);
+c1_bool = cursor >= bData.T1; 
+c2_bool = E1_mean <= bData.E1_thresh;
+c3_bool = E2_subord_mean >= bData.E2_subord_thresh(E2_dom_sel);
 
 %target hit
 target_hit = c1_bool & c2_bool & c3_bool; 
