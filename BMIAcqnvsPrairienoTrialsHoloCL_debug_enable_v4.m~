@@ -148,7 +148,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
     %% Load BMI parameters from baseline calibration
     bData = load(fullfile(baselineCalibrationFile));
     back2Base = 1/2*bData.T1; % cursor must be under this value to be able to hit again
-%     single_bool = 1; 
+    single_bool = 1; 
 
     %Fields: 
     %'n_mean', 'n_std',
@@ -167,12 +167,13 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
     numberNeurons = length(bData.E_id);
     
     %pre-allocating arrays
-    single_bool = 1; 
     if single_bool
         Fbuffer = single(nan(numberNeurons, movingAverageFrames));  %define a windows buffer
-    else
+        e;
         Fbuffer = double(nan(numberNeurons, movingAverageFrames));  %define a windows buffer
     end
+    
+    
     data.cursor = double(nan(1,ceil(expectedLengthExperiment)));  %define a very long vector for cursor
     data.bmiAct = double(nan(numberNeurons, ceil(expectedLengthExperiment)));
 %     data.bmidffz = double(nan(numberNeurons, ceil(expectedLengthExperiment)));
@@ -190,11 +191,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
     data.vectorVTA = vectorVTA;
     
     if(debug_bool)
-        if single_bool
-            data.fsmooth    = single(nan(numberNeurons, ceil(expectedLengthExperiment)));
-        else
-            data.fsmooth    = double(nan(numberNeurons, ceil(expectedLengthExperiment)));
-        end
+        data.fsmooth    = double(nan(numberNeurons, ceil(expectedLengthExperiment)));
         data.dff        = double(nan(numberNeurons, ceil(expectedLengthExperiment)));
         data.c1_bool    = double(nan(1, ceil(expectedLengthExperiment)));
         data.c2_val     = double(nan(1, ceil(expectedLengthExperiment)));
@@ -385,11 +382,8 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
                         baseval = baseValSeed; 
                         disp('baseBuffer seeded!'); 
                     else
-                        if single_bool
-                            baseval = single(ones(numberNeurons,1)).*unitVals/baseFrames;
-                        else
-                            baseval = double(ones(numberNeurons,1)).*unitVals/baseFrames;                        
-                        end
+%                         baseval = single(ones(numberNeurons,1)).*unitVals/baseFrames;
+                        baseval = double(ones(numberNeurons,1)).*unitVals/baseFrames;                        
                     end
                     %---
                 elseif ~baseBuffer_full && data.frame <= (initFrameBase+baseFrames)
@@ -407,12 +401,8 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
                 m.Data.baseVector(:,data.frame) = baseval; % saving in memmap
                 
                 %Smooth F
-                if single_bool
-                    Fsmooth = single(nanmean(Fbuffer, 2));
-                else
-                    Fsmooth = double(nanmean(Fbuffer, 2));
-                end
-                
+                %Fsmooth = single(nanmean(Fbuffer, 2));
+                Fsmooth = double(nanmean(Fbuffer, 2));
                 if debug_bool
                     data.fsmooth(:,data.frame) = Fsmooth;
                 end
