@@ -65,8 +65,8 @@ cd(home_dir)
 env_dir = 'G:\VivekNuria\utils'
 
 % define Animal, day and folder where to save
-animal = 'NVI13'; day = 'D1';
-folder = 'E:\holobmi_E\190926';
+animal = 'NVI12'; day = 'D3';
+folder = 'E:\holobmi_E\190928';
 savePath = fullfile(folder, animal,  day);
 if ~exist(savePath, 'dir')
     mkdir(savePath);
@@ -183,7 +183,7 @@ im_bg = im_sc_struct(end).im;
 h = figure;
 imagesc(im_bg); 
 axis square
-colormap('gray'); 
+colormap('grayy'); 
 title('selected background image for identifying ROI'); 
 %PLOT_IMAGES data:
 %'plot_images' contains a set of images so user can tell if ROI selection is
@@ -256,6 +256,7 @@ close all;
 disp('Deleting ROIs from image!');
 [roi_data] = delete_roi_2chan(plot_images, roi_data);
 close all;
+
 
 %% Add ROI if needed
 %--------------------------------------------------------------------------
@@ -452,7 +453,7 @@ plotHoloStimTimeLock(holoActivity, voltageRec, min_duration, plot_win)
 % (I often choose more than 4 neurons, manually stim the neurons.
 % then re-run once you've chosen your 4.)
 %--------------------------------------------------------------------------
-E2_candidate = unique([17 45 46 52]); %unique also sorts
+E2_candidate = unique([5 42 4 10]); %unique also sorts
 % E2_base = sort([21    36   127   196], 'ascend')
 
 %% Holo stim of Ensemble neurons
@@ -645,7 +646,7 @@ plotNeuronsBaseline(baseActivity, CComp, YrA, 30)
 %
 %Manually enter and confirm the BMI neurons:
 % E2_candidate = unique([9 15 23 29]); %unique also sorts
-E1_base = sort([ 5 34 8 35], 'ascend')
+E1_base = sort([28 7 8 2], 'ascend') % 60 10 2 45
 ensembleNeurons = [E1_base, E2_base];
 plotNeuronsEnsemble(baseActivity, ensembleNeurons, [ones(1,length(E1_base)) 2*ones(1,length(E2_base))])
 select_roi_data(roi_data, [E2_base, unique(E1_base)]); 
@@ -722,9 +723,9 @@ close all
 %D0:
 %Note down: 
 % - T value
-% T: 0.40  
-% num_valid_hits: 10
-% num_hits: 33
+% T: 0.18
+% num_valid_hits: 9
+% num_hits:57
 %--------------------------------------------------------------------------
 %% Holo stim checking connectivity
 % create randomize run for each individual neuron of the ensemple
@@ -960,16 +961,19 @@ BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
 %3) video
 
 %%
-%DO: random reward
+%DO: bmi no reward
 %Clear vectorVTA
 %Clear vectorHolo
+%CLEAR MARK POINTS!!!
 bmi_no_reward_bool = 1; 
 
+baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan
+baselineCalibrationFile = target_info_path;
 if bmi_no_reward_bool
 
     close all
     imshow(im_bg)
-     baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan
+    baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan
     vectorHolo = [];
     vectorVTA= []; 
     debug_bool = 0; 
@@ -1087,10 +1091,4 @@ end
 %--------------------------------------------------------------------------
 %%
 %NOTES:
-% Pretrain was BMI without reward.
-% Then he did random reward every 20-30 sec
-% he stopped drinking water at 15000 frames 
-% he drunk again (once and again, but not constantly when he received reward)
-% at 38000 frames aprox
-% at 59 he started licking for each reward, activity on the bhrain also
-% seemed more active and he stopped again
+
