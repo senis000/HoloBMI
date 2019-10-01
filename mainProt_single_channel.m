@@ -65,8 +65,8 @@ cd(home_dir)
 env_dir = 'G:\VivekNuria\utils'
 
 % define Animal, day and folder where to save
-animal = 'NVI12'; day = 'D3';
-folder = 'E:\holobmi_E\190928';
+animal = 'NVI12'; day = 'D6';
+folder = 'E:\holobmi_E\191001';
 savePath = fullfile(folder, animal,  day);
 if ~exist(savePath, 'dir')
     mkdir(savePath);
@@ -171,6 +171,7 @@ close all;
 
 %% REMEMBER TO TURN OFF PHASE OFFSET
 %% TURN OFF THE MANIPULATOR 
+%% TURN OFF AUTOSCALE
 
 %%
 %--------------------------------------------------------------------------
@@ -183,7 +184,7 @@ im_bg = im_sc_struct(end).im;
 h = figure;
 imagesc(im_bg); 
 axis square
-colormap('grayy'); 
+colormap('gray'); 
 title('selected background image for identifying ROI'); 
 %PLOT_IMAGES data:
 %'plot_images' contains a set of images so user can tell if ROI selection is
@@ -453,7 +454,7 @@ plotHoloStimTimeLock(holoActivity, voltageRec, min_duration, plot_win)
 % (I often choose more than 4 neurons, manually stim the neurons.
 % then re-run once you've chosen your 4.)
 %--------------------------------------------------------------------------
-E2_candidate = unique([5 42 4 10]); %unique also sorts
+E2_candidate = unique([27 8 3 19]); %unique also sorts
 % E2_base = sort([21    36   127   196], 'ascend')
 
 %% Holo stim of Ensemble neurons
@@ -646,7 +647,7 @@ plotNeuronsBaseline(baseActivity, CComp, YrA, 30)
 %
 %Manually enter and confirm the BMI neurons:
 % E2_candidate = unique([9 15 23 29]); %unique also sorts
-E1_base = sort([28 7 8 2], 'ascend') % 60 10 2 45
+E1_base = sort([13 9 20 32], 'ascend') % 32 26
 ensembleNeurons = [E1_base, E2_base];
 plotNeuronsEnsemble(baseActivity, ensembleNeurons, [ones(1,length(E1_base)) 2*ones(1,length(E2_base))])
 select_roi_data(roi_data, [E2_base, unique(E1_base)]); 
@@ -724,9 +725,9 @@ close all
 %D0:
 %Note down: 
 % - T value
-% T: 0.18
-% num_valid_hits: 9
-% num_hits:57
+% T: 0.43
+% num_valid_hits: 7
+% num_hits:92
 %--------------------------------------------------------------------------
 %% Holo stim checking connectivity
 % create randomize run for each individual neuron of the ensemple
@@ -917,16 +918,16 @@ BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
 %--------------------------------------------------------------------------
 
 
-% %Get baseValSeed from HoloVTA_pretrain!  load file, take the last valid
-% %baseVal
-% % load_baseVal = 0; 
-% % if load_baseVal
-% % baselineCalibrationFile = 'BMI_target_info_20190523T220638.mat';
-% pretrain_file = 'BMI_online190524T131817'
-% load(fullfile(savePath, pretrain_file)); 
-% pretrain_base = data.baseVector; 
-% pretrain_base(:, isnan(pretrain_base(1,:))) = [];
-% baseValSeed = pretrain_base(:,end)
+%Get baseValSeed from HoloVTA_pretrain!  load file, take the last valid
+%baseVal
+% load_baseVal = 0; 
+% if load_baseVal
+% baselineCalibrationFile = 'BMI_target_info_20190523T220638.mat';
+pretrain_file = 'BMI_online190930T143340'
+load(fullfile(savePath, pretrain_file)); 
+pretrain_base = data.baseVector; 
+pretrain_base(:, isnan(pretrain_base(1,:))) = [];
+baseValSeed = pretrain_base(:,end)
 
 %%
 baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan
@@ -980,8 +981,6 @@ if bmi_no_reward_bool
     debug_bool = 0; 
     debug_input = []; 
     cursor_zscore_bool = 0; 
-
-    %T1 = 0.27
 
     expt_str = 'BMI_no_reward'; 
     BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
@@ -1092,4 +1091,5 @@ end
 %--------------------------------------------------------------------------
 %%
 %NOTES:
-
+%NOTES:
+% Holostim with BMI first holoBMI,no learning
