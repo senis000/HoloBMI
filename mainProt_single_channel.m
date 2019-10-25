@@ -52,8 +52,9 @@ duration of stim
 %Input 'folder', as directory to write to.
 %--------------------------------------------------------------------------
 fb_bool = 0;
-[task_settings] = define_BMI_task_settings(fb_bool);
 cd G:\VivekNuria\Code\HoloBMI
+[task_settings] = define_BMI_task_settings(fb_bool);
+
 %DEFINE PATH_DATA: 
 %
 %LOAD PATHS: 
@@ -65,8 +66,8 @@ cd(home_dir)
 env_dir = 'G:\VivekNuria\utils'
 
 % define Animal, day and folder where to save
-animal = 'NVI12'; day = 'D6';
-folder = 'E:\holobmi_E\191001';
+animal = 'NVI13'; day = 'D24';
+folder = 'E:\holobmi_E\191024';
 savePath = fullfile(folder, animal,  day);
 if ~exist(savePath, 'dir')
     mkdir(savePath);
@@ -148,7 +149,7 @@ if option1_bool
     pl.Disconnect();
 else
     im_summary_path    = ...
-        fullfile('G:\vivek\190822_NY35_good_stim_tests\NY35\D1_test', 'green_std.tif'); 
+        fullfile('G:\vivek190822_NY35_good_stim_tests\NY35\D1_test', 'green_std.tif'); 
     % fullfile('E:\vivek\190822\NY35\D1_test', 'chan_mean.tif'); 
     exist(im_summary_path)
     im_summary = imread(im_summary_path); 
@@ -204,7 +205,7 @@ plot_images(2).label = 'scaled';
 %--------------------------------------------------------------------------
 auto_init = 1;  %initializes roi_data using automatic cell detection: 
 % Parameters for auto cell detection:
-% Following were for zoom=2 on bruker soma:
+% Folylowing were for zoom=2 on bruker soma:
 % template_diam = 25; %diamter of difference of Gaussians in pixels
 % thres = 0.5; %cell detection threshold as correlation coefficient
 % cell_diam = 7; %CELL_DIAM is diameter used for dilation.
@@ -212,7 +213,7 @@ auto_init = 1;  %initializes roi_data using automatic cell detection:
 % temmode = 0;  % 0 is for full circle (soma) 1 is for donuts (membrane)
 template_diam = 15; %diamter of difference of Gaussians in pixels
 thres = 0.6; %cell detection threshold as correlation coefficient
-cell_diam = 13; %CELL_DIAM is diameter used for dilation.
+cell_diam = 16; %CELL_DIAM is diameter used for dilation.
 finemode = 1; %imTemplateMatch will be used instead of normxcorr2. It will be slower.
 temmode = 1;  % 0 is for full circle (soma) 1 is for donuts (membrane)
 if auto_init
@@ -271,6 +272,7 @@ close all
 %% SEE ROI if needed
 see_roi_data = 1; 
 if see_roi_data
+    
     %HoloMask
     holoMask = roi_data.roi_mask; 
     screen_size = get(0,'ScreenSize');
@@ -454,7 +456,7 @@ plotHoloStimTimeLock(holoActivity, voltageRec, min_duration, plot_win)
 % (I often choose more than 4 neurons, manually stim the neurons.
 % then re-run once you've chosen your 4.)
 %--------------------------------------------------------------------------
-E2_candidate = unique([27 8 3 19]); %unique also sorts
+E2_candidate = unique([16 28 23 20]); %unique also sorts 33 34 31 19 29 5 
 % E2_base = sort([21    36   127   196], 'ascend')
 
 %% Holo stim of Ensemble neurons
@@ -647,11 +649,18 @@ plotNeuronsBaseline(baseActivity, CComp, YrA, 30)
 %
 %Manually enter and confirm the BMI neurons:
 % E2_candidate = unique([9 15 23 29]); %unique also sorts
-E1_base = sort([13 9 20 32], 'ascend') % 32 26
+% 18 8 14 33
+E1_base = sort([6 26 4 11], 'ascend') % 8 31 11 26 7
 ensembleNeurons = [E1_base, E2_base];
 plotNeuronsEnsemble(baseActivity, ensembleNeurons, [ones(1,length(E1_base)) 2*ones(1,length(E2_base))])
 select_roi_data(roi_data, [E2_base, unique(E1_base)]); 
 % E2_candidates = [39 45 59 37 88 6 26 46 78 48 22 20 33]
+
+
+%% for E3 experiments:
+% E3_base = E2_base;  
+% E3_base = unique([57 52 66 63]); %unique also sorts  50 12 15 8 67 53 
+% E2_base = sort([49 46 23 50], 'ascend'); % 50 12 15 8 67 53 
 
 %%
 %OPTION: Use previously collected BMI data as the baseline data: 
@@ -686,7 +695,7 @@ A_file = roi_data_file; %fullfile(savePath, 'red.mat');
 exist(A_file)
 onacid_bool = 0
 
-sec_per_reward_range = [120 100]; 
+sec_per_reward_range = [120 80]; 
 
 
 frames_per_reward_range = sec_per_reward_range*baseline_frameRate;
@@ -725,9 +734,9 @@ close all
 %D0:
 %Note down: 
 % - T value
-% T: 0.43
+% T: 0.18
 % num_valid_hits: 7
-% num_hits:92
+% num_hits:15
 %--------------------------------------------------------------------------
 %% Holo stim checking connectivity
 % create randomize run for each individual neuron of the ensemple
@@ -803,7 +812,7 @@ end
 
 frameRate = 30 %baseline_frameRate
 baseFrames = 2*60*30; 
-expectedLengthExperiment = 40*60*frameRate
+expectedLengthExperiment = 75*60*frameRate
 
 % IHSImean, IHSIrange
 IHSImean = 20; 
@@ -815,6 +824,9 @@ if ~seedBase
     vectorHolo = vectorHolo + baseFrames;
 end
 % num imaging reps should be 75600 = 72000+3600
+
+
+
 
 %% Load Ensemble BOT:  create masks bot and image to check during experiment
 %In BOT, load 'BOT_ens.cfg'
@@ -839,7 +851,7 @@ seedBase = 0;
 baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan
 if seedBase
     %TODO:
-    pretrain_file = 'BMI_online190523T010653'
+    pretrain_file = 'BMI_online191016T222528'
     load(fullfile(savePath, pretrain_file)); 
     pretrain_base = data.baseVector; 
     pretrain_base(:, isnan(pretrain_base(1,:))) = [];
@@ -923,7 +935,7 @@ BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
 % load_baseVal = 0; 
 % if load_baseVal
 % baselineCalibrationFile = 'BMI_target_info_20190523T220638.mat';
-pretrain_file = 'BMI_online190930T143340'
+pretrain_file = 'BMI_online191018T160622'
 load(fullfile(savePath, pretrain_file)); 
 pretrain_base = data.baseVector; 
 pretrain_base(:, isnan(pretrain_base(1,:))) = [];
@@ -933,6 +945,7 @@ baseValSeed = pretrain_base(:,end)
 baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan
 baselineCalibrationFile = target_info_path;
 %%
+
 close all
 imshow(im_bg)
 %  baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan
@@ -969,13 +982,12 @@ BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
 %CLEAR MARK POINTS!!!
 bmi_no_reward_bool = 1; 
 
-baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan
 baselineCalibrationFile = target_info_path;
 if bmi_no_reward_bool
 
     close all
     imshow(im_bg)
-    baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan
+%     baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan
     vectorHolo = [];
     vectorVTA= []; 
     debug_bool = 0; 
@@ -1038,6 +1050,103 @@ if random_reward_bool
     %2) load cells
     %3) video
 end
+%% Extra strong vector Holo
+% frameRate = 30 %baseline_frameRate
+% baseFrames = 2*60*30; 
+% expectedLengthExperiment = 10*60*frameRate
+% 
+% % IHSImean, IHSIrange
+% IHSImean = 4; 
+% IHSIrange = 1; 
+% [vectorHolo1, ISI] = createVectorHolo(frameRate, expectedLengthExperiment, IHSImean, IHSIrange, false);
+% 
+% IHSImean = 8; 
+% IHSIrange = 2; 
+% [vectorHolo2, ISI] = createVectorHolo(frameRate, expectedLengthExperiment, IHSImean, IHSIrange, false);
+% 
+% IHSImean = 12; 
+% IHSIrange = 3; 
+% [vectorHolo3, ISI] = createVectorHolo(frameRate, expectedLengthExperiment, IHSImean, IHSIrange, false);
+% 
+% 
+% vectorHolo = [vectorHolo1; vectorHolo2 + 10*30*60; vectorHolo3 + 20*30*60];
+% 
+% seedBase = 0; %Set this to 1 if you will seed the baseline
+% if ~seedBase
+%     vectorHolo = vectorHolo + baseFrames;
+% end
+% % num imaging reps should be 75600 = 72000+3600
+
+
+
+
+%% HOLO PRETRAIN
+
+expectedLengthExperiment = 40*60*frameRate
+baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan
+
+IHSImean, IHSIrange
+IHSImean = 20; 
+IHSIrange = 10; 
+[vectorHolo, ISI] = createVectorHolo(frameRate, expectedLengthExperiment, IHSImean, IHSIrange, false);
+
+
+close all
+imshow(im_bg)
+clear s
+baselineCalibrationFile = target_info_path;
+vectorVTA = []
+%expt_str: 
+%     expt_cell = {...
+%         'BMI', ...
+%         'HoloVTA_pretrain', ...
+%         'Holo_pretrain', ...
+%         'VTA_pretrain'}; 
+
+expt_str = 'Holo_pretrain'; 
+debug_bool = 0; 
+debug_input = []; 
+
+BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
+    expt_str, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
+    cursor_zscore_bool, debug_bool, debug_input, baseValSeed)
+
+% BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v3(folder, animal, day, ...
+%     expt_str, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
+%     cursor_zscore_bool, debug_bool, debug_input);
+%TODO: add seed functionality
+%
+% BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v2(path_data.savePath, path_data.env_dir, ...
+%     expt_str, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
+%     cursor_zscore_bool, debug_bool, debug_input, baseValSeed);
+%saves filename with expt_str
+% BMIAcqnvsPrairienoTrialsHoloCL(folder, animal, day, expt_str, baselineCalibrationFile, baseline_frameRate, vectorHolo, vectorVTA, cursor_zscore_bool)
+
+%--------------------------------------------------------------------------
+%D0:
+%Stop:
+%1) pyctrl
+%2) load cells
+%3) video
+
+%% Extra strong Vector Holo for holopretrain
+
+frameRate = 30 %baseline_frameRate
+baseFrames = 2*60*30; 
+expectedLengthExperiment = 10*60*frameRate 
+
+IHSImean = 16; 
+IHSIrange = 4; 
+[vectorHolo1, ISI] = createVectorHolo(frameRate, expectedLengthExperiment, IHSImean, IHSIrange, false);
+
+%at least 60 stim+reward
+expectedLengthExperiment = 40*60*frameRate 
+IHSImean = 20; 
+IHSIrange = 5; 
+[vectorHolo2, ISI] = createVectorHolo(frameRate, expectedLengthExperiment, IHSImean, IHSIrange, false);
+
+
+vectorHolo = [vectorHolo1; vectorHolo2 + 10*30*60];
 
 
 %% Holo stim checking connectivity
@@ -1090,6 +1199,4 @@ end
 
 %--------------------------------------------------------------------------
 %%
-%NOTES:
-%NOTES:
-% Holostim with BMI first holoBMI,no learning
+%NOTES: 15min baseline and I want to cry

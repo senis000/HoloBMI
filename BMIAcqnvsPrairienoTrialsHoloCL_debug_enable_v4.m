@@ -269,7 +269,11 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
         lastFrame = zeros(px, py); % to compare with new incoming frames
 
         % set the environment for the Time Series in PrairieView
-        loadCommand = ['-tsl ' fullfile('G:/VivekNuria/utils', 'Tseries_VivekNuria_40.env')];
+        if strcmp(expt_str, 'HoloVTA_pretrain' )
+            loadCommand = ['-tsl ' fullfile('G:/VivekNuria/utils', 'Tseries_VivekNuria_75.env')];
+        else
+            loadCommand = ['-tsl ' fullfile('G:/VivekNuria/utils', 'Tseries_VivekNuria_40.env')];
+        end
         pl.SendScriptCommands(loadCommand);   
 
         % set the path where to store the imaging data -SetSavePath (-p) "path" ["addDateTime"]
