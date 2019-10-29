@@ -1,4 +1,5 @@
 %%
+%test_092519_NVI12.m
 home_dir = '/Users/vivekathalye/Dropbox/Code/holobmi_git/HoloBMI'
 cd(home_dir); 
 load_path = define_and_load_bmi_paths_debug(home_dir)
@@ -6,19 +7,19 @@ matlab_exchange_home = '/Users/vivekathalye/Dropbox/Code/MatlabExchange';
 addpath(genpath(matlab_exchange_home)); 
 
 %%
-animal          = 'NVI12'
+animal          = 'NVI13'
 home_dir        = fullfile('/Users/vivekathalye/Dropbox/Data/holo_sep2019'); 
 data_dir        = fullfile(home_dir, animal); 
-debug_path      = fullfile(data_dir, 'debug_data_v2')
+debug_path      = fullfile(data_dir, 'cal_bmi')
 mkdir(debug_path);
 exist(debug_path)
 
 day             = 'D0'
 roi_data_file   = fullfile(data_dir, 'roi_data.mat'); 
-base_file       = fullfile(data_dir, 'BaselineOnline190926T140545.mat'); 
-bmi_file        = fullfile(data_dir, 'BMI_online190926T151518.mat'); 
-cal_file        = fullfile(data_dir, 'BMI_target_info_20190926T143224.mat');
-cal_ALL_file    = fullfile(data_dir, 'target_calibration_ALL_20190926T143224.mat'); 
+base_file       = fullfile(data_dir, 'BaselineOnline190926T165216.mat'); 
+bmi_file        = fullfile(data_dir, 'BMI_online190926T180211.mat'); 
+cal_file        = fullfile(data_dir, 'BMI_target_info_20190926T171148.mat');
+cal_ALL_file    = fullfile(data_dir, 'target_calibration_ALL_20190926T171148.mat'); 
 
 %NOTE: 
 % single vs double did not make a difference for this data set.
@@ -82,25 +83,69 @@ cursor_zscore_bool = 0;
 f0_init_slide = 0; 
 
 %%
-
-close all
-[target_info_path, target_cal_ALL_path] = baseline2target_vE1strict(n_f_file, A_file, onacid_bool,  ...
-    E1_base, E2_base, frames_per_reward_range, target_on_cov_bool, ...
-    prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, savePath, ...
-    cursor_zscore_bool, f0_init_slide);
-
-
-%%
-test_cal_data = load(target_cal_ALL_path); 
-%%
 base_data = load(base_file); 
 cal_data = load(cal_file)
 cal_ALL_data = load(cal_ALL_file); 
 
-debug_input = ...
-    base_data.baseActivity(mask_data.E_base_sel,:);
-debug_input = debug_input(:, ~isnan(debug_input(1,:)));
-size(debug_input)
+disp('num hits calibration:')
+cal_ALL_data.num_valid_hits
+
+%%
+test_base_bool = 0;
+test_bmi_bool = 1; 
+
+if(test_bmi_bool) 
+    bmi_data        = load(bmi_file); 
+    debug_input     = bmi_data.data.bmiAct; 
+    valid_idxs      = find(~isnan(debug_input(1,:))); 
+    last_valid_idx  = max(valid_idxs)
+    debug_input     = debug_input(:,1:last_valid_idx); 
+    size(debug_input)
+end
+
+if(test_base_bool)
+    debug_input = ...
+        base_data.baseActivity(mask_data.E_base_sel,:);
+    debug_input = debug_input(:, ~isnan(debug_input(1,:)));
+    size(debug_input)
+end
+
+%%
+%Take BMI data and save it so baseline can be run on it.  
+% f_base = baseActivity; 
+%n_f_file - contains matrix, neural fluorescence from baseline file, num_samples X num_neurons_baseline 
+
+bmi_data            = load(bmi_file); 
+bmi_cal_file        = fullfile(data_dir, 'bmi_cal.mat'); 
+
+%%
+baseActivity        = bmi_data.data.bmiAct; 
+valid_idxs          = find(~isnan(baseActivity(1,:))); 
+baseActivity        = baseActivity(:,valid_idxs).'; 
+size(baseActivity)
+
+%%
+save(bmi_cal_file, 'baseActivity'); 
+
+%%
+E2mE1_prctile = 96; 
+rerun_cal_bool = 1; 
+if rerun_cal_bool
+    close all
+%     [target_info_path, target_cal_ALL_path] = baseline2target_vE1strict(bmi_cal_file, A_file, onacid_bool,  ...
+%         E1_base, E2_base, frames_per_reward_range, target_on_cov_bool, ...
+%         prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, savePath, ...
+%         cursor_zscore_bool, f0_init_slide);
+    
+    [target_info_path, target_cal_ALL_path] = baseline2target_vE1strict(n_f_file, A_file, onacid_bool,  ...
+        E1_base, E2_base, frames_per_reward_range, target_on_cov_bool, ...
+        prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, savePath, ...
+        cursor_zscore_bool, f0_init_slide, E2mE1_prctile);    
+    
+    test_cal_data = load(target_cal_ALL_path); 
+    test_cal_data.num_valid_hits    
+end
+
 
 %%
 
@@ -112,48 +157,98 @@ t_plot = 1:size(debug_input,2);
 
 % [h, offset_vec] = plot_E_activity(t,n, E_id, E_color, offset)
 
+
 %%
-% folder = debug_path; 
+sim_bmi_bool = 1
 single_bool         = 1; 
 if single_bool
-    folder = '/Users/vivekathalye/Dropbox/Data/holo_sep2019/NVI12/debug_data'
+    if(test_bmi_bool)
+        folder = fullfile(home_dir, animal, 'bmi_sim_single')
+        mkdir(folder)
+    else
+%         folder = '/Users/vivekathalye/Dropbox/Data/holo_sep2019/NVI12/debug_data'
+        folder = fullfile(home_dir, animal, 'debug_data'); 
+    end
+    exist(folder)
 else
-    folder = '/Users/vivekathalye/Dropbox/Data/holo_sep2019/NVI12/debug_data_v2'
+    if(test_bmi_bool)
+        folder = fullfile(home_dir, animal, 'bmi_sim_double')
+        mkdir(folder)
+    else
+        folder = fullfile(home_dir, animal, 'debug_data_v2'); 
+%         '/Users/vivekathalye/Dropbox/Data/holo_sep2019/NVI12/debug_data_v2'
+    end
+    exist(folder)
 end
 
-expt_str = 'BMI'; 
-baselineCalibrationFile = cal_file;
-vectorHolo          = []; 
-vectorVTA           = []; 
-cursor_zscore_bool  = 0;
-debug_bool          = 1; 
-baseValSeed         = ones(length(E1_base)+length(E2_base), 1)+nan
+drop_prefix_bool = 0
+if drop_prefix_bool
+    bmi_sim_input = debug_input(:,(prefix_win+1):end); 
+else
+    bmi_sim_input = debug_input; 
+end
 
-bmi_sim_input = debug_input(:,(prefix_win+1):end); 
-BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
-    expt_str, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
-    cursor_zscore_bool, debug_bool, bmi_sim_input, baseValSeed, single_bool);
+if sim_bmi_bool
+    expt_str = 'BMI'; 
+    baselineCalibrationFile = cal_file;
+    vectorHolo = []; 
+    vectorVTA = []; 
+    cursor_zscore_bool = 0;
+    debug_bool = 1; 
+    baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan
+
+    BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
+        expt_str, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
+        cursor_zscore_bool, debug_bool, bmi_sim_input, baseValSeed, single_bool);
+end
 
 %%
 if single_bool    
-    bmi_dir = '/Users/vivekathalye/Dropbox/Data/holo_sep2019/NVI12/debug_data/NVI12/D0'
-    bmi_path = fullfile(bmi_dir, 'BMI_online190927T135423.mat'); 
+    bmi_dir = fullfile(folder, animal, day); 
+    
+    bmi_path = fullfile(bmi_dir, 'BMI_online190927T174405.mat'); 
     exist(bmi_path)
     bmi_sim = load(bmi_path); 
+    disp('bmi sim hits: '); 
+    bmi_sim.data.selfTargetCounter
+    disp('base cal hits: '); 
+    cal_ALL_data.num_valid_hits
 else
-    bmi_dir = '/Users/vivekathalye/Dropbox/Data/holo_sep2019/NVI12/debug_data_v2/NVI12/D0'
+    bmi_dir = fullfile(folder, animal, day); 
+    
     bmi_path = fullfile(bmi_dir, 'BMI_online190927T135423.mat'); 
     exist(bmi_path)
     bmi_sim = load(bmi_path); 
+    bmi_sim.data.selfTargetCounter
+    cal_ALL_data.num_valid_hits    
+end
+% %%
+% bmi_dir = '/Users/vivekathalye/Dropbox/Data/holo_sep2019/NVI16/debug_data/NVI16/D0'
+% % bmi_path = fullfile(bmi_dir, 'BMI_online190927T101911.mat'); 
+% bmi_path = fullfile(bmi_dir, 'BMI_online190926T205945.mat'); 
+% 
+% exist(bmi_path)
+% bmi_sim0 = load(bmi_path)
+% bmi_sim0.data.selfTargetCounter
+% 
+% %%
+% bmi_dir = '/Users/vivekathalye/Dropbox/Data/holo_sep2019/NVI16/debug_data_v2/NVI16/D0'
+% bmi_path = fullfile(bmi_dir, 'BMI_online190927T115234.mat'); 
+% exist(bmi_path)
+% bmi_sim1 = load(bmi_path)
+% bmi_sim1.data.selfTargetCounter
+%%
+h = figure;
+hold on;
+plot(bmi_data.data.cursor, 'LineWidth', 2); 
+plot(bmi_sim0.data.cursor); 
+legend('bmi', 'sim'); 
 
-test_sim = load(bmi_path); 
+
 %%
-bmi_dir = '/Users/vivekathalye/Dropbox/Data/holo_sep2019/NVI12/debug_data_v2/NVI12/D0'
-bmi_path = fullfile(bmi_dir, 'BMI_online190927T135423.mat'); 
-exist(bmi_path)
-%10 hits
-%%
-bmi_sim = load(bmi_path)
+% bmi_sim1_path = ;
+% bmi_sim2_path = ;
+% bmi_sim
 
 %%
 h = figure;
@@ -178,19 +273,23 @@ size(debug_input)
 size(bmi_sim.data.bmiAct(:,1:length(debug_input)))
 % find(debug_input ~= bmi_sim.data.bmiAct(:,1:length(debug_input)))
 %%
+%F
+%
 cal_num_valid = length(debug_input)
 bmi_num_valid = sum(~isnan(bmi_sim.data.bmiAct(1,:)))
-
-%%
 bmi_valid_idxs = find(~isnan(bmi_sim.data.bmiAct(1,:))); 
 bmi_last_valid = bmi_valid_idxs(end);
-%%
+
+%
 %NOTE: debug_input: num_neurons x num_samples
 n_sel = 1; 
 h = figure
 hold on;
-plot(debug_input(n_sel, :)); 
-plot(bmi_sim.data.bmiAct(n_sel, 1:bmi_last_valid)); 
+plot(debug_input(n_sel, :), 'LineWidth', 2); 
+
+bmi_t = (1:length(bmi_sim.data.bmiAct(n_sel, :))) + prefix_win;
+plot(bmi_t, bmi_sim.data.bmiAct(n_sel, :)); 
+% plot(bmi_sim.data.bmiAct(n_sel, 1:bmi_last_valid)); 
 legend('base', 'bmi'); 
 %in bmi_sim:
 % NaN in the beginning for prefix_win number of samples
@@ -213,6 +312,8 @@ legend('base', 'bmi');
 %        25109           8
 
 %%
+%F0
+%
 %NOTE: 
 %bmi_sim.data.baseVector: num_neurons X num_samples
 %cal_ALL_data.f0: num_samples X num_neuronsﬂ
@@ -220,9 +321,9 @@ legend('base', 'bmi');
 % t_cal = 1:cal_num_valid;
 % t_bmi = 40+(1:bmi_num_valid); 
 
-n_sel = 4; 
+n_sel = 2; 
 
-t_bmi = prefix_win +(f0_win:bmi_num_valid);
+t_bmi = (f0_win:bmi_num_valid); % + prefix_win
 t_cal = 1:length(cal_ALL_data.f0);
 
 cal_plot = cal_ALL_data.f0(t_cal,n_sel);
@@ -234,6 +335,7 @@ plot(cal_plot);
 plot(bmi_plot); 
 legend({'cal', 'sim'})
 
+title(['F0: ' num2str(n_sel)]); 
 %%
 %F Gross comparison:
 y_plot = cal_ALL_data.f0; 
@@ -266,7 +368,7 @@ size(cal_ALL_data.f_smooth)
 size(bmi_sim.data.fsmooth)
 %%
 %Fsmooth comparison:
-n_sel = 1; 
+n_sel = 7; 
 
 % bmi_num_valid = sum(~isnan(bmi_sim.data.fsmooth(1,:))) 
 % t_bmi = prefix_win +(f0_win:bmi_num_valid);
@@ -315,16 +417,24 @@ c2_cal(cal_ALL_data.c2)=1;
 
 bmi_offset = 3600+2; 
 cal_plot = cal_ALL_data.E1_mean_analyze;
-bmi_plot = bmi_sim.data.c2_val(n_sel,bmi_offset:end);
+bmi_plot = bmi_sim.data.c2_val(bmi_offset:end);
 
 h = figure;
 hold on;
 plot(cal_plot, 'k'); 
 plot(bmi_plot, 'r'); 
 plot(c2_cal, 'k', 'LineWidth',2); 
-plot(bmi_sim.data.c2_bool(n_sel,bmi_offset:end), 'r'); 
+plot(bmi_sim.data.c2_bool(bmi_offset:end), 'r'); 
 % legend({'cal', 'sim'})
 title(['E1']); 
+
+%%
+disp('E1 bool :'); 
+disp('base cal:'); 
+sum(c2_cal)
+disp('bmi sim:');
+nansum(bmi_sim.data.c2_bool)
+
 
 %%
 %E1 bool:
@@ -332,7 +442,6 @@ h = figure;
 hold on;
 plot(c2_cal, 'k', 'LineWidth',2); 
 plot(bmi_sim.data.c2_bool(1,bmi_offset:end), 'r'); 
-
 
 %%
 %E2 comparison:
@@ -351,13 +460,19 @@ bmi_plot = bmi_sim.data.c3_val(n_sel,bmi_offset:end);
 
 h = figure;
 hold on;
-plot(cal_plot, 'k'); 
+plot(cal_plot, 'k', 'LineWidth', 2); 
 plot(bmi_plot, 'r'); 
 % plot(c2_cal, 'k', 'LineWidth',2); 
 % plot(bmi_sim.data.c2_bool(n_sel,bmi_offset:end), 'r'); 
-% legend({'cal', 'sim'})
+legend({'cal', 'sim'})
 title(['E2']); 
 
+%%
+disp('E1 bool :'); 
+disp('base cal:'); 
+sum(c3_cal)
+disp('bmi sim:');
+nansum(bmi_sim.data.c3_bool)
 
 %%
 %E2 bool: 
@@ -383,11 +498,10 @@ size(cal_ALL_data.cursor_obs)
 
 h = figure;
 hold on;
-plot(cal_ALL_data.cursor_obs); 
-
-% t_bmi = prefix_win +(f0_win:bmi_num_valid);
+plot(cal_ALL_data.cursor_obs, 'LineWidth',2); 
 bmi_valid_idxs = find(~isnan(bmi_sim.data.cursor)); 
-plot(bmi_sim.data.cursor(bmi_valid_idxs)); 
+t_bmi = prefix_win + (1:length(bmi_valid_idxs)) -2;
+plot(t_bmi, bmi_sim.data.cursor(bmi_valid_idxs)); 
 legend({'base cal', 'bmi sim'}); 
 
 %%

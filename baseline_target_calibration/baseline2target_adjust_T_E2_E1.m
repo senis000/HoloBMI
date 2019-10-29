@@ -2,6 +2,7 @@ function [target_info_path, target_cal_ALL_path] = baseline2target_vE1strict(n_f
     E1_base, E2_base, frames_per_reward_range, target_on_cov_bool, ...
     prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, save_dir, ...
     cursor_zscore_bool, f0_init_slide, E2mE1_prctile)
+%TODO: implement a more effective, efficient calibration algorithm
 %4.18.19
 %inputs:
 %n_f_file - contains matrix, neural fluorescence from baseline file, num_samples X num_neurons_baseline 

@@ -1,4 +1,4 @@
-function [task_settings] = define_BMI_task_settings(fb_bool)
+function [task_settings] = define_BMI_task_settings()
 
 task_settings.frameRate = 29.989; 
 %Imaging environment file for baseline acquisition
@@ -51,6 +51,7 @@ task_settings.b2base_coeff              = 0.5;
 %a frame counts as back2base if cursor < b2base_coeff*T, where T is target cursor value.  
 
 %feedback: 
+fb_bool = 0; 
 task_settings.fb.fb_bool                = fb_bool; 
 task_settings.fb.target_low_freq        = 1; 
 %Set the target cursor value to be the low frequency

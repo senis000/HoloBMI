@@ -1,6 +1,6 @@
-function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
+function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v4(folder, animal, day, ...
     expt_str, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
-    cursor_zscore_bool, debug_bool, debug_input, baseValSeed)
+    cursor_zscore_bool, debug_bool, debug_input, baseValSeed, fb_bool, fb_cal, a)
     %{
     Function to acquire the BMI in a prairie scope
     animal -> animal for the experiment
@@ -29,6 +29,10 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
         determines if holo stim will be delivered on a schedule
     flagVTAsched: 
         determines if VTA stim is delivered on a schedule
+    
+    -fb_bool - bool to play tones
+    -fb_cal - calibration for mapping cursor to audio feedback
+    -a - arduino object for playing feedback tones.
 
     expt_str --> Experiments:
     0) BMI
@@ -130,8 +134,8 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
 
     %% Reward/VTA parameters
     %Sound: 
-    xrnd = randn(1000,1);
-    reward_sound = audioplayer(xrnd, 10000); %Play sound using: play()
+%     xrnd = randn(1000,1);
+%     reward_sound = audioplayer(xrnd, 10000); %Play sound using: play()
 %     xrnd_filt = filter([1 1], 1, xrnd); 
 %     reward_sound = audioplayer(xrnd_filt, 10000); %Play sound using: play()
 %     play(reward_sound)
@@ -148,7 +152,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
     %% Load BMI parameters from baseline calibration
     bData = load(fullfile(baselineCalibrationFile));
     back2Base = 1/2*bData.T1; % cursor must be under this value to be able to hit again
-    single_bool = 1; 
+%     single_bool = 1; 
 
     %Fields: 
     %'n_mean', 'n_std',
@@ -167,14 +171,14 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
     numberNeurons = length(bData.E_id);
     
     %pre-allocating arrays
+    single_bool = 1; 
     if single_bool
         Fbuffer = single(nan(numberNeurons, movingAverageFrames));  %define a windows buffer
-        e;
+    else
         Fbuffer = double(nan(numberNeurons, movingAverageFrames));  %define a windows buffer
     end
-    
-    
     data.cursor = double(nan(1,ceil(expectedLengthExperiment)));  %define a very long vector for cursor
+    data.fb_freq    = double(nan(1,ceil(expectedLengthExperiment)));  %define a very long vector for fb_freq
     data.bmiAct = double(nan(numberNeurons, ceil(expectedLengthExperiment)));
 %     data.bmidffz = double(nan(numberNeurons, ceil(expectedLengthExperiment)));
     data.baseVector = double(nan(numberNeurons,ceil(expectedLengthExperiment)));  %define a very long vector for cursor    
@@ -191,7 +195,11 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
     data.vectorVTA = vectorVTA;
     
     if(debug_bool)
-        data.fsmooth    = double(nan(numberNeurons, ceil(expectedLengthExperiment)));
+        if single_bool
+            data.fsmooth    = single(nan(numberNeurons, ceil(expectedLengthExperiment)));
+        else
+            data.fsmooth    = double(nan(numberNeurons, ceil(expectedLengthExperiment)));
+        end
         data.dff        = double(nan(numberNeurons, ceil(expectedLengthExperiment)));
         data.c1_bool    = double(nan(1, ceil(expectedLengthExperiment)));
         data.c2_val     = double(nan(1, ceil(expectedLengthExperiment)));
@@ -289,6 +297,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
     % creates a file with the correct shape
     fileID = fopen(fileName,'w');
     fwrite(fileID, data.cursor ,'double');
+    fwrite(fileID, data.fb_freq,'double');
     fwrite(fileID, data.bmiAct, 'double'); 
     fwrite(fileID, data.baseVector, 'double');     
     fwrite(fileID, data.selfHits ,'single');
@@ -300,6 +309,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
     % maps the file into memory
     m = memmapfile(fileName, 'Format',...
         {'double',size(data.cursor),'cursor'; ...
+        'double',size(data.fb_freq),'fb_freq'; ...
         'double',size(data.bmiAct),'bmiAct'; ...
         'double',size(data.baseVector),'baseVector'; ...
         'single',size(data.selfHits),'selfHits'; ...
@@ -382,8 +392,11 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
                         baseval = baseValSeed; 
                         disp('baseBuffer seeded!'); 
                     else
-%                         baseval = single(ones(numberNeurons,1)).*unitVals/baseFrames;
-                        baseval = double(ones(numberNeurons,1)).*unitVals/baseFrames;                        
+                        if single_bool
+                            baseval = single(ones(numberNeurons,1)).*unitVals/baseFrames;
+                        else
+                            baseval = double(ones(numberNeurons,1)).*unitVals/baseFrames;                        
+                        end
                     end
                     %---
                 elseif ~baseBuffer_full && data.frame <= (initFrameBase+baseFrames)
@@ -401,8 +414,12 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
                 m.Data.baseVector(:,data.frame) = baseval; % saving in memmap
                 
                 %Smooth F
-                %Fsmooth = single(nanmean(Fbuffer, 2));
-                Fsmooth = double(nanmean(Fbuffer, 2));
+                if single_bool
+                    Fsmooth = single(nanmean(Fbuffer, 2));
+                else
+                    Fsmooth = double(nanmean(Fbuffer, 2));
+                end
+                
                 if debug_bool
                     data.fsmooth(:,data.frame) = Fsmooth;
                 end
@@ -416,8 +433,11 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
                     [~, cursor_i, target_hit, c1_bool, c2_val, c2_bool, c3_val, c3_bool] = ...
                         dff2cursor_target(dff, bData, cursor_zscore_bool);
 %                     data.bmidffz(:,data.frame) = dff_z;
+%--------------------------------------------------------------------------
+                    disp(['Cursor: ' num2str(cursor_i)]); 
                     data.cursor(data.frame) = cursor_i;
                     m.Data.cursor(data.frame) = data.cursor(data.frame); % saving in memmap
+%--------------------------------------------------------------------------                    
                     if debug_bool
                         data.dff(:,data.frame)      = dff;
                         data.c1_bool(data.frame)    = c1_bool; 
@@ -427,7 +447,23 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
                         data.c3_bool(data.frame)    = c3_bool;
                     end
                     
-                    disp(['Cursor: ' num2str(cursor_i)]); 
+                    %fb: 
+%--------------------------------------------------------------------------                    
+                    fb_freq_i = cursor2audio_freq_v2(cursor_i, fb_cal);  
+%                     if(debug_bool)
+%                         disp(['FB Freq: ' num2str(fb_freq_i)]);
+%                     end
+                    data.fb_freq(data.frame) = fb_freq_i;
+                    m.Data.fb_freq(data.frame) = data.fb_freq(data.frame); % saving in memmap    
+%--------------------------------------------------------------------------                    
+                    if(fb_bool)
+                        %Send tone arduino
+                        playTone(a,...
+                            fb_cal.settings.arduino.pin,...
+                            fb_freq_i,...
+                            fb_cal.settings.arduino.duration)
+                    end                    
+                    
 %                     disp(['Target : ' num2str(target_hit)]); 
 %                     disp(['C1 - cursor: ' num2str(c1_bool)]); 
 %                     disp(['C2 - E1 : ' num2str(c2_bool)]); 

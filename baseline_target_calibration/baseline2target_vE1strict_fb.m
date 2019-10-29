@@ -1,33 +1,35 @@
-function [target_info_path, target_cal_ALL_path] = baseline2target_vE1strict(n_f_file, Acomp_file, onacid_bool,  ...
+function [target_info_path, target_cal_ALL_path, fb_cal] = baseline2target_vE1strict_fb(n_f_file, Acomp_file, onacid_bool,  ...
     E1_base, E2_base, frames_per_reward_range, target_on_cov_bool, ...
     prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, save_dir, ...
-    cursor_zscore_bool, f0_init_slide, E2mE1_prctile)
-%4.18.19
-%inputs:
-%n_f_file - contains matrix, neural fluorescence from baseline file, num_samples X num_neurons_baseline 
-%Acomp_file - 
-%E1_base - E1 idxs in baseline data
-%E2_base - E2 idxs in baseline data
-%frames_per_reward_range - a range on how many frames should elapse before a
-% reward is expected.  Used to calibrate the target patterns.
-%target_on_cov_bool - if false, calibrate target to baseline data directly.
-% if true, use the covariance of data to calibrate target.  Potentially
-% useful if the data itself does not exhibit strong co-modulation of E
-% units.
-%prefix_win - number of frames at start of baseline that calibration
-% should NEGLECT.  (these starting frames are just ignored.)
-%f0_win_bool - if true, estimate f0 with a window of activity.  if false, estimate f0 using the full baseline, 
-%f0_win - number of frames to use for estimating f0.  (This code uses a
-% rolling average, as used during the BMI)
-%dff_win_bool - whether to smooth dff in a window
-%dff_win - number of frames to use for smoothing dff
-%save_dir - directory to save baseline results in in.
-%
-%cursor_zscore_bool - if 1, neural activity is zscored before going into
-%cursor calculation. if 0, neural activity is not zscored.  
-%
-%f0_init_slide - if 0, f0 is only used after f0_win samples.  if 1, f0 is
-%adapted in the window from 0 to f0_win samples.
+    cursor_zscore_bool, f0_init_slide, E2mE1_prctile, fb_settings)
+%{
+4.18.19
+inputs:
+-n_f_file - contains matrix, neural fluorescence from baseline file, num_samples X num_neurons_baseline 
+-Acomp_file - 
+-E1_base - E1 idxs in baseline data
+-E2_base - E2 idxs in baseline data
+-frames_per_reward_range - a range on how many frames should elapse before a
+reward is expected.  Used to calibrate the target patterns.
+-target_on_cov_bool - if false, calibrate target to baseline data directly.
+if true, use the covariance of data to calibrate target.  Potentially
+useful if the data itself does not exhibit strong co-modulation of E
+units.
+-prefix_win - number of frames at start of baseline that calibration
+should NEGLECT.  (these starting frames are just ignored.)
+-f0_win_bool - if true, estimate f0 with a window of activity.  if false, estimate f0 using the full baseline, 
+-f0_win - number of frames to use for estimating f0.  (This code uses a
+rolling average, as used during the BMI)
+-dff_win_bool - whether to smooth dff in a window
+-dff_win - number of frames to use for smoothing dff
+-save_dir - directory to save baseline results in in.
+-cursor_zscore_bool - if 1, neural activity is zscored before going into
+-cursor calculation. if 0, neural activity is not zscored.  
+-f0_init_slide - if 0, f0 is only used after f0_win samples.  if 1, f0 is
+adapted in the window from 0 to f0_win samples.
+-E2mE1_prctile: it is the lowest acceptable E2mE1_prctile for deciding the
+target threshold.  
+%}
 
 % %%
 % %Debug parameters: 
@@ -202,25 +204,9 @@ end
 %%
 %4) Decoder information
 %Decoder information
-E1_proj = zeros(num_neurons, 1); 
-E1_proj(E1_sel) = 1;
-E1_norm = sum(E1_sel); %can replace with vector norm.  
 
-disp('E1 proj'); 
-E1_proj = E1_proj/E1_norm;
-E1_proj
-
-E2_proj = zeros(num_neurons, 1); 
-E2_proj(E2_sel) = 1; 
-E2_norm = sum(E2_sel); 
-disp('E2 proj')
-E2_proj = E2_proj/E2_norm;
-E2_proj
-
-disp('decoder:')
-decoder = E2_proj - E1_proj
-
-
+[decoder, E1_proj, E2_proj, E1_norm, E2_norm] = ...
+    def_decoder(num_neurons, E1_sel, E2_sel);
 
 %%
 %First process f0: 
@@ -445,6 +431,7 @@ E2_sum_analyze = sum(E2_analyze,2);
 %signals needed for target detection:
 cursor_obs                      = n_analyze*decoder; 
 E1_mean_analyze                 = mean(E1_analyze,2);
+E2_mean_analyze                 = mean(E2_analyze, 2); 
 E1_mean_max                     = max(E1_mean_analyze); 
 [E2_dom_samples, E2_dom_sel]    = max(E2_analyze, [], 2);
 E2_subord_mean_analyze          = (E2_sum_analyze - E2_dom_samples)/(num_E2-1);
@@ -507,18 +494,23 @@ while(~task_complete)
     %3) E2_subord > mu (anded with previous constraint)
     %For each idx, subtract the 
     c3 = find(E2_subord_mean_analyze >= E2_subord_thresh(E2_dom_sel)); 
-    hits = intersect(intersect(c1, c2), c3);
+    hit_idxs_no_b2base = intersect(intersect(c1, c2), c3);
     %Remove hits that fall in a back2base
 
+    %----------------------------------------------------------------------
+    %Remove hits that fall in a back2base
     b2base_thresh = 0.5*T;
-    hits_valid = ones(length(hits),1); 
-    if length(hits) > 1
-        for i = 2:length(hits)
-            b2base_bool = sum(cursor_obs(hits(i-1):hits(i)) <= b2base_thresh) >= back2BaseFramesThresh; 
+    hits_valid = ones(length(hit_idxs_no_b2base),1); 
+    if length(hit_idxs_no_b2base) > 1
+        for i = 2:length(hit_idxs_no_b2base)
+            b2base_bool = sum(cursor_obs(hit_idxs_no_b2base(i-1):hit_idxs_no_b2base(i)) <= b2base_thresh) >= back2BaseFramesThresh; 
             hits_valid(i) = b2base_bool; 
         end
     end
-    reward_prob_per_frame = sum(hits_valid)/length(n_analyze);
+    hit_idxs_b2base         = hit_idxs_no_b2base(find(hits_valid)); 
+    valid_hit_idxs          = hit_idxs_b2base;
+    reward_prob_per_frame   = sum(hits_valid)/length(n_analyze);    
+    %----------------------------------------------------------------------
     
     
     reward_prob_per_frame
@@ -578,52 +570,85 @@ saveas(h, fullfile(plotPath, 'target_val_over_calibration.png'));
 % saveas(h, fullfile(save_dir, 'reward_per_frame_over_calibration.png')); 
 
 %%
-%Plot the hits on actual data: 
+%Summary results of cal: 
+disp('T'); 
+T
 
-%data: 2.29
-cursor_obs = n_analyze*decoder; 
-c1 = find(cursor_obs >= T); 
+% cursor_obs = n_analyze*decoder; 
+% c1 = find(cursor_obs >= T); 
 disp('num E2-E1 >= T'); 
-length(c1)
+num_c1 = length(c1)
 
-E1_mean_analyze = mean(E1_analyze,2)
-c2 = find(E1_mean_analyze <= E1_thresh);
+% E1_mean_analyze = mean(E1_analyze,2)
+% c2 = find(E1_mean_analyze <= E1_thresh);
 disp('E1 >= b'); 
-length(c2)
+num_c2 = length(c2)
 
-E2_mean_analyze = mean(E2_analyze,2); 
-[E2_dom_samples, E2_dom_sel] = max(E2_analyze, [], 2);
-E2_subord_mean_analyze = (E2_sum_analyze - E2_dom_samples)/(num_E2-1);
-%For each idx, subtract the 
-c3 = find(E2_subord_mean_analyze >= E2_subord_thresh(E2_dom_sel)); 
+% E2_mean_analyze = mean(E2_analyze,2); 
+% [E2_dom_samples, E2_dom_sel] = max(E2_analyze, [], 2);
+% E2_subord_mean_analyze = (E2_sum_analyze - E2_dom_samples)/(num_E2-1);
+% %For each idx, subtract the 
+% c3 = find(E2_subord_mean_analyze >= E2_subord_thresh(E2_dom_sel)); 
 disp('E2 subord >= c'); 
-length(c3)
+num_c3 = length(c3)
 
 num_cursor_hits = length(c1); 
 disp('num cursor target hits (wo E1<thr, E2sub>thr :'); 
 num_cursor_hits
 
-hit_times = intersect(intersect(c1, c2), c3);
 disp('num baseline hits WITHOUT B2BASE:'); 
-num_hits = length(hit_times)
+num_hits_no_b2base = length(hit_idxs_no_b2base)
 
-b2base_thresh = 0.5*T;
-hits_valid = ones(length(hit_times),1); 
-if length(hit_times) > 1
-    for i = 2:length(hit_times)
-        b2base_bool = sum(cursor_obs(hit_times(i-1):hit_times(i)) <= b2base_thresh) > 1; 
-        hits_valid(i) = b2base_bool; 
-    end
-end
-disp('num baseline hits WITH B2BASE:'); 
-num_valid_hits = sum(hits_valid)
+disp('num valid hits (WITH B2BASE):'); 
+num_valid_hits = length(valid_hit_idxs)
 
-valid_hit_times = hit_times(find(hits_valid)); 
+% b2base_thresh = 0.5*T;
+% hits_valid = ones(length(hit_times),1); 
+% if length(hit_times) > 1
+%     for i = 2:length(hit_times)
+%         b2base_bool = sum(cursor_obs(hit_times(i-1):hit_times(i)) <= b2base_thresh) > 1; 
+%         hits_valid(i) = b2base_bool; 
+%     end
+% end
+% disp('num baseline hits WITH B2BASE:'); 
+% num_valid_hits = sum(hits_valid)
+
+% valid_hit_times = hit_times(find(hits_valid)); 
 
 
 cursor_amp = (max(cursor_obs)-min(cursor_obs));
 cursor_offset = cursor_amp/10; 
 max_cursor = max(cursor_obs); 
+
+%%
+% Calculate parameters for auditory feedback
+cursor_target   = T;
+[fb_cal]        = cursor2audio_fb(cursor_obs, fb_settings, cursor_target);
+
+%%
+%PLOTS
+%TODO: decomposition into plotting functions
+%--------------------------------------------------------------------------
+%%
+%Plot auditory feedback
+% plot_cursor = linspace(cal.fb.cursor_min, cal.fb.cursor_max, 1000); 
+plot_cursor = linspace(min(cursor_obs), max(cursor_obs), 1000); 
+plot_freq   = cursor2audio_freq_v2(plot_cursor, fb_cal);
+h = figure;
+plot(plot_cursor, plot_freq); 
+xlabel('Cursor E2-E1'); 
+ylabel('Audiory Freq'); 
+vline(cursor_target); 
+saveas(h, fullfile(plotPath, 'cursor2freq.png')); 
+
+%%
+fb_obs = cursor2audio_freq_v2(cursor_obs, fb_cal); % cursor2audio_freq(cursor_obs, cal);
+num_fb_bins = 100; 
+h = figure;
+hist(fb_obs, num_fb_bins); 
+xlabel('audio freq'); 
+ylabel('baseline counts'); 
+saveas(h, fullfile(plotPath, 'base_freq_hist.png')); 
 
 %%
 h =figure; hold on;
@@ -637,7 +662,7 @@ plot(E2_subord_mean_analyze-2*cursor_amp);
 xlabel('frame'); 
 title(['hits with b2base: ' num2str(num_valid_hits)]); 
 legend({'c1', 'c2 - E1 cond', 'c3 - E2 cond', 'cursor', 'E1 mean', 'E2 subord mean'}); 
-vline(valid_hit_times); 
+vline(valid_hit_idxs); 
 saveas(h, fullfile(plotPath, 'cursor_hit_ts.png')); 
 
 %%
@@ -653,7 +678,9 @@ hist(cursor_obs, 50);
 vline(T); 
 xlabel('Cursor'); 
 ylabel('Number of Observations'); 
-title(['E2-E1 thr on E2-E1 hist, num valid hits: ' num2str(num_valid_hits) ' num hits: ' num2str(num_hits) ' num cursor hits: ' num2str(num_cursor_hits)]); 
+title(['E2-E1 thr on E2-E1 hist, num valid hits: ' num2str(num_valid_hits) ...
+    ' num hits no b2base: ' num2str(num_hits_no_b2base) ...
+    ' num cursor hits: ' num2str(num_cursor_hits)]); 
 saveas(h, fullfile(plotPath, 'cursor_dist_T.png')); 
 
 % %%
@@ -686,7 +713,7 @@ saveas(h, fullfile(plotPath, 'cursor_dist_T.png'));
 %%
 %Plot PSTH of neural activity locked to target hit: 
 psth_win = [-30 30]*3; 
-[psth_mean, psth_sem, psth_mat] = calc_psth(n_analyze, valid_hit_times, psth_win);
+[psth_mean, psth_sem, psth_mat] = calc_psth(n_analyze, valid_hit_idxs, psth_win);
 h = figure; hold on;
 offset = 0; 
 for i=1:num_neurons
@@ -733,6 +760,68 @@ save(save_path, 'AComp_BMI', 'n_mean', 'n_std', 'decoder', 'E_id', 'E1_sel_idxs'
 
 disp('T'); 
 T
+end
+
+function [decoder, E1_proj, E2_proj, E1_norm, E2_norm] = ...
+    def_decoder(num_neurons, E1_sel, E2_sel)
+
+E1_proj = zeros(num_neurons, 1); 
+E1_proj(E1_sel) = 1;
+E1_norm = sum(E1_sel); %can replace with vector norm.  
+disp('E1 proj'); 
+E1_proj = E1_proj/E1_norm;
+E1_proj
+
+E2_proj = zeros(num_neurons, 1); 
+E2_proj(E2_sel) = 1; 
+E2_norm = sum(E2_sel); 
+disp('E2 proj')
+E2_proj = E2_proj/E2_norm;
+E2_proj
+
+disp('decoder:')
+decoder = E2_proj - E1_proj
+end
+
+function [fb_cal] = cursor2audio_fb(cursor_obs, fb_settings, cursor_target)
+%INPUT: 
+%cursor_obs
+%cal
+%FIELDS: 
+% -- target.T
+% -- fb.freq_min
+% -- fb.freq_max
+
+%Assumes cursor = E2-E1, and cursor_target is positive.
+%Maps cursor to auditory feedback.
+% freq = a*exp(b*(cursor_trunc-cursor_min))
+
+%Copy from task_settings:
+fb_cal.settings = fb_settings; 
+% fb_settings.target_low_freq        = 1; % %Set the target cursor value to be the low frequency
+% fb_settings.freq_min               = 6000; 
+% fb_settings.freq_max               = 19000; 
+% fb_settings.arduino.com            = 'COM11';
+% fb_settings.arduino.label          = 'Mega2560';
+% fb_settings.arduino.pin            = 'D3';
+% fb_settings.arduino.duration       = 0.3; %ms, tones update at rate of BMI code, this is the longest a tone will play for
+% fb_settings.min_perctile            = 10;
+
+%Calculate:
+fb_cal.cursor_min         = ...
+    prctile(cursor_obs, fb_cal.settings.min_perctile); 
+%min(cursor_obs); %for fb, cursor is ceil to this value
+fb_cal.cursor_max         = ...
+    cursor_target; %for fb, cursor is floor to this value
+fb_cal.cursor_range       = ...
+    fb_cal.cursor_max - fb_cal.cursor_min; 
+% % freq = a*exp(b*(cursor_trunc-cursor_min))
+fb_cal.a                  = ...
+    fb_cal.settings.freq_min; 
+fb_cal.b                  = ...
+    (log(fb_cal.settings.freq_max) - log(fb_cal.a))/fb_cal.cursor_range; 
+end
+
 %%
 %ToDo: re-add target_on_cov_bool functionality:
 % if(target_on_cov_bool)

@@ -63,7 +63,9 @@ c2_val = E1_mean;
 %c3: E2_subord
 E2_sum = sum(E2); 
 [E2_dom_samples, E2_dom_sel]    = max(E2, [], 2); %E2_dom  CAREFUL THIS MAY BRING TWO!!
-% E2_dom_samples = dff(E2_dom_sel(1));
+% E2_dom_samples = dff(E2_dom_sel(1)); %THIS COMMENTED LINE IS A BUG, SAVED FOR
+% POSTERITY.  using indices from vector with only E2 cells for vector with
+% E2 and E1 cells. 
 E2_subord_mean          = (E2_sum - E2_dom_samples)/(num_E2-1);
 c3_val = E2_subord_mean;
 
