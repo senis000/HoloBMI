@@ -49,4 +49,20 @@ disp('reward delivery!')
 % end
 
 %%
+%Test audio feedback
+task_settings.fb.arduino.com            = 'COM11';
+task_settings.fb.arduino.label          = 'Mega2560';
+task_settings.fb.arduino.pin            = 'D3';
+a = arduino(task_settings.fb.arduino.com, ...
+    task_settings.fb.arduino.label);
+
+%%
+fb_freq_i = 7000;
+task_settings.fb.arduino.duration = 1
+playTone(a,...
+    task_settings.fb.arduino.pin,...
+    fb_freq_i,...
+    task_settings.fb.arduino.duration)
+
+%%
 clear s

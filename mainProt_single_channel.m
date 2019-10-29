@@ -66,8 +66,8 @@ cd(home_dir)
 env_dir = 'G:\VivekNuria\utils'
 
 % define Animal, day and folder where to save
-animal = 'NVI13'; day = 'D24';
-folder = 'E:\holobmi_E\191024';
+animal = 'NVI16'; day = 'D28';
+folder = 'E:\holobmi_E\191028';
 savePath = fullfile(folder, animal,  day);
 if ~exist(savePath, 'dir')
     mkdir(savePath);
@@ -456,7 +456,7 @@ plotHoloStimTimeLock(holoActivity, voltageRec, min_duration, plot_win)
 % (I often choose more than 4 neurons, manually stim the neurons.
 % then re-run once you've chosen your 4.)
 %--------------------------------------------------------------------------
-E2_candidate = unique([16 28 23 20]); %unique also sorts 33 34 31 19 29 5 
+E2_candidate = unique([36 42 22 26]); %unique also sorts 47 38 19 34 9 45 
 % E2_base = sort([21    36   127   196], 'ascend')
 
 %% Holo stim of Ensemble neurons
@@ -638,7 +638,7 @@ end
 load(base_file); 
 % totalneurons = 40; 
 % plotNeuronsBaseline(baseActivity, CComp, YrA, totalneurons)
-plotNeuronsBaseline(baseActivity, CComp, YrA, 30)
+plotNeuronsBaseline(baseActivity, CComp, YrA, 20)
 %TODO:  
 %ToDo: for plotting, do sliding window deltaf/f
 %%
@@ -649,8 +649,8 @@ plotNeuronsBaseline(baseActivity, CComp, YrA, 30)
 %
 %Manually enter and confirm the BMI neurons:
 % E2_candidate = unique([9 15 23 29]); %unique also sorts
-% 18 8 14 33
-E1_base = sort([6 26 4 11], 'ascend') % 8 31 11 26 7
+% 27 24 28 36]); %unique also sorts 9 6 4 37 
+E1_base = sort([15 13 18 23], 'ascend') % 16 9 17
 ensembleNeurons = [E1_base, E2_base];
 plotNeuronsEnsemble(baseActivity, ensembleNeurons, [ones(1,length(E1_base)) 2*ones(1,length(E2_base))])
 select_roi_data(roi_data, [E2_base, unique(E1_base)]); 
@@ -658,9 +658,9 @@ select_roi_data(roi_data, [E2_base, unique(E1_base)]);
 
 
 %% for E3 experiments:
-% E3_base = E2_base;  
-% E3_base = unique([57 52 66 63]); %unique also sorts  50 12 15 8 67 53 
-% E2_base = sort([49 46 23 50], 'ascend'); % 50 12 15 8 67 53 
+% E2_candidate = unique([36 42 22 26]); %unique also sorts 47 38 19 34 9 45 
+E3_base = unique([36 42 22 26]); %unique also sorts  50 12 15 8 67 53 
+E2_base = sort([47 38 19 34], 'ascend'); % 
 
 %%
 %OPTION: Use previously collected BMI data as the baseline data: 
@@ -695,7 +695,7 @@ A_file = roi_data_file; %fullfile(savePath, 'red.mat');
 exist(A_file)
 onacid_bool = 0
 
-sec_per_reward_range = [120 80]; 
+sec_per_reward_range = [120 90]; 
 
 
 frames_per_reward_range = sec_per_reward_range*baseline_frameRate;
@@ -734,9 +734,9 @@ close all
 %D0:
 %Note down: 
 % - T value
-% T: 0.18
-% num_valid_hits: 7
-% num_hits:15
+% T: 0.30//0.35
+% num_valid_hits: 7//7
+% num_hits:141//211
 %--------------------------------------------------------------------------
 %% Holo stim checking connectivity
 % create randomize run for each individual neuron of the ensemple
@@ -851,7 +851,7 @@ seedBase = 0;
 baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan
 if seedBase
     %TODO:
-    pretrain_file = 'BMI_online191016T222528'
+    pretrain_file = 'BMI_online191025T195532'
     load(fullfile(savePath, pretrain_file)); 
     pretrain_base = data.baseVector; 
     pretrain_base(:, isnan(pretrain_base(1,:))) = [];
@@ -1199,4 +1199,5 @@ end
 
 %--------------------------------------------------------------------------
 %%
-%NOTES: 15min baseline and I want to cry
+%NOTES: 15min baseline 
+% E3 control he clearly learned I ran extinction
