@@ -123,7 +123,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v5(folder, animal, day, 
     % values of parameters in frames
     expectedLengthExperiment = 60*60*frameRate; % in frames
     %EDIT HERE
-%     baseFrames = 100; 
+%USE: 
     baseFrames = round(2*60 * frameRate); % Period at the beginning without BMI to establish BL
 %     baseFrames = 100; %FOR DEBUGGING
 %     baseFrames = round(0.1*60 * frameRate); % Period at the beginning without BMI to establish BL    
@@ -463,7 +463,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v5(folder, animal, day, 
                     end
                     %fb: 
 %-------------------------------------------------------------------------- 
-                    fb_freq_i = cursor2audio_freq_v3_E1_E2_state(cursor, c2_bool, c3_bool, fb_cal);
+                    fb_freq_i = cursor2audio_freq_v3_E1_E2_state(cursor_i, c2_bool, c3_bool, fb_cal);
 %                     fb_freq_i = cursor2audio_freq_v2(cursor_i, fb_cal);  
 %                     if(debug_bool)
 %                         disp(['FB Freq: ' num2str(fb_freq_i)]);

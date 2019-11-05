@@ -77,8 +77,8 @@ cd(home_dir)
 env_dir = 'G:\VivekNuria\utils'
 
 % define Animal, day and folder where to save
-animal = 'NVI16'; day = 'D35';
-folder = 'E:\holobmi_E\191104';
+animal = 'NVI12'; day = 'fb_test';
+folder = 'E:\holobmi_E\191105';
 savePath = fullfile(folder, animal,  day);
 if ~exist(savePath, 'dir')
     mkdir(savePath);
@@ -465,7 +465,7 @@ plotHoloStimTimeLock(holoActivity, voltageRec, min_duration, plot_win)
 % (I often choose more than 4 neurons, manually stim the neurons.
 % then re-run once you've chosen your 4.)
 %--------------------------------------------------------------------------
-E2_candidate =[22 15 23 1]; % 13 3 11 8
+E2_candidate = sort([6 8 16 4], 'ascend'); % 5 2 12 8 10
 % E2_base = sort([21    36   127   196], 'ascend')
 
 %% Holo stim of Ensemble neurons
@@ -659,7 +659,7 @@ plotNeuronsBaseline(baseActivity, CComp, YrA, totalneurons)
 %Manually enter and confirm the BMI neurons:
 % E2_candidate = unique([9 15 23 29]); %unique also sorts
 % E2_base = sort([9 17 28 26], 'ascend') 3 6 5 4 35
-E1_base = sort([17 7 28 29 ], 'ascend')  % 27 5 13 9 4 3010
+E1_base = sort([2 9  1 14], 'ascend')  % 27 5 13 9 4 3010
 ensembleNeurons = [E1_base, E2_base];
 plotNeuronsEnsemble(baseActivity, ensembleNeurons, [ones(1,length(E1_base)) 2*ones(1,length(E2_base))])
 select_roi_data(roi_data, [E2_base, unique(E1_base)]); 
@@ -699,6 +699,7 @@ exist(A_file)
 onacid_bool = 0
 
 sec_per_reward_range = [120 90]; 
+% sec_per_reward_range = [120 90]; 
 % sec_per_reward_range = [10 5]
 
 
@@ -710,7 +711,7 @@ disp(frames_per_reward_range)
 % sec_per_reward_range must be higher than 80seconds (to keep the
 % occurence of artificial vs natural higher than 80% 
 
-E2mE1_prctile = 98; 
+E2mE1_prctile = 90; %98
 target_on_cov_bool = 0
 prefix_win = 40
 f0_win_bool = 1
@@ -724,10 +725,16 @@ cursor_zscore_bool = 0;
 f0_init_slide = 0; 
 
 close all
-[target_info_path, target_cal_ALL_path, fb_cal] = baseline2target_vE1strict_fb(n_f_file, A_file, onacid_bool,  ...
+
+[target_info_path, target_cal_ALL_path, fb_cal] = baseline2target_vE1strict_fb_E1_E2(n_f_file, A_file, onacid_bool,  ...
     E1_base, E2_base, frames_per_reward_range, target_on_cov_bool, ...
     prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, savePath, ...
-    cursor_zscore_bool, f0_init_slide, E2mE1_prctile, fb_settings);
+    cursor_zscore_bool, f0_init_slide, E2mE1_prctile, fb_settings)
+
+% [target_info_path, target_cal_ALL_path, fb_cal] = baseline2target_vE1strict_fb(n_f_file, A_file, onacid_bool,  ...
+%     E1_base, E2_base, frames_per_reward_range, target_on_cov_bool, ...
+%     prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, savePath, ...
+%     cursor_zscore_bool, f0_init_slide, E2mE1_prctile, fb_settings);
 
 % [target_info_path, target_cal_ALL_path] = baseline2target_vE1strict(n_f_file, A_file, onacid_bool,  ...
 %     E1_base, E2_base, frames_per_reward_range, target_on_cov_bool, ...

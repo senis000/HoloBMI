@@ -490,10 +490,12 @@ while(~task_complete)
     %1) E2-E1 > alpha
     c1 = find(cursor_obs >= T); 
     %2) E1 < mu
-    c2 = find(E1_mean_analyze <= E1_thresh);
+    E1_state_obs    = E1_mean_analyze <= E1_thresh;     
+    c2              = find(E1_state_obs); 
     %3) E2_subord > mu (anded with previous constraint)
     %For each idx, subtract the 
-    c3 = find(E2_subord_mean_analyze >= E2_subord_thresh(E2_dom_sel)); 
+    E2_state_obs    = E2_subord_mean_analyze >= E2_subord_thresh(E2_dom_sel);
+    c3              = find(E2_state_obs); 
     hit_idxs_no_b2base = intersect(intersect(c1, c2), c3);
     %Remove hits that fall in a back2base
 
@@ -623,10 +625,7 @@ max_cursor = max(cursor_obs);
 %%
 % Calculate parameters for auditory feedback
 cursor_target   = T;
-E1_state_obs    = c2; 
-E2_state_obs    = c3; 
-
-[fb_cal]        = cursor2audio_fb(cursor_obs, E1_state_obs, E2_state_obs, fb_settings, cursor_target);
+[fb_cal]        = cursor2audio_fb(cursor_obs, fb_settings, cursor_target);
 
 %%
 %PLOTS
@@ -646,7 +645,7 @@ E2_state_obs    = c3;
 
 %%
 % fb_obs = cursor2audio_freq_v2(cursor_obs, fb_cal); % cursor2audio_freq(cursor_obs, cal);
-fb_obs = cursor2audio_freq_v3_E1_E2_state(cursor_obs,E1_state_obs, E2_state_obs, cal);
+fb_obs = cursor2audio_freq_v3_E1_E2_state(cursor_obs,E1_state_obs, E2_state_obs, fb_cal);
 
 num_fb_bins = 100; 
 h = figure;
@@ -675,6 +674,7 @@ offset = 0;
 [h, offset_vec] = plot_cursor_E1_E2_activity(cursor_obs, E1_mean_analyze, E2_mean_analyze, n_analyze, E_id, E_color, offset)
 hold on; hline(T); 
 saveas(h, fullfile(plotPath, 'cursor_E1_E2_ts.png')); 
+
 %%
 cursor_obs = n_analyze*decoder; 
 h = figure;

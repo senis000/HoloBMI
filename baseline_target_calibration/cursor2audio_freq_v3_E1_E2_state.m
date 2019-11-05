@@ -53,18 +53,18 @@ freq = double(freq);
 %%
 %Truncate frequency based on ensemble state: 
 %Find where E1 is too low, and truncate frequency: 
-if fb_settings.target_low_freq
+if fb_cal.settings.target_low_freq
     %Truncate frequency where E1 threshold isn't met: 
     E1_low_idxs = E1_state_obs == 0;
-    freq(E1_low_idxs) = max(freq(E1_low_idxs), fb_settings.trunc_freq_E1_state);
+    freq(E1_low_idxs) = max(freq(E1_low_idxs), fb_cal.settings.trunc_freq_E1_state);
     %Truncate frequency where E1+E2 isn't met: 
-    E1_E2_low_idxs = (E1_state_obs ==0) & (E2_state_obs == 0); 
-    freq(E1_E2_low_idxs) = max(freq(E1_E2_low_idxs), fb_settings.trunc_freq_non_target);
+    E1_E2_low_idxs = (E1_state_obs ==1) & (E2_state_obs == 0); 
+    freq(E1_E2_low_idxs) = max(freq(E1_E2_low_idxs), fb_cal.settings.trunc_freq_non_target);
     
 else
     E1_low_idxs = E1_state_obs == 0;
-    freq(E1_low_idxs) = min(freq(E1_low_idxs), fb_settings.trunc_freq_E1_state);    
+    freq(E1_low_idxs) = min(freq(E1_low_idxs), fb_cal.settings.trunc_freq_E1_state);    
     %Truncate frequency where E1+E2 isn't met: 
     E1_E2_low_idxs = (E1_state_obs ==0) & (E2_state_obs == 0); 
-    freq(E1_E2_low_idxs) = min(freq(E1_E2_low_idxs), fb_settings.trunc_freq_non_target); 
+    freq(E1_E2_low_idxs) = min(freq(E1_E2_low_idxs), fb_cal.settings.trunc_freq_non_target); 
 end

@@ -53,7 +53,7 @@ duration of stim
 %--------------------------------------------------------------------------
 [task_settings] = define_BMI_task_settings();
 [fb_settings]   = define_fb_audio_settings();
-fb_bool = 1; %If any experiment will need audio
+fb_bool = 0; %If any experiment will need audio
 %Initialize arduino:
 if(fb_bool) 
     a = arduino(fb_settings.arduino.com, ...
