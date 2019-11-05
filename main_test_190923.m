@@ -43,7 +43,7 @@ Verify and Upload (COM12)
 disp('reward delivery!')
 % play(reward_sound);
 % pause(0.3); 
-% for i=1:1000
+% for i=1:100
     outputSingleScan(s,ni_reward); pause(0.001); outputSingleScan(s,ni_out);
     pause(0.3)
 % end

@@ -123,6 +123,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v4(folder, animal, day, 
     % values of parameters in frames
     expectedLengthExperiment = 60*60*frameRate; % in frames
     %EDIT HERE
+%     baseFrames = 100; 
     baseFrames = round(2*60 * frameRate); % Period at the beginning without BMI to establish BL
 %     baseFrames = 100; %FOR DEBUGGING
 %     baseFrames = round(0.1*60 * frameRate); % Period at the beginning without BMI to establish BL    
@@ -455,7 +456,8 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v4(folder, animal, day, 
 %                     end
                     data.fb_freq(data.frame) = fb_freq_i;
                     m.Data.fb_freq(data.frame) = data.fb_freq(data.frame); % saving in memmap    
-%--------------------------------------------------------------------------                    
+%--------------------------------------------------------------------------
+
                     if(fb_bool)
                         %Send tone arduino
                         playTone(a,...

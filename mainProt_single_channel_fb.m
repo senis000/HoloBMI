@@ -57,10 +57,13 @@ fb_bool = 1; %If any experiment will need audio
 %Initialize arduino:
 if(fb_bool) 
     a = arduino(fb_settings.arduino.com, ...
-        fb_settingstask_settings.fb.arduino.label);
+        fb_settings.arduino.label);
 else
     a = [];
 end
+
+%     a = arduino(task_settings.fb.arduino.com, ...
+%         task_settings.fb.arduino.label);
 
 cd G:\VivekNuria\Code\HoloBMI
 %DEFINE PATH_DATA: 
@@ -74,8 +77,8 @@ cd(home_dir)
 env_dir = 'G:\VivekNuria\utils'
 
 % define Animal, day and folder where to save
-animal = 'NVI13'; day = 'D1';
-folder = 'E:\holobmi_E\190926';
+animal = 'NVI16'; day = 'D35';
+folder = 'E:\holobmi_E\191104';
 savePath = fullfile(folder, animal,  day);
 if ~exist(savePath, 'dir')
     mkdir(savePath);
@@ -180,6 +183,7 @@ close all;
 
 %% REMEMBER TO TURN OFF PHASE OFFSET
 %% TURN OFF THE MANIPULATOR 
+%% TURN OFF AUTOSCALE
 
 %%
 %--------------------------------------------------------------------------
@@ -461,12 +465,12 @@ plotHoloStimTimeLock(holoActivity, voltageRec, min_duration, plot_win)
 % (I often choose more than 4 neurons, manually stim the neurons.
 % then re-run once you've chosen your 4.)
 %--------------------------------------------------------------------------
-E2_candidate = unique([17 45 46 52]); %unique also sorts
+E2_candidate =[22 15 23 1]; % 13 3 11 8
 % E2_base = sort([21    36   127   196], 'ascend')
 
 %% Holo stim of Ensemble neurons
 % Make GPL (points), BOT (measure activity)
-% -select markpoints_data for 
+% -select markpoints_data fo
 close all
 sel_idxs = unique(E2_candidate); 
 [sel_roi_data, sel_idxs] = select_roi_data(roi_data, sel_idxs); 
@@ -642,8 +646,8 @@ else
 end
 load(base_file); 
 % totalneurons = 40; 
-% plotNeuronsBaseline(baseActivity, CComp, YrA, totalneurons)
-plotNeuronsBaseline(baseActivity, CComp, YrA, 30)
+plotNeuronsBaseline(baseActivity, CComp, YrA, totalneurons)
+% plotNeuronsBaseline(baseActivity, CComp, YrA, 30)
 %TODO:  
 %ToDo: for plotting, do sliding window deltaf/f
 %%
@@ -654,7 +658,8 @@ plotNeuronsBaseline(baseActivity, CComp, YrA, 30)
 %
 %Manually enter and confirm the BMI neurons:
 % E2_candidate = unique([9 15 23 29]); %unique also sorts
-E1_base = sort([ 5 34 8 35], 'ascend')
+% E2_base = sort([9 17 28 26], 'ascend') 3 6 5 4 35
+E1_base = sort([17 7 28 29 ], 'ascend')  % 27 5 13 9 4 3010
 ensembleNeurons = [E1_base, E2_base];
 plotNeuronsEnsemble(baseActivity, ensembleNeurons, [ones(1,length(E1_base)) 2*ones(1,length(E2_base))])
 select_roi_data(roi_data, [E2_base, unique(E1_base)]); 
@@ -693,7 +698,8 @@ A_file = roi_data_file; %fullfile(savePath, 'red.mat');
 exist(A_file)
 onacid_bool = 0
 
-sec_per_reward_range = [120 100]; 
+sec_per_reward_range = [120 90]; 
+% sec_per_reward_range = [10 5]
 
 
 frames_per_reward_range = sec_per_reward_range*baseline_frameRate;
@@ -718,10 +724,9 @@ cursor_zscore_bool = 0;
 f0_init_slide = 0; 
 
 close all
-
-[target_info_path, target_cal_ALL_path, fb_cal] = baseline2target_vE1strict_fb(n_f_file, Acomp_file, onacid_bool,  ...
+[target_info_path, target_cal_ALL_path, fb_cal] = baseline2target_vE1strict_fb(n_f_file, A_file, onacid_bool,  ...
     E1_base, E2_base, frames_per_reward_range, target_on_cov_bool, ...
-    prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, save_dir, ...
+    prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, savePath, ...
     cursor_zscore_bool, f0_init_slide, E2mE1_prctile, fb_settings);
 
 % [target_info_path, target_cal_ALL_path] = baseline2target_vE1strict(n_f_file, A_file, onacid_bool,  ...
@@ -738,9 +743,9 @@ close all
 %D0:
 %Note down: 
 % - T value
-% T: 0.40  
-% num_valid_hits: 10
-% num_hits: 33
+% T = 0.24
+% num_valid_hits: 7 
+% num_hits: 90
 %--------------------------------------------------------------------------
 %% Holo stim checking connectivity
 % create randomize run for each individual neuron of the ensemple
@@ -816,7 +821,7 @@ end
 
 frameRate = 30 %baseline_frameRate
 baseFrames = 2*60*30; 
-expectedLengthExperiment = 40*60*frameRate
+expectedLengthExperiment = 70*60*frameRate
 
 % IHSImean, IHSIrange
 IHSImean = 20; 
@@ -896,11 +901,9 @@ expt_str = 'HoloVTA_pretrain';
 debug_bool = 0; 
 debug_input = []; 
 
-fb_cal
-
-BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v4(folder, animal, day, ...
+BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
     expt_str, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
-    cursor_zscore_bool, debug_bool, debug_input, baseValSeed, fb_cal);
+    cursor_zscore_bool, debug_bool, debug_input, baseValSeed);
 
 % BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
 %     expt_str, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
@@ -947,6 +950,15 @@ BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v4(folder, animal, day, ...
 % pretrain_base = data.baseVector; 
 % pretrain_base(:, isnan(pretrain_base(1,:))) = [];
 % baseValSeed = pretrain_base(:,end)
+%% Test FB
+
+fb_freq_i = 7000;
+task_settings.fb.arduino.duration = 1
+playTone(a,...
+    task_settings.fb.arduino.pin,...
+    fb_freq_i,...
+    task_settings.fb.arduino.duration)
+
 
 %%
 baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan
@@ -964,9 +976,13 @@ cursor_zscore_bool = 0;
 %T1 = 0.27
 
 expt_str = 'BMI'; 
-BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
+BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v4(folder, animal, day, ...
     expt_str, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
-    cursor_zscore_bool, debug_bool, debug_input, baseValSeed)
+    cursor_zscore_bool, debug_bool, debug_input, baseValSeed, fb_bool, fb_cal, a);
+
+% BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
+%     expt_str, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
+%     cursor_zscore_bool, debug_bool, debug_input, baseValSeed)
 % BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v3(folder, animal, day, ...
 %     'BMI', baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
 %     cursor_zscore_bool, debug_bool, debug_input);
@@ -1109,10 +1125,6 @@ end
 %--------------------------------------------------------------------------
 %%
 %NOTES:
-% Pretrain was BMI without reward.
-% Then he did random reward every 20-30 sec
-% he stopped drinking water at 15000 frames 
-% he drunk again (once and again, but not constantly when he received reward)
-% at 38000 frames aprox
-% at 59 he started licking for each reward, activity on the bhrain also
-% seemed more active and he stopped again
+% feedback with holo BMI (didnt do 100 paired holo-reward due to error-
+% error being that this version didn't say to use more than 75600 frames 
+% for holo scheduling)
