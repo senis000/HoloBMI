@@ -224,13 +224,13 @@ x_vec = (1:70000)/(30*60);
 
 %%
 h = figure;
-plot(smooth_hits_cell{1,2})
+plot(
 %%
 
 h = figure;
 hold on;
-plot(x_vec, stim_r_trunc, 'r', 'LineWidth', 2); 
-plot(x_vec, nostim_r_trunc, 'k', 'LineWidth', 2); 
+plot(x_vec, stim_r_trunc); 
+plot(x_vec, nostim_r_trunc); 
 legend({'stim reward pretrain', 'random reward pretrain'}); 
 xlabel('time (min)'); 
 ylabel('hits per min'); 
@@ -239,35 +239,3 @@ title('within session learning, each curve is average of 9 animal-sessions');
 
 export_fig(h, fullfile(save_dir, 'within_session_learning.eps'));
 export_fig(h, fullfile(save_dir, 'within_session_learning.png'));
-
-
-
-%%
-h = figure; 
-hold on;
-for i_day = 1:num_days
-    for i_animal = 1:num_animals
-        if sum(i_day == stim_idxs) > 0
-            plot(x_vec, smooth_hits_cell{i_animal, i_day}(1:70000)*30*60, 'r');
-        end
-%         else
-%             plot(smooth_hits_cell{i_animal, i_day}, 'k'); 
-%         end        
-    end
-end
-plot(x_vec, stim_r_trunc, 'r', 'LineWidth', 4); 
-
-%%
-h = figure; 
-hold on;
-for i_day = 1:num_days
-    for i_animal = 1:num_animals
-        if sum(i_day == stim_idxs) > 0
-%             plot(x_vec, smooth_hits_cell{i_animal, i_day}(1:70000)*30*60, 'r');
-        
-        else
-            plot(smooth_hits_cell{i_animal, i_day}(1:70000)*30*60, 'k'); 
-        end        
-    end
-end
-plot(x_vec, stim_r_trunc, 'k', 'LineWidth', 4); 

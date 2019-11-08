@@ -83,6 +83,17 @@ cursor_zscore_bool = 0;
 f0_init_slide = 0; 
 
 %%
+%Test new calibration: 
+n_f_file            = base_file;
+[fb_settings]       = define_fb_objective_audio_settings();
+save_dir = savePath; 
+E2mE1_prctile = 96; 
+[target_info_path, target_cal_ALL_path, fb_cal] = baseline2target_fb_objective(n_f_file, A_file, onacid_bool,  ...
+    E1_base, E2_base, frames_per_reward_range, target_on_cov_bool, ...
+    prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, save_dir, ...
+    cursor_zscore_bool, f0_init_slide, E2mE1_prctile, fb_settings)
+
+%%
 %Re-run calibraiton on baseline data: 
 n_f_file            = base_file;
 [fb_settings]       = define_fb_audio_settings();

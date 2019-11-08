@@ -1,4 +1,4 @@
-function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v5(folder, animal, day, ...
+function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v6(folder, animal, day, ...
     expt_str, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
     cursor_zscore_bool, debug_bool, debug_input, baseValSeed, fb_bool, fb_cal, a)
     %{
@@ -123,7 +123,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v5(folder, animal, day, 
     % values of parameters in frames
     expectedLengthExperiment = 60*60*frameRate; % in frames
     %EDIT HERE
-%     baseFrames = 100; 
+%USE: 
     baseFrames = round(2*60 * frameRate); % Period at the beginning without BMI to establish BL
 %     baseFrames = 100; %FOR DEBUGGING
 %     baseFrames = round(0.1*60 * frameRate); % Period at the beginning without BMI to establish BL    
@@ -178,7 +178,6 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v5(folder, animal, day, 
     else
         Fbuffer = double(nan(numberNeurons, movingAverageFrames));  %define a windows buffer
     end
-    data.cursor = double(nan(1,ceil(expectedLengthExperiment)));  %define a very long vector for cursor
     data.fb_freq    = double(nan(1,ceil(expectedLengthExperiment)));  %define a very long vector for fb_freq
     data.bmiAct = double(nan(numberNeurons, ceil(expectedLengthExperiment)));
 %     data.bmidffz = double(nan(numberNeurons, ceil(expectedLengthExperiment)));
@@ -194,6 +193,13 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v5(folder, animal, day, 
     data.vectorHolo = vectorHolo; 
     data.vectorHoloCL = vectorHolo;     
     data.vectorVTA = vectorVTA;
+
+    data.E2mE1              = double(nan(1,ceil(expectedLengthExperiment)));  %define a very long vector for cursor
+    data.E2mE1_error        = double(nan(1,ceil(expectedLengthExperiment)));  %define a very long vector for cursor
+    data.E1_val             = double(nan(1, ceil(expectedLengthExperiment)));
+    data.E1_error           = double(nan(1, ceil(expectedLengthExperiment)));
+    data.E2_val             = double(nan(1, ceil(expectedLengthExperiment)));
+    data.E2_error           = double(nan(1, ceil(expectedLengthExperiment)));
     
     if(debug_bool)
         if single_bool
@@ -203,10 +209,6 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v5(folder, animal, day, 
         end
         data.dff        = double(nan(numberNeurons, ceil(expectedLengthExperiment)));
         data.c1_bool    = double(nan(1, ceil(expectedLengthExperiment)));
-        data.c2_val     = double(nan(1, ceil(expectedLengthExperiment)));
-        data.c2_bool    = double(nan(1, ceil(expectedLengthExperiment)));
-        data.c3_val     = double(nan(1, ceil(expectedLengthExperiment)));
-        data.c3_bool    = double(nan(1, ceil(expectedLengthExperiment)));        
     end
 
     %initializing general flags and counters 
@@ -293,11 +295,17 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v5(folder, animal, day, 
         load(fullfile(savePath, 'strcMask.mat'), 'strcMask');
     end
     
+    
     %% Create the file where to store info in case matlab crashes
     fileName = fullfile(savePath, 'bmiExp.dat');
     % creates a file with the correct shape
     fileID = fopen(fileName,'w');
-    fwrite(fileID, data.cursor ,'double');
+    fwrite(fileID, data.E2mE1 ,'double');
+    fwrite(fileID, data.E2mE1_error ,'double');
+    fwrite(fileID, data.E1_val ,'double');
+    fwrite(fileID, data.E1_error ,'double');
+    fwrite(fileID, data.E2_val ,'double');
+    fwrite(fileID, data.E2_error ,'double'); 
     fwrite(fileID, data.fb_freq,'double');
     fwrite(fileID, data.bmiAct, 'double'); 
     fwrite(fileID, data.baseVector, 'double');     
@@ -309,7 +317,12 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v5(folder, animal, day, 
     fclose(fileID);
     % maps the file into memory
     m = memmapfile(fileName, 'Format',...
-        {'double',size(data.cursor),'cursor'; ...
+        {'double',size(data.E2mE1),'E2mE1'; ...
+        'double',size(data.E2mE1_error),'E2mE1_error'; ...
+        'double',size(data.E1_val),'E1_val'; ...
+        'double',size(data.E1_error),'E1_error'; ...
+        'double',size(data.E2_val),'E2_val'; ...
+        'double',size(data.E2_error),'E2_error'; ...
         'double',size(data.fb_freq),'fb_freq'; ...
         'double',size(data.bmiAct),'bmiAct'; ...
         'double',size(data.baseVector),'baseVector'; ...
@@ -319,7 +332,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v5(folder, animal, day, 
         'single',size(data.holoVTA),'holoVTA'; ...
         'single',size(data.trialStart),'trialStart'}, 'repeat', 1);     
     m.Writable = true;
-    
+        
 %     %TODO: fix this given bData
 %     %in case matlab crashes copy some info in txt
 %     fileID = fopen([savePath, 'bmiExp.txt'],'wt');
@@ -431,26 +444,41 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v5(folder, animal, day, 
                     % calculate (smoothed) DFF
                     dff = (Fsmooth - baseval) ./ baseval;
                     %Passing smoothed dff to "decoder"
-                    [~, cursor_i, target_hit, c1_bool, c2_val, c2_bool, c3_val, c3_bool] = ...
-                        dff2cursor_target(dff, bData, cursor_zscore_bool);
+                    [~, target_hit, ...
+                        E2mE1, E2mE1_bool, E2mE1_error, ...
+                        E1_val, E1_bool, E1_error, ...
+                        E2_val, E2_bool, E2_error] = ...
+                        dff2cursor_target_error(dff, bData, cursor_zscore_bool);                                         
+%                     [~, cursor_i, target_hit, c1_bool, c2_val, c2_bool, c3_val, c3_bool] = ...
+%                         dff2cursor_target(dff, bData, cursor_zscore_bool);
 %                     data.bmidffz(:,data.frame) = dff_z;
 %--------------------------------------------------------------------------
-                    disp(['Cursor: ' num2str(cursor_i)]); 
-                    data.cursor(data.frame) = cursor_i;
-                    m.Data.cursor(data.frame) = data.cursor(data.frame); % saving in memmap
+                    disp(['E2mE1: ' num2str(E2mE1)]); 
+                    
+                    %SAVE: 
+                    data.E2mE1(data.frame)              = E2mE1;
+                    data.E2mE1_error(data.frame)        = E2mE1_error;
+                    data.E1_val(data.frame)             = E1_val;
+                    data.E1_error(data.frame)           = E1_error;
+                    data.E2_val(data.frame)             = E2_val;
+                    data.E2_error(data.frame)           = E2_error; 
+                    
+                    m.Data.E2mE1(data.frame)            = data.E2mE1(data.frame); % saving in memmap
+                    m.Data.E2mE1_error(data.frame)      = data.E2mE1_error(data.frame); % saving in memmap
+                    m.Data.E1_val(data.frame)           = data.E1_val(data.frame); % saving in memmap
+                    m.Data.E1_error(data.frame)         = data.E1_error(data.frame); % saving in memmap
+                    m.Data.E2_val(data.frame)           = data.E2_val(data.frame); % saving in memmap
+                    m.Data.E2_error(data.frame)         = data.E2_error(data.frame); % saving in memmap
+                    
 %--------------------------------------------------------------------------                    
                     if debug_bool
                         data.dff(:,data.frame)      = dff;
                         data.c1_bool(data.frame)    = c1_bool; 
-                        data.c2_val(data.frame)     = c2_val;
-                        data.c2_bool(data.frame)    = c2_bool;
-                        data.c3_val(data.frame)     = c3_val;
-                        data.c3_bool(data.frame)    = c3_bool;
                     end
-                    
                     %fb: 
-%-------------------------------------------------------------------------- 
-                    fb_freq_i = cursor2audio_freq_v3_E1_E2_state(cursor,E1_state_obs, E2_state_obs, fb_cal);
+%--------------------------------------------------------------------------
+                    fb_freq_i = error2audio_freq(E2mE1_error, E1_error, E2_error, fb_cal);
+%                     fb_freq_i = cursor2audio_freq_v3_E1_E2_state(cursor_i, c2_bool, c3_bool, fb_cal);
 %                     fb_freq_i = cursor2audio_freq_v2(cursor_i, fb_cal);  
 %                     if(debug_bool)
 %                         disp(['FB Freq: ' num2str(fb_freq_i)]);

@@ -366,8 +366,11 @@ calibration_settings_bmi4   = calibration_settings;
 exist(baseline_mat)
 n_f_file = baseline_mat;
 close all;
-[calibration_settings, BMI_roi_path] = baseline2target_vE1strict_v2(n_f_file, roi_data_file, task_settings, ...
-    E1_base, E2_base, savePath);
+[cal, fb_cal, BMI_roi_path] = baseline2target_fb_objective_2pop(n_f_file, roi_data_file, task_settings, ...
+    E1_base, E2_base, save_dir);
+
+% [calibration_settings, BMI_roi_path] = baseline2target_vE1strict_v2(n_f_file, roi_data_file, task_settings, ...
+%     E1_base, E2_base, savePath);
 %ToDo: return the filename of 
 
 
@@ -430,9 +433,13 @@ vectorVTA= [];
 debug_bool = 0; 
 debug_input = []; 
 expt_str = 'BMI'; 
-BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable(folder, animal, day, ...
-    expt_str, calibration_settings, task_settings, a, vectorHolo, vectorVTA, ...
-    debug_bool, debug_input)
+
+BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_110719(folder, animal, day, ...
+    expt_str, cal, fb_cal, task_settings, a, vectorHolo, vectorVTA, ...
+    debug_bool, debug_input); 
+% BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable(folder, animal, day, ...
+%     expt_str, calibration_settings, task_settings, a, vectorHolo, vectorVTA, ...
+%     debug_bool, debug_input)
 %Stop:
 %1) pyctrl
 %2) load cells
