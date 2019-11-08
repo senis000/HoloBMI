@@ -77,8 +77,8 @@ cd(home_dir)
 env_dir = 'G:\VivekNuria\utils'
 
 % define Animal, day and folder where to save
-animal = 'NVI16'; day = 'D35';
-folder = 'E:\holobmi_E\191104';
+animal = 'NVI21'; day = 'D03';
+folder = 'E:\holobmi_E\191107';
 savePath = fullfile(folder, animal,  day);
 if ~exist(savePath, 'dir')
     mkdir(savePath);
@@ -223,7 +223,7 @@ auto_init = 1;  %initializes roi_data using automatic cell detection:
 % finemode = 1; %imTemplateMatch will be used instead of normxcorr2. It will be slower.
 % temmode = 0;  % 0 is for full circle (soma) 1 is for donuts (membrane)
 template_diam = 15; %diamter of difference of Gaussians in pixels
-thres = 0.6; %cell detection threshold as correlation coefficient
+thres = 0.5; %cell detection threshold as correlation coefficient
 cell_diam = 13; %CELL_DIAM is diameter used for dilation.
 finemode = 1; %imTemplateMatch will be used instead of normxcorr2. It will be slower.
 temmode = 1;  % 0 is for full circle (soma) 1 is for donuts (membrane)
@@ -236,6 +236,10 @@ if auto_init
 else
     roi_data = init_roi_data(im_bg, num_chan, chan_data);
 end
+
+% use the time now to draw some neurons in the screen
+% if result looks weird check pixel size, zoom and parameters of the
+% function
 
 %%
 %Visualize: 
@@ -406,6 +410,10 @@ disp(['Stim time per neuron (s): ' num2str(stim_time_per_neuron)]);
 disp(['Num neurons: ' num2str(numberNeurons)]); 
 disp(['Length (min): ' num2str(len_seq_stim)])
 
+
+% if position of stim cells looks different, "smaller/bigger" check the
+% pixel size
+
 %--------------------------------------------------------------------------
 %DO: 
 % upload .gpl in MarkPoints (Top half)
@@ -413,6 +421,7 @@ disp(['Length (min): ' num2str(len_seq_stim)])
 % update T-series repetitions in Prairie View with above number
 % Make sure Voltage Recording has all channels enabled
 % Make sure you turn on the laser power and pmt's
+% while running paint the neurons
 % TODO: automate uploading
 %--------------------------------------------------------------------------
 
@@ -465,7 +474,7 @@ plotHoloStimTimeLock(holoActivity, voltageRec, min_duration, plot_win)
 % (I often choose more than 4 neurons, manually stim the neurons.
 % then re-run once you've chosen your 4.)
 %--------------------------------------------------------------------------
-E2_candidate =[22 15 23 1]; % 13 3 11 8
+E2_candidate =[28 33 31 34 ]; % 28 29 33
 % E2_base = sort([21    36   127   196], 'ascend')
 
 %% Holo stim of Ensemble neurons
@@ -519,6 +528,7 @@ pl.Disconnect();
 
 %--------------------------------------------------------------------------
 %DO: 
+
 %1) upload the GPL file
 %2) upload XML file
 %3) Click BOT in Image Window, load BOT.cfg, only display ROI of interest
@@ -605,6 +615,8 @@ imshow(im_bg)
 %3) run and start pyctrl
 %4) Run following cell
 
+%0) if you need to convert other files from previous experiments do it now
+
 %% --------------------------------------------------------------------------
 if ~onacid_bool
     AComp = 0;
@@ -659,7 +671,7 @@ plotNeuronsBaseline(baseActivity, CComp, YrA, totalneurons)
 %Manually enter and confirm the BMI neurons:
 % E2_candidate = unique([9 15 23 29]); %unique also sorts
 % E2_base = sort([9 17 28 26], 'ascend') 3 6 5 4 35
-E1_base = sort([17 7 28 29 ], 'ascend')  % 27 5 13 9 4 3010
+E1_base = sort([32 37 13 14], 'ascend')  %  32 24 20 35
 ensembleNeurons = [E1_base, E2_base];
 plotNeuronsEnsemble(baseActivity, ensembleNeurons, [ones(1,length(E1_base)) 2*ones(1,length(E2_base))])
 select_roi_data(roi_data, [E2_base, unique(E1_base)]); 
@@ -739,13 +751,18 @@ close all
 %To Do: Show the percent correct of the pretrain period, based on the
 %calibration. 
 
+
+% CAREFUL!!! You don't want T too small (all noise) or too big (stim can not reach it)
+% ideal value is   0.2 < T < 0.5
+% if T too low, I can only recommend to change the E1 neurons or E2
+% if T too high you can change the ensemble neurons or this E2mE1_prctile = 97;
 %--------------------------------------------------------------------------
 %D0:
 %Note down: 
 % - T value
-% T = 0.24
+% T = 0.32
 % num_valid_hits: 7 
-% num_hits: 90
+% num_hits: 94
 %--------------------------------------------------------------------------
 %% Holo stim checking connectivity
 % create randomize run for each individual neuron of the ensemple
@@ -1074,6 +1091,57 @@ if random_reward_bool
 end
 
 
+%% HOLO PRETRAIN
+
+expectedLengthExperiment = 40*60*frameRate
+baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan
+
+IHSImean, IHSIrange
+IHSImean = 20; 
+IHSIrange = 10; 
+[vectorHolo, ISI] = createVectorHolo(frameRate, expectedLengthExperiment, IHSImean, IHSIrange, false);
+
+
+close all
+imshow(im_bg)
+clear s
+baselineCalibrationFile = target_info_path;
+vectorVTA = []
+%expt_str: 
+%     expt_cell = {...
+%         'BMI', ...
+%         'HoloVTA_pretrain', ...
+%         'Holo_pretrain', ...
+%         'VTA_pretrain'}; 
+
+expt_str = 'Holo_pretrain'; 
+debug_bool = 0; 
+debug_input = []; 
+
+BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
+    expt_str, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
+    cursor_zscore_bool, debug_bool, debug_input, baseValSeed)
+
+% BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v3(folder, animal, day, ...
+%     expt_str, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
+%     cursor_zscore_bool, debug_bool, debug_input);
+%TODO: add seed functionality
+%
+% BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v2(path_data.savePath, path_data.env_dir, ...
+%     expt_str, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
+%     cursor_zscore_bool, debug_bool, debug_input, baseValSeed);
+%saves filename with expt_str
+% BMIAcqnvsPrairienoTrialsHoloCL(folder, animal, day, expt_str, baselineCalibrationFile, baseline_frameRate, vectorHolo, vectorVTA, cursor_zscore_bool)
+
+%--------------------------------------------------------------------------
+%D0:
+%Stop:
+%1) pyctrl
+%2) load cells
+%3) video
+
+
+
 %% Holo stim checking connectivity
 if connectivity_bool
     if pl.Connected()
@@ -1125,6 +1193,5 @@ end
 %--------------------------------------------------------------------------
 %%
 %NOTES:
-% feedback with holo BMI (didnt do 100 paired holo-reward due to error-
-% error being that this version didn't say to use more than 75600 frames 
-% for holo scheduling)
+% only holo. Behavior load cell crashed before so I'm not sure if recording
+% is correct animal moves much more of what I can see in the window
