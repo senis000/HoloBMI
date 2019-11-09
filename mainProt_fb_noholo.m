@@ -44,8 +44,8 @@ duration of stim
 %--------------------------------------------------------------------------
 
 % define Animal, day and folder where to save
-animal = 'NY107'; day = 'D1';
-folder = 'E:\Vivek_e\training';
+animal = 'NY127'; day = '2019-11-08';
+folder = 'E:\ines';
 % folder = 'F:\Vivek\training';
 
 % define posz TODO can we get this from prairie?
@@ -66,6 +66,21 @@ end
 
 screen_size = get(0,'ScreenSize');
 
+
+%%
+%DO: enter zoom (either 1.5 or 2)
+zoom = 2; 
+posz = 0;
+pl = actxserver('PrairieLink.Application');
+pl.Connect(); disp('Connecting to prairie...');
+% Prairie variables
+px = pl.PixelsPerLine();
+py = pl.LinesPerFrame();
+micronsPerPixel.x = str2double(pl.GetState('micronsPerPixel', 'XAxis')); 
+micronsPerPixel.y = str2double(pl.GetState('micronsPerPixel', 'YAxis')); 
+pl.Disconnect();
+disp('Disconnected from prairie');
+
 %%
 %--------------------------------------------------------------------------
 %DO:
@@ -85,19 +100,37 @@ screen_size = get(0,'ScreenSize');
 %--save the images into 'redgreen' folder in 'savePath'
 %--------------------------------------------------------------------------
 %%
-%Load red, green images: 
-redgreen_dir = fullfile(savePath, 'redgreen'); 
-exist(redgreen_dir)
-red_path      = fullfile(redgreen_dir, 'red_mean.tif'); 
-exist(red_path)
-green_path    = fullfile(redgreen_dir, 'green_mean.tif'); 
-exist(green_path)
+%Option 1: load images from prairie directly
+
+
+option1_bool = 1; 
+if option1_bool
+    pl = actxserver('PrairieLink.Application');
+    pl.Connect();
+    disp('Connecting to prairie')
+    pause(2);    
+    green_im = pl.GetImage_2(2, px, py);
+    red_im = pl.GetImage_2(1, px, py);
+    pl.Disconnect();
+    disp('Disconnected from prairie')
+else
+    %Load red, green images: 
+    redgreen_dir = fullfile(savePath, 'redgreen'); 
+    exist(redgreen_dir)
+    red_path      = fullfile(redgreen_dir, 'red_mean.tif'); 
+    exist(red_path)
+    green_path    = fullfile(redgreen_dir, 'green_mean.tif'); 
+    exist(green_path)    
+    green_im    = imread(green_path); 
+    red_im      = imread(red_path); 
+end
+
+
 %%
 % red_path      = fullfile('E:\ines_e\redgreen-000', 'red.tif'); 
 % green_path    = fullfile('E:\ines_e\redgreen-000', 'green.tif'); 
 
-green_im    = imread(green_path); 
-red_im      = imread(red_path);  
+ 
 
 %Initialize data structure to save overlays:
 rg_struct = struct(...
@@ -135,10 +168,18 @@ plot_images(1).label = 'Green Mean';
 plot_images(2).im = red_im; 
 plot_images(2).label = 'Red Mean'; 
 
+num_chan = 2; 
+chan_data(1).chan_idx = 1;
+chan_data(1).label = 'r';
+chan_data(2).chan_idx = 2;
+chan_data(2).label = 'g';
 roi_init_bool = 1; %Initializes an empty roi_data structure
 if(roi_init_bool)
-    roi_data = init_roi_data(im_bg); 
+%     roi_data = init_roi_data(im_bg); 
+    roi_data = init_roi_data(im_bg, num_chan, chan_data)
 end
+
+%%
 disp('Adding ROIs to image!'); 
 [roi_data] = draw_roi_2chan(plot_images, roi_data);
 
@@ -292,7 +333,7 @@ load(baseline_mat);
 totalneurons = 30; 
 sel = roi_data.chan(1).idxs; 
 plotSelNeuronsBaseline(baseActivity, CComp, YrA, totalneurons, sel);
-title('RED'); 
+% title('RED'); 
 %D1
 %[7 1 11 2]
 %%
@@ -311,11 +352,11 @@ plotSelNeuronsBaseline(baseActivity, CComp, YrA, totalneurons, sel);
 %Manually enter:
 %E2 green
 %E1 red
-E2_base = sort([1 7 26 42], 'ascend') %Activity needs to increase 
+E2_base = sort([21 15 16 19 17 18 25 22 20 23 24], 'ascend') %Activity needs to increase 
 %8 21 30 45
 %R G R G
 %5 6 7 8
-E1_base = sort([2 11 31 40], 'ascend') %Activity needs to decrease
+E1_base = sort([11 6 9 1 4 3 12 8 7 10 13], 'ascend') %Activity needs to decrease
 ensembleNeurons = [E1_base, E2_base];
 ensembleID = [ones(1,length(E1_base)) 2*ones(1,length(E2_base))]; 
 %Change the colors of the traces: 
@@ -341,7 +382,7 @@ plotNeuronsEnsemble(baseActivity, ensembleNeurons, ensembleID)
 % calibration_settings_bmi3 = calibration_settings;
 
 %%
-calibration_settings_bmi4   = calibration_settings;
+% calibration_settings_bmi4   = calibration_settings;
 
 %% Calibrate Target with Baseline simulation
 %--------------------------------------------------------------------------
@@ -367,7 +408,7 @@ exist(baseline_mat)
 n_f_file = baseline_mat;
 close all;
 [cal, fb_cal, BMI_roi_path] = baseline2target_fb_objective_2pop(n_f_file, roi_data_file, task_settings, ...
-    E1_base, E2_base, save_dir);
+    E1_base, E2_base, savePath);
 
 % [calibration_settings, BMI_roi_path] = baseline2target_vE1strict_v2(n_f_file, roi_data_file, task_settings, ...
 %     E1_base, E2_base, savePath);
@@ -418,6 +459,14 @@ if seedBase
     pretrain_base(:, isnan(pretrain_base(1,:))) = [];
     baseValSeed = pretrain_base(:,end)
 end
+
+%%
+fb_freq_i = 7000;
+% task_settings.fb.arduino.duration = 1
+playTone(a,...
+    task_settings.fb.arduino.pin,...
+    fb_freq_i,...
+    1)
 
 %% run BMI
 %--------------------------------------------------------------------------

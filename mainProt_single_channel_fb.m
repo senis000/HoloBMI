@@ -77,8 +77,8 @@ cd(home_dir)
 env_dir = 'G:\VivekNuria\utils'
 
 % define Animal, day and folder where to save
-animal = 'NVI21'; day = 'D03';
-folder = 'E:\holobmi_E\191107';
+animal = 'NVI21'; day = 'D04';
+folder = 'E:\holobmi_E\191108';
 savePath = fullfile(folder, animal,  day);
 if ~exist(savePath, 'dir')
     mkdir(savePath);
@@ -474,7 +474,7 @@ plotHoloStimTimeLock(holoActivity, voltageRec, min_duration, plot_win)
 % (I often choose more than 4 neurons, manually stim the neurons.
 % then re-run once you've chosen your 4.)
 %--------------------------------------------------------------------------
-E2_candidate =[28 33 31 34 ]; % 28 29 33
+E2_candidate =[10 19 47 7]; % 7 50 13 49 16 41 33  
 % E2_base = sort([21    36   127   196], 'ascend')
 
 %% Holo stim of Ensemble neurons
@@ -658,8 +658,8 @@ else
 end
 load(base_file); 
 % totalneurons = 40; 
-plotNeuronsBaseline(baseActivity, CComp, YrA, totalneurons)
-% plotNeuronsBaseline(baseActivity, CComp, YrA, 30)
+% plotNeuronsBaseline(baseActivity, CComp, YrA, totalneurons)
+plotNeuronsBaseline(baseActivity, CComp, YrA, 30)
 %TODO:  
 %ToDo: for plotting, do sliding window deltaf/f
 %%
@@ -671,7 +671,7 @@ plotNeuronsBaseline(baseActivity, CComp, YrA, totalneurons)
 %Manually enter and confirm the BMI neurons:
 % E2_candidate = unique([9 15 23 29]); %unique also sorts
 % E2_base = sort([9 17 28 26], 'ascend') 3 6 5 4 35
-E1_base = sort([32 37 13 14], 'ascend')  %  32 24 20 35
+E1_base = sort([33 13 38 34], 'ascend')  % 34 56 12 54 12 26 29
 ensembleNeurons = [E1_base, E2_base];
 plotNeuronsEnsemble(baseActivity, ensembleNeurons, [ones(1,length(E1_base)) 2*ones(1,length(E2_base))])
 select_roi_data(roi_data, [E2_base, unique(E1_base)]); 
@@ -760,9 +760,9 @@ close all
 %D0:
 %Note down: 
 % - T value
-% T = 0.32
-% num_valid_hits: 7 
-% num_hits: 94
+% T = 0.25
+% num_valid_hits: 7
+% num_hits: 39
 %--------------------------------------------------------------------------
 %% Holo stim checking connectivity
 % create randomize run for each individual neuron of the ensemple
@@ -1193,5 +1193,4 @@ end
 %--------------------------------------------------------------------------
 %%
 %NOTES:
-% only holo. Behavior load cell crashed before so I'm not sure if recording
-% is correct animal moves much more of what I can see in the window
+% holobmi

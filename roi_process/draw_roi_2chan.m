@@ -103,6 +103,8 @@ while(~roi_complete_bool)
             roi_data.num_rois = roi_data.num_rois+1; 
             %This ROI mask binary:
             roi_data.roi_bin_cell{roi_data.num_rois}      = rois;
+            %Update x,y,r:
+            [roi_ctr] = roi_bin_cell2center_radius({rois});
             roi_data.x = [roi_data.x roi_ctr.x];
             roi_data.y = [roi_data.y roi_ctr.y];
             roi_data.r = [roi_data.r roi_ctr.r];             

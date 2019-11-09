@@ -1,6 +1,6 @@
 function roi_data = init_roi_data(im_bg, num_chan, chan_data)
 %im_mask: num_rows X num_cols x num_chan
-if(numel(size(im_bg)))
+if(size(im_bg,3) ~= 3)
     roi_data.im_bg_one_chan = im_bg; 
     im_bg = repmat(im_bg, [1 1 3]); 
 end

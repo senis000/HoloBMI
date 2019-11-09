@@ -422,7 +422,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_110719(folder, anim
                         E2mE1, E2mE1_bool, E2mE1_error, ...
                         E1_val, E1_bool, E1_error, ...
                         E2_val, E2_bool, E2_error] = ...
-                        dff2cursor_target_error_cal(dff, cal, cursor_zscore_bool)                     
+                        dff2cursor_target_error_cal(dff, cal, task_settings.cursor_zscore_bool);                     
                     
 %                     [cursor_i, target_hit, c1_bool, ~, c2_bool, ~, c3_bool] = ...
 %                         dff2cursor_target_v2(dff, cal);
@@ -490,7 +490,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_110719(folder, anim
                     end
 
                     if backtobaselineFlag 
-                        if data.cursor(data.frame) <= back2Base 
+                        if data.E2mE1(data.frame) <= back2Base 
                             back2BaseCounter = back2BaseCounter+1;
 
                         end

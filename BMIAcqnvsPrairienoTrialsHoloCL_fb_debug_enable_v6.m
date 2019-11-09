@@ -518,7 +518,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v6(folder, animal, day, 
                     end
 
                     if backtobaselineFlag 
-                        if data.cursor(data.frame) <= back2Base 
+                        if data.E2mE1(data.frame) <= back2Base 
                             back2BaseCounter = back2BaseCounter+1;
 
                         end

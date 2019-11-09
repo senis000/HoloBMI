@@ -56,6 +56,7 @@ duration of stim
 fb_bool = 1; %If any experiment will need audio
 %Initialize arduino:
 if(fb_bool) 
+    clear a
     a = arduino(fb_settings.arduino.com, ...
         fb_settings.arduino.label);
 else
@@ -77,8 +78,8 @@ cd(home_dir)
 env_dir = 'G:\VivekNuria\utils'
 
 % define Animal, day and folder where to save
-animal = 'NVI12'; day = 'fb_test';
-folder = 'E:\holobmi_E\191105';
+animal = 'NVI18'; day = '2019-11-08';
+folder = 'H:\ines_h';
 savePath = fullfile(folder, animal,  day);
 if ~exist(savePath, 'dir')
     mkdir(savePath);
@@ -657,9 +658,9 @@ plotNeuronsBaseline(baseActivity, CComp, YrA, totalneurons)
 %--------------------------------------------------------------------------
 %
 %Manually enter and confirm the BMI neurons:
-% E2_candidate = unique([9 15 23 29]); %unique also sorts
-% E2_base = sort([9 17 28 26], 'ascend') 3 6 5 4 35
-E1_base = sort([2 9  1 14], 'ascend')  % 27 5 13 9 4 3010
+% E2_candidate = unique([8 28 16 19]); %unique also sorts
+E2_base = sort([8 28 16 19], 'ascend') %3 6 5 4 35
+E1_base = sort([26 22 23 27], 'ascend')  % 27 5 13 9 4 3010
 ensembleNeurons = [E1_base, E2_base];
 plotNeuronsEnsemble(baseActivity, ensembleNeurons, [ones(1,length(E1_base)) 2*ones(1,length(E2_base))])
 select_roi_data(roi_data, [E2_base, unique(E1_base)]); 

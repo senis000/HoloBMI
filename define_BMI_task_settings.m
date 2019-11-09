@@ -51,7 +51,7 @@ task_settings.b2base_coeff              = 0.5;
 %a frame counts as back2base if cursor < b2base_coeff*T, where T is target cursor value.  
 
 %feedback: 
-fb_bool = 0; 
+fb_bool = 1; 
 task_settings.fb.fb_bool                = fb_bool; 
 task_settings.fb.target_low_freq        = 1; 
 %Set the target cursor value to be the low frequency
@@ -61,6 +61,12 @@ task_settings.fb.arduino.com            = 'COM11';
 task_settings.fb.arduino.label          = 'Mega2560';
 task_settings.fb.arduino.pin            = 'D3';
 task_settings.fb.arduino.duration       = 0.3; %ms, tones update at rate of BMI code, this is the longest a tone will play for
+task_settings.fb.obj_max_perctile       = 90; 
+
+task_settings.fb.lambda_E2mE1           = 0.5; 
+task_settings.fb.lambda_E1              = 0.25; 
+task_settings.fb.lambda_E2              = 0.25; 
+
 
 %Fields set in calibration: 
 % task_settings.fb.cursor_min         = []; %for fb, cursor is ceil to this value

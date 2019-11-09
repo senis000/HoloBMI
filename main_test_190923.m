@@ -66,3 +66,4 @@ playTone(a,...
 
 %%
 clear s
+clear a
