@@ -577,7 +577,7 @@ E2_subord_mean_analyze          = (E2_sum_analyze - E2_dom_samples)/(num_E2-1);
 %T:
 T0      = max(cursor_obs);
 T       = T0; 
-T_min   = 0;
+T_min   = prctile(cursor_obs, 90); 
 
 %E2:
 E2_coeff0           = 0.5;
@@ -591,7 +591,7 @@ E1_coeff            = E1_coeff0;
 E1_thresh           = E1_mean + E1_coeff*E1_std; %E1_mean_max; %E1_mean;
 
 %Step size: 
-T_delta             = 0.05;
+T_delta             = 0.01;
 E2_coeff_delta      = 0.05; %0.05 
 E1_coeff_delta      = 0.05; %0.05 
 task_complete       = 0;

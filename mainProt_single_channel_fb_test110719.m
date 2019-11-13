@@ -78,7 +78,7 @@ cd(home_dir)
 env_dir = 'G:\VivekNuria\utils'
 
 % define Animal, day and folder where to save
-animal = 'NVI18'; day = '2019-11-08';
+animal = 'NVI18'; day = '2019-11-12';
 folder = 'H:\ines_h';
 savePath = fullfile(folder, animal,  day);
 if ~exist(savePath, 'dir')
@@ -659,12 +659,21 @@ plotNeuronsBaseline(baseActivity, CComp, YrA, totalneurons)
 %
 %Manually enter and confirm the BMI neurons:
 % E2_candidate = unique([8 28 16 19]); %unique also sorts
-E2_base = sort([8 28 16 19], 'ascend') %3 6 5 4 35
-E1_base = sort([26 22 23 27], 'ascend')  % 27 5 13 9 4 3010
+E2_base = sort([8 17 2 6], 'ascend') %3 6 5 4 35
+E1_base = sort([5 1 10 23], 'ascend')  % 27 5 13 9 4 3010
 ensembleNeurons = [E1_base, E2_base];
 plotNeuronsEnsemble(baseActivity, ensembleNeurons, [ones(1,length(E1_base)) 2*ones(1,length(E2_base))])
 select_roi_data(roi_data, [E2_base, unique(E1_base)]); 
 % E2_candidates = [39 45 59 37 88 6 26 46 78 48 22 20 33]
+
+%%
+%Create BOT using E1, E2
+%This has a bug, it seems like cells 1-4 are E2
+sel_idxs = [E1_base, E2_base]; 
+[bmi_roi_data, sel_idxs] = select_roi_data(roi_data, sel_idxs); 
+%BOT
+bot_candidates_path = fullfile(savePath, 'BOT_E1_E2.cfg'); 
+createBot_v2(bot_candidates_path, bmi_roi_data.x, bmi_roi_data.y, bmi_roi_data.r)
 
 %%
 %OPTION: Use previously collected BMI data as the baseline data: 
@@ -755,10 +764,12 @@ close all
 %--------------------------------------------------------------------------
 %D0:
 %Note down: 
-% - T value
-% T = 0.24
+% % - T value
+% T =
+% 
+%     0.5345
 % num_valid_hits: 7 
-% num_hits: 90
+% num_hits no b2base: 171
 %--------------------------------------------------------------------------
 %% Holo stim checking connectivity
 % create randomize run for each individual neuron of the ensemple
@@ -976,7 +987,7 @@ playTone(a,...
 %%
 baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan
 baselineCalibrationFile = target_info_path;
-%%
+%
 close all
 imshow(im_bg)
 %  baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan
@@ -1135,6 +1146,5 @@ end
 %--------------------------------------------------------------------------
 %%
 %NOTES:
-% feedback with holo BMI (didnt do 100 paired holo-reward due to error-
-% error being that this version didn't say to use more than 75600 frames 
-% for holo scheduling)
+%Ran an extra 20 minutes.  Animal may have improved more in that extra 20.
+% 

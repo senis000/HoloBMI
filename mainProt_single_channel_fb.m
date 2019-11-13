@@ -77,8 +77,8 @@ cd(home_dir)
 env_dir = 'G:\VivekNuria\utils'
 
 % define Animal, day and folder where to save
-animal = 'NVI21'; day = 'D04';
-folder = 'E:\holobmi_E\191108';
+animal = 'NVI20'; day = 'D08';
+folder = 'E:\holobmi_E\191112';
 savePath = fullfile(folder, animal,  day);
 if ~exist(savePath, 'dir')
     mkdir(savePath);
@@ -474,7 +474,7 @@ plotHoloStimTimeLock(holoActivity, voltageRec, min_duration, plot_win)
 % (I often choose more than 4 neurons, manually stim the neurons.
 % then re-run once you've chosen your 4.)
 %--------------------------------------------------------------------------
-E2_candidate =[10 19 47 7]; % 7 50 13 49 16 41 33  
+E2_candidate =[14 19 29 27 ]; %  16 26 6 15 24
 % E2_base = sort([21    36   127   196], 'ascend')
 
 %% Holo stim of Ensemble neurons
@@ -670,12 +670,19 @@ plotNeuronsBaseline(baseActivity, CComp, YrA, 30)
 %
 %Manually enter and confirm the BMI neurons:
 % E2_candidate = unique([9 15 23 29]); %unique also sorts
-% E2_base = sort([9 17 28 26], 'ascend') 3 6 5 4 35
-E1_base = sort([33 13 38 34], 'ascend')  % 34 56 12 54 12 26 29
+% E2_base = sort([7 9 12 29]; %8 21 10 6 17 3 18
+E1_base = sort([16 15 19 8], 'ascend')  %23 18 21 
 ensembleNeurons = [E1_base, E2_base];
 plotNeuronsEnsemble(baseActivity, ensembleNeurons, [ones(1,length(E1_base)) 2*ones(1,length(E2_base))])
 select_roi_data(roi_data, [E2_base, unique(E1_base)]); 
 % E2_candidates = [39 45 59 37 88 6 26 46 78 48 22 20 33]
+%E2_candidate =[19 33 37 24]; % 25 16 32 15  36 35 18 12  
+%% for E3 experiments:
+% E2_candidate = unique([36 42 22 26]); %unique also sorts 47 38 19 34 9 45 
+% E3_base = unique([7 9 12 29]); % 22 21 16 23 4 5 9 
+% E2_base = sort([8 3 18 6], 'ascend'); % 
+
+
 
 %%
 %OPTION: Use previously collected BMI data as the baseline data: 
@@ -760,9 +767,9 @@ close all
 %D0:
 %Note down: 
 % - T value
-% T = 0.25
-% num_valid_hits: 7
-% num_hits: 39
+% T = 0.29
+% num_valid_hits: 8
+% num_hits: 73
 %--------------------------------------------------------------------------
 %% Holo stim checking connectivity
 % create randomize run for each individual neuron of the ensemple

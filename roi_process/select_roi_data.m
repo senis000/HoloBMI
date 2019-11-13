@@ -20,7 +20,7 @@ function [roi_data_sel, sel_idxs] = select_roi_data(roi_data, sel_idxs)
 %        im_roi_rg: [512×512×3 double]
 %             chan: [1×2 struct]
 
-sel_idxs                        = unique(sel_idxs);
+% sel_idxs                        = unique(sel_idxs);
 roi_data_sel.sel_idxs           = sel_idxs; %ascending order
 roi_data_sel.im_bg              = roi_data.im_bg; 
 roi_data_sel.num_rows           = roi_data.num_rows; 

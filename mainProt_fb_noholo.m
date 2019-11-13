@@ -44,7 +44,7 @@ duration of stim
 %--------------------------------------------------------------------------
 
 % define Animal, day and folder where to save
-animal = 'NY127'; day = '2019-11-08';
+animal = 'NY127'; day = '2019-11-12';
 folder = 'E:\ines';
 % folder = 'F:\Vivek\training';
 
@@ -103,7 +103,7 @@ disp('Disconnected from prairie');
 %Option 1: load images from prairie directly
 
 
-option1_bool = 1; 
+option1_bool = 0; 
 if option1_bool
     pl = actxserver('PrairieLink.Application');
     pl.Connect();
@@ -117,7 +117,7 @@ else
     %Load red, green images: 
     redgreen_dir = fullfile(savePath, 'redgreen'); 
     exist(redgreen_dir)
-    red_path      = fullfile(redgreen_dir, 'red_mean.tif'); 
+    red_path      = fullfile(redgreen_dir, 'red.tif'); 
     exist(red_path)
     green_path    = fullfile(redgreen_dir, 'green_mean.tif'); 
     exist(green_path)    
@@ -330,20 +330,29 @@ else
 end
 load(baseline_mat); 
 %Plot Red: 
-totalneurons = 30; 
+totalneurons = length(roi_data.chan(1).idxs) %53
 sel = roi_data.chan(1).idxs; 
 plotSelNeuronsBaseline(baseActivity, CComp, YrA, totalneurons, sel);
 % title('RED'); 
 %D1
 %[7 1 11 2]
 %%
+red_sel = [1 24 25 13 34 36 28 26 5 20 85 27 112 102 6 79 22 124 30 90 15 8 111 32 98 105 84]
+red_sel = red_sel(4:23); 
+length(red_sel)
+%%
 %Plot Green:
-totalneurons = 30; 
+% totalneurons = 30; 
+totalneurons = length(roi_data.chan(2).idxs) 
 sel = roi_data.chan(2).idxs; 
 plotSelNeuronsBaseline(baseActivity, CComp, YrA, totalneurons, sel);
 % title('GREEN'); 
 %D2
 %[42 31 40 26]
+%%
+green_sel = [52 38 55 50 74 115 116 101 76 63 83 77 41 37 110 42 61 44 80 73 46 39 48 103 123 91 60 119]
+green_sel = green_sel(1:20)
+length(green_sel)
 %%
 %--------------------------------------------------------------------------
 %D0:
@@ -352,11 +361,19 @@ plotSelNeuronsBaseline(baseActivity, CComp, YrA, totalneurons, sel);
 %Manually enter:
 %E2 green
 %E1 red
-E2_base = sort([21 15 16 19 17 18 25 22 20 23 24], 'ascend') %Activity needs to increase 
+% E2_base = sort([red_sel(1:5) red_sel(16:20) green_sel(1:5) green_sel(16:20)], 'ascend') %Activity needs to increase 
+% E1_base = sort([red_sel(6:15) green_sel(6:15)], 'ascend') %Activity needs to decrease
+
+% E2_base = sort([red_sel(1:10) green_sel(1:10)], 'ascend') %Activity needs to increase 
+% E1_base = sort([red_sel(11:20) green_sel(11:20)], 'ascend') %Activity needs to decrease
+
+E2_base = sort(green_sel, 'ascend') %Activity needs to increase 
+E1_base = sort(red_sel, 'ascend') %Activity needs to decrease
+
+length(E2_base)
 %8 21 30 45
 %R G R G
 %5 6 7 8
-E1_base = sort([11 6 9 1 4 3 12 8 7 10 13], 'ascend') %Activity needs to decrease
 ensembleNeurons = [E1_base, E2_base];
 ensembleID = [ones(1,length(E1_base)) 2*ones(1,length(E2_base))]; 
 %Change the colors of the traces: 
@@ -407,6 +424,7 @@ plotNeuronsEnsemble(baseActivity, ensembleNeurons, ensembleID)
 exist(baseline_mat)
 n_f_file = baseline_mat;
 close all;
+task_settings.calibration.sec_per_reward_range = [120 110]
 [cal, fb_cal, BMI_roi_path] = baseline2target_fb_objective_2pop(n_f_file, roi_data_file, task_settings, ...
     E1_base, E2_base, savePath);
 
@@ -422,12 +440,12 @@ close all;
 %D0:
 %Note down: 
 % - T value
-% T: 0.1014
-%                 num_c1: 1355
-%                 num_c2: 12870
-%                 num_c3: 114
-%     num_hits_no_b2base: 20
-%         num_valid_hits: 10
+% T: 0.988
+%                 num_c1: 69
+%                 num_c2: 15009
+%                 num_c3: 6513
+%     num_hits_no_b2base: 19
+%         num_valid_hits: 9
 %--------------------------------------------------------------------------
 
 %% create masks bot and image to check during experiment
@@ -507,26 +525,7 @@ BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_110719(folder, animal, day, 
 %%
 %NOTES:
 %{
-First baseline didn't work because of motion drifting and losing the ROI's
-The ROIs are smaller than cortex
-For future, draw roi's for baseline with BOT
-
-TODO: 
-save ensemble ROIs with rg identity
-show std dev for choosing ROI
-PLOT ROIMASK with Traces, check that the numbers of what we pick aren't
-close to eachother
-center the feedback at the mode cursor.  
-%Need script to tell us how off live frames are from template image.  very
-important in striatum imaging.  
-
-First BMI was mix D1,D2
-Second BMI was E1=D2, E2=D1
-Third BMI was E1=D1, E2=D2
-    This had calibration issue where it was very difficult to get one
-    ensemble active and not the other, so not sure we can interpret this
-    experiment.
-%Fourth BMI was same as first.
+Adjusted imaging window around 53000 frame.  
 %
 %
 %}
