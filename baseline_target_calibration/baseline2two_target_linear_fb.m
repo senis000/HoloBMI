@@ -142,7 +142,7 @@ plot_o = [0.8500    0.3250    0.0980];
 E_color = {plot_b, plot_o}; 
 %E1: blue-ish.  E2: orange-ish
 
-plot_bool           = 0; 
+plot_bool           = 1; 
 plot_raw_bool       = 1 && plot_bool; 
 plot_f0_bool        = 1 && plot_bool; 
 plot_smooth_bool    = 1 && plot_bool; 
@@ -695,53 +695,53 @@ title(['E2: T: ' num2str(E2_T) ' hits b2base: ' num2str(E2_hits_b2base) ' hits n
     ' E1: T: ' num2str(E1_T) ' hits b2base: ' num2str(E1_hits_b2base) ' hits no b2b: ' num2str(E1_hits_no_b2base)]); 
 saveas(h, fullfile(plotPath, 'cursor_dist_T.png'));
 
-% %%
-% %Plot PSTH of neural activity locked to E2 target hit: 
-% valid_hit_idxs = best_cal_data.E2_hit_data.T_idxs_b2base;
-% 
-% psth_win = [-30 30]*3; 
-% [psth_mean, psth_sem, psth_mat] = calc_psth(n_analyze, valid_hit_idxs, psth_win);
-% h = figure; hold on;
-% offset = 0; 
-% for i=1:num_neurons
-%     y_plot = psth_mean(:,i); 
-%     y_plot = y_plot-min(y_plot);
-%     y_amp = max(y_plot); 
-%     offset = offset + y_amp; 
-%     y_sem = psth_sem(:,i)-min(y_plot); 
-%     
-%     plot(y_plot-offset, 'Color', E_color{(E_id(i))}); 
-%     errbar(1:length(y_plot), y_plot-offset,y_sem, 'Color', E_color{(E_id(i))}); 
-% end
-% % vline((psth_win(2)-psth_win(1))/2+1); 
-% xlabel('frame')
-% title('PSTH of Baseline Activity Locked to Target Hit'); 
-% 
-% saveas(h, fullfile(plotPath, 'E2_PSTH_locked_to_hit_baseline.png')); 
-% 
-% %%
-% %Plot PSTH of neural activity locked to E2 target hit: 
-% valid_hit_idxs = best_cal_data.E1_hit_data.T_idxs_b2base;
-% 
-% psth_win = [-30 30]*3; 
-% [psth_mean, psth_sem, psth_mat] = calc_psth(n_analyze, valid_hit_idxs, psth_win);
-% h = figure; hold on;
-% offset = 0; 
-% for i=1:num_neurons
-%     y_plot = psth_mean(:,i); 
-%     y_plot = y_plot-min(y_plot);
-%     y_amp = max(y_plot); 
-%     offset = offset + y_amp; 
-%     y_sem = psth_sem(:,i)-min(y_plot); 
-%     
-%     plot(y_plot-offset, 'Color', E_color{(E_id(i))}); 
-%     errbar(1:length(y_plot), y_plot-offset,y_sem, 'Color', E_color{(E_id(i))}); 
-% end
-% % vline((psth_win(2)-psth_win(1))/2+1); 
-% xlabel('frame')
-% title('PSTH of Baseline Activity Locked to Target Hit'); 
-% 
-% saveas(h, fullfile(plotPath, 'E1_PSTH_locked_to_hit_baseline.png')); 
+%%
+%Plot PSTH of neural activity locked to E2 target hit: 
+valid_hit_idxs = best_cal_data.E2_hit_data.T_idxs_b2base;
+
+psth_win = [-30 30]*3; 
+[psth_mean, psth_sem, psth_mat] = calc_psth(n_analyze, valid_hit_idxs, psth_win);
+h = figure; hold on;
+offset = 0; 
+for i=1:num_neurons
+    y_plot = psth_mean(:,i); 
+    y_plot = y_plot-min(y_plot);
+    y_amp = max(y_plot); 
+    offset = offset + y_amp; 
+    y_sem = psth_sem(:,i)-min(y_plot); 
+    
+    plot(y_plot-offset, 'Color', E_color{(E_id(i))}); 
+    errbar(1:length(y_plot), y_plot-offset,y_sem, 'Color', E_color{(E_id(i))}); 
+end
+% vline((psth_win(2)-psth_win(1))/2+1); 
+xlabel('frame')
+title('PSTH of Baseline Activity Locked to Target Hit'); 
+
+saveas(h, fullfile(plotPath, 'E2_PSTH_locked_to_hit_baseline.png')); 
+
+%%
+%Plot PSTH of neural activity locked to E2 target hit: 
+valid_hit_idxs = best_cal_data.E1_hit_data.T_idxs_b2base;
+
+psth_win = [-30 30]*3; 
+[psth_mean, psth_sem, psth_mat] = calc_psth(n_analyze, valid_hit_idxs, psth_win);
+h = figure; hold on;
+offset = 0; 
+for i=1:num_neurons
+    y_plot = psth_mean(:,i); 
+    y_plot = y_plot-min(y_plot);
+    y_amp = max(y_plot); 
+    offset = offset + y_amp; 
+    y_sem = psth_sem(:,i)-min(y_plot); 
+    
+    plot(y_plot-offset, 'Color', E_color{(E_id(i))}); 
+    errbar(1:length(y_plot), y_plot-offset,y_sem, 'Color', E_color{(E_id(i))}); 
+end
+% vline((psth_win(2)-psth_win(1))/2+1); 
+xlabel('frame')
+title('PSTH of Baseline Activity Locked to Target Hit'); 
+
+saveas(h, fullfile(plotPath, 'E1_PSTH_locked_to_hit_baseline.png')); 
 
 %%
 %Save the results: 
