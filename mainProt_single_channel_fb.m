@@ -77,8 +77,8 @@ cd(home_dir)
 env_dir = 'G:\VivekNuria\utils'
 
 % define Animal, day and folder where to save
-animal = 'NVI20'; day = 'D08';
-folder = 'E:\holobmi_E\191112';
+animal = 'NVI17'; day = 'D10';
+folder = 'H:\holobmi_H\191114';
 savePath = fullfile(folder, animal,  day);
 if ~exist(savePath, 'dir')
     mkdir(savePath);
@@ -223,8 +223,8 @@ auto_init = 1;  %initializes roi_data using automatic cell detection:
 % finemode = 1; %imTemplateMatch will be used instead of normxcorr2. It will be slower.
 % temmode = 0;  % 0 is for full circle (soma) 1 is for donuts (membrane)
 template_diam = 15; %diamter of difference of Gaussians in pixels
-thres = 0.5; %cell detection threshold as correlation coefficient
-cell_diam = 13; %CELL_DIAM is diameter used for dilation.
+thres = 0.6; %cell detection threshold as correlation coefficient
+cell_diam = 14; %CELL_DIAM is diameter used for dilation.
 finemode = 1; %imTemplateMatch will be used instead of normxcorr2. It will be slower.
 temmode = 1;  % 0 is for full circle (soma) 1 is for donuts (membrane)
 if auto_init
@@ -240,6 +240,7 @@ end
 % use the time now to draw some neurons in the screen
 % if result looks weird check pixel size, zoom and parameters of the
 % function
+% if rois are too small, remove them and draw them yourself
 
 %%
 %Visualize: 
@@ -474,7 +475,7 @@ plotHoloStimTimeLock(holoActivity, voltageRec, min_duration, plot_win)
 % (I often choose more than 4 neurons, manually stim the neurons.
 % then re-run once you've chosen your 4.)
 %--------------------------------------------------------------------------
-E2_candidate =[14 19 29 27 ]; %  16 26 6 15 24
+E2_candidate =[1 2 7 10]; %  11 10 9
 % E2_base = sort([21    36   127   196], 'ascend')
 
 %% Holo stim of Ensemble neurons
@@ -671,7 +672,7 @@ plotNeuronsBaseline(baseActivity, CComp, YrA, 30)
 %Manually enter and confirm the BMI neurons:
 % E2_candidate = unique([9 15 23 29]); %unique also sorts
 % E2_base = sort([7 9 12 29]; %8 21 10 6 17 3 18
-E1_base = sort([16 15 19 8], 'ascend')  %23 18 21 
+E1_base = sort([8 6 3 5], 'ascend')  % 3 11 9 7 21 
 ensembleNeurons = [E1_base, E2_base];
 plotNeuronsEnsemble(baseActivity, ensembleNeurons, [ones(1,length(E1_base)) 2*ones(1,length(E2_base))])
 select_roi_data(roi_data, [E2_base, unique(E1_base)]); 
@@ -762,14 +763,17 @@ close all
 % CAREFUL!!! You don't want T too small (all noise) or too big (stim can not reach it)
 % ideal value is   0.2 < T < 0.5
 % if T too low, I can only recommend to change the E1 neurons or E2
-% if T too high you can change the ensemble neurons or this E2mE1_prctile = 97;
+% if T too high you can change the ensemble neurons or this E2mE1_prctile = 95;
+% sometimes the E2mE1 oercentil is no good if the E2 neurons are very
+% active. that is why is better to choose, active but not crazy active
+% neurons
 %--------------------------------------------------------------------------
 %D0:
 %Note down: 
 % - T value
-% T = 0.29
-% num_valid_hits: 8
-% num_hits: 73
+% T = 0.40
+% num_valid_hits: 7
+% num_hits:
 %--------------------------------------------------------------------------
 %% Holo stim checking connectivity
 % create randomize run for each individual neuron of the ensemple
@@ -1201,3 +1205,4 @@ end
 %%
 %NOTES:
 % holobmi
+% it took me forever to find a calibration that had a T smaller than 0.55
