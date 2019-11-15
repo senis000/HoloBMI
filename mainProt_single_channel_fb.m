@@ -77,8 +77,8 @@ cd(home_dir)
 env_dir = 'G:\VivekNuria\utils'
 
 % define Animal, day and folder where to save
-animal = 'NVI17'; day = 'D10';
-folder = 'H:\holobmi_H\191114';
+animal = 'NVI22'; day = 'D11';
+folder = 'H:\holobmi_H\191115';
 savePath = fullfile(folder, animal,  day);
 if ~exist(savePath, 'dir')
     mkdir(savePath);
@@ -475,7 +475,7 @@ plotHoloStimTimeLock(holoActivity, voltageRec, min_duration, plot_win)
 % (I often choose more than 4 neurons, manually stim the neurons.
 % then re-run once you've chosen your 4.)
 %--------------------------------------------------------------------------
-E2_candidate =[1 2 7 10]; %  11 10 9
+E2_candidate =[53 37 3 54]; % 2 3 36 14 15 58 59 10]; %  
 % E2_base = sort([21    36   127   196], 'ascend')
 
 %% Holo stim of Ensemble neurons
@@ -672,16 +672,16 @@ plotNeuronsBaseline(baseActivity, CComp, YrA, 30)
 %Manually enter and confirm the BMI neurons:
 % E2_candidate = unique([9 15 23 29]); %unique also sorts
 % E2_base = sort([7 9 12 29]; %8 21 10 6 17 3 18
-E1_base = sort([8 6 3 5], 'ascend')  % 3 11 9 7 21 
+E1_base = sort([10 18 17 21], 'ascend')  % 16 17 32  6 23 5 1249 4 
 ensembleNeurons = [E1_base, E2_base];
 plotNeuronsEnsemble(baseActivity, ensembleNeurons, [ones(1,length(E1_base)) 2*ones(1,length(E2_base))])
 select_roi_data(roi_data, [E2_base, unique(E1_base)]); 
 % E2_candidates = [39 45 59 37 88 6 26 46 78 48 22 20 33]
 %E2_candidate =[19 33 37 24]; % 25 16 32 15  36 35 18 12  
 %% for E3 experiments:
-% E2_candidate = unique([36 42 22 26]); %unique also sorts 47 38 19 34 9 45 
-% E3_base = unique([7 9 12 29]); % 22 21 16 23 4 5 9 
-% E2_base = sort([8 3 18 6], 'ascend'); % 
+% E2_candidate =[53 37 3 54]; % 2 36 14 15    58 59 10]; %  
+E3_base = unique([53 37 3 54]); % 22 21 16 23 4 5 9 
+E2_base = sort([2 36 14 15], 'ascend'); % 
 
 
 
@@ -730,7 +730,7 @@ disp(frames_per_reward_range)
 % sec_per_reward_range must be higher than 80seconds (to keep the
 % occurence of artificial vs natural higher than 80% 
 
-E2mE1_prctile = 98; 
+E2mE1_prctile = 96; 
 target_on_cov_bool = 0
 prefix_win = 40
 f0_win_bool = 1
@@ -771,9 +771,9 @@ close all
 %D0:
 %Note down: 
 % - T value
-% T = 0.40
-% num_valid_hits: 7
-% num_hits:
+% T = 0.40//0.43
+% num_valid_hits: 7/7
+% num_hits: 265/405
 %--------------------------------------------------------------------------
 %% Holo stim checking connectivity
 % create randomize run for each individual neuron of the ensemple
@@ -1204,5 +1204,5 @@ end
 %--------------------------------------------------------------------------
 %%
 %NOTES:
-% holobmi
-% it took me forever to find a calibration that had a T smaller than 0.55
+% E3 fluorescence went down quite a lot during holovta E3 pretrain, not
+% many pairs of water+holo

@@ -124,7 +124,9 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_111419(folder, anim
     % Period at the beginning to establish f0 baseline without BMI
     movingAverageFrames     = task_settings.dff_win;
     relaxationFrames        = round(relaxationTime * frameRate);
-    back2Base               = cal.target.E2_hit_cal.T*task_settings.b2base_coeff;
+    E1_back2Base            = cal.target.E1_hit_cal.b2base_thresh;
+    E2_back2Base            = cal.target.E2_hit_cal.b2base_thresh;
+%     back2Base               = cal.target.E2_hit_cal.T*task_settings.b2base_coeff;
     %In order to hit target again, cursor must be under this value for at least 
     rewardDelayFrames       = task_settings.rewardDelayFrames;
     %Number of frames between target achievement and reward delivery
@@ -456,16 +458,15 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_111419(folder, anim
                         trialFlag = 0;
                         %start running the timer again
                         disp('New Trial!')
-                    end
-%                     data.E1Hits(data.frame) = E1_hit; 
+                    end 
                     if (E1_backtobaselineFlag || E2_backtobaselineFlag)
                         
                         if(E1_backtobaselineFlag)
-                            if data.cursor(data.frame) >= back2Base 
+                            if data.cursor(data.frame) >= E1_back2Base 
                                 back2BaseCounter = back2BaseCounter+1;
                             end
                         elseif(E2_backtobaselineFlag)
-                            if data.cursor(data.frame) <= back2Base 
+                            if data.cursor(data.frame) <= E2_back2Base 
                                 back2BaseCounter = back2BaseCounter+1;
                             end
                         end
@@ -484,8 +485,9 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_111419(folder, anim
                             %Save the point it happened at
                             data.E1Hits(data.frame) = 1;
                             m.Data.E1Hits(data.frame) = 1;
+                            disp('E1 Hit!'); 
                             disp(['Num E1 Hits: ', num2str(data.E1TargetCounter)]); 
-                            
+                            E1_backtobaselineFlag = 1; 
                         elseif target_hit      %if it hit the target
                             disp('target hit')
                             
@@ -515,7 +517,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_111419(folder, anim
                                 
                                 %Back to baseline, and new trial
                                 BufferUpdateCounter = relaxationFrames; 
-                                backtobaselineFlag = 1;
+                                E2_backtobaselineFlag = 1;
                                 disp(['Trial: ', num2str(data.trialCounter), 'VTA STIMS: ', num2str(data.holoTargetVTACounter + data.selfTargetVTACounter)]);
                                 % update trials and hits vector
                                 trialFlag = 1;
@@ -545,7 +547,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_111419(folder, anim
                                     m.Data.selfVTA(data.frame) = 1;                                    
 
                                     BufferUpdateCounter = relaxationFrames; 
-                                    backtobaselineFlag = 1;
+                                    E2_backtobaselineFlag = 1;
                                     disp(['Trial: ', num2str(data.trialCounter), 'VTA STIMS: ', num2str(data.holoTargetVTACounter + data.selfTargetVTACounter)]);
                                     % update trials and hits vector
                                     trialFlag = 1;                                    
