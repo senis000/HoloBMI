@@ -8,7 +8,7 @@ fb_settings.arduino.com            = 'COM11';
 fb_settings.arduino.label          = 'Mega2560';
 fb_settings.arduino.pin            = 'D3';
 fb_settings.arduino.duration       = 0.3; %ms, tones update at rate of BMI code, this is the longest a tone will play for
-fb_settings.min_perctile            = 10; 
+fb_settings.min_perctile            = 90; 
 
 %Added 11.5.19 to have feedback dependent on E1, E2 state
 %target_buffer: how much frequency separation there should be between 

@@ -3,17 +3,17 @@ function [task_settings] = define_BMI_task_settings()
 task_settings.frameRate = 29.989; 
 %Imaging environment file for baseline acquisition
 task_settings.baseline_env = ...
-    fullfile('G:\VivekNuria\utils', "Tseries_VivekNuria_15.env");
+    fullfile('G:\VivekNuria\utils', 'Tseries_VivekNuria_15.env');
 %Imaging environment file for BMI acquisition
 task_settings.bmi_env = ...
-    fullfile('G:\VivekNuria\utils', "Tseries_VivekNuria_40.env");
+    fullfile('G:\VivekNuria\utils', 'Tseries_VivekNuria_40.env');
 %TODO: BaselineAcqnvsPrairie to take this as input
 %TODO: BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable to take this as input
 
 
 %calibration: 
 task_settings.calibration.target_on_cov_bool     = 0; 
-task_settings.calibration.sec_per_reward_range   = [120 80]; 
+task_settings.calibration.sec_per_reward_range   = [100 80]; 
 task_settings.calibration.baseline_len           = 15*60; %seconds
 task_settings.calibration.f0_win_bool            = 1; %during calibration, 
 %estimate f0 using the window
@@ -61,7 +61,10 @@ task_settings.fb.arduino.com            = 'COM11';
 task_settings.fb.arduino.label          = 'Mega2560';
 task_settings.fb.arduino.pin            = 'D3';
 task_settings.fb.arduino.duration       = 0.3; %ms, tones update at rate of BMI code, this is the longest a tone will play for
+task_settings.fb.min_prctile            = 10; %The lowest percentile allowed for E2 minus E1
+task_settings.fb.max_prctile            = 100; %The lowest percentile allowed for E2 minus E1
 task_settings.fb.obj_max_perctile       = 90; 
+
 
 task_settings.fb.lambda_E2mE1           = 0.5; 
 task_settings.fb.lambda_E1              = 0.25; 

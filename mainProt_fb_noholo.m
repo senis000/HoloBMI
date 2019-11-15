@@ -424,9 +424,14 @@ plotNeuronsEnsemble(baseActivity, ensembleNeurons, ensembleID)
 exist(baseline_mat)
 n_f_file = baseline_mat;
 close all;
-task_settings.calibration.sec_per_reward_range = [120 110]
-[cal, fb_cal, BMI_roi_path] = baseline2target_fb_objective_2pop(n_f_file, roi_data_file, task_settings, ...
-    E1_base, E2_base, savePath);
+% Manually adjust task difficulty: 
+% task_settings.calibration.sec_per_reward_range = [100 80]
+
+[cal, BMI_roi_path] = baseline2two_target_linear_fb(n_f_file, roi_data_file, task_settings, ...
+    E1_base, E2_base, save_dir);
+
+% [cal, fb_cal, BMI_roi_path] = baseline2target_fb_objective_2pop(n_f_file, roi_data_file, task_settings, ...
+%     E1_base, E2_base, savePath);
 
 % [calibration_settings, BMI_roi_path] = baseline2target_vE1strict_v2(n_f_file, roi_data_file, task_settings, ...
 %     E1_base, E2_base, savePath);

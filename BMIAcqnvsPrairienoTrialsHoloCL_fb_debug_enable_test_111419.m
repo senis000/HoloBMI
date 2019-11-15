@@ -1,12 +1,13 @@
-function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v6(folder, animal, day, ...
-    expt_str, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
-    cursor_zscore_bool, debug_bool, debug_input, baseValSeed, fb_bool, fb_cal, a)
+function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_111419(folder, animal, day, ...
+    expt_str, cal, task_settings, a, vectorHolo, vectorVTA, ...
+    debug_bool, debug_input)
+% BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable(folder, animal, day, ...
+%     expt_str, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
+%     cursor_zscore_bool, debug_bool, debug_input)
     %{
     Function to acquire the BMI in a prairie scope
     animal -> animal for the experiment
     day -> day for the experiment
-    
-    debug_input: num_neurons x num_samples
 
     baselineCalibrationFile:
     %AComp_BMI: matrix for spatial filters with px*py*unit
@@ -29,10 +30,6 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v6(folder, animal, day, 
         determines if holo stim will be delivered on a schedule
     flagVTAsched: 
         determines if VTA stim is delivered on a schedule
-    
-    -fb_bool - bool to play tones
-    -fb_cal - calibration for mapping cursor to audio feedback
-    -a - arduino object for playing feedback tones.
 
     expt_str --> Experiments:
     0) BMI
@@ -112,24 +109,28 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v6(folder, animal, day, 
 %     flagVTAsched  = false;    
     
     %% BMI parameters 
-    %frameRate = 30; % TODO check if it can be obtained from prairie 
-    relaxationTime = 0;  % there can't be another hit in this many sec
-    %back2Base = 1/2*bData.T1; % cursor must be under this value to be able to hit again
-
     savePath = fullfile(folder, animal, day); %[folder, animal, '/',  day, '/'];
     if ~exist(savePath, 'dir')
         mkdir(savePath);
     end
-    % values of parameters in frames
-    expectedLengthExperiment = 60*60*frameRate; % in frames
-    %EDIT HERE
-%USE: 
-    baseFrames = round(2*60 * frameRate); % Period at the beginning without BMI to establish BL
-%     baseFrames = 100; %FOR DEBUGGING
-%     baseFrames = round(0.1*60 * frameRate); % Period at the beginning without BMI to establish BL    
-    movingAverageFrames = 4;
-    relaxationFrames = round(relaxationTime * frameRate);
 
+    frameRate           = task_settings.frameRate; % TODO check if it can be obtained from prairie 
+    relaxationTime      = task_settings.relaxationTime;  % there can't be another hit in this many sec
+    dilation_factor     = 1.2; 
+    expectedLengthExperiment = ceil(task_settings.bmi_len*frameRate*dilation_factor); % in frames
+    %EDIT HERE
+    prefixFrames            = task_settings.prefix_win; 
+    baseFrames              = task_settings.f0_win; 
+    % Period at the beginning to establish f0 baseline without BMI
+    movingAverageFrames     = task_settings.dff_win;
+    relaxationFrames        = round(relaxationTime * frameRate);
+    back2Base               = cal.target.E2_hit_cal.T*task_settings.b2base_coeff;
+    %In order to hit target again, cursor must be under this value for at least 
+    rewardDelayFrames       = task_settings.rewardDelayFrames;
+    %Number of frames between target achievement and reward delivery
+    back2BaseFrameThresh    = task_settings.back2BaseFrameThresh; 
+    %need to be back2Base for two frames before another target can be achieved
+    
     %% prairie view parameters
     chanIdx = 2; % green channel
 
@@ -151,9 +152,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v6(folder, animal, day, 
     syncVTA = 0.001; % duration of the TTL
     
     %% Load BMI parameters from baseline calibration
-    bData = load(fullfile(baselineCalibrationFile));
-    back2Base = 1/2*bData.T1; % cursor must be under this value to be able to hit again
-%     single_bool = 1; 
+%     bData = load(fullfile(savePath, baselineCalibrationFile));
 
     %Fields: 
     %'n_mean', 'n_std',
@@ -169,47 +168,30 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v6(folder, animal, day, 
     global pl data
 %     cursor hits trialStart bmiAct baseVector timeVector %TODO remove timeVector
     
-    numberNeurons = length(bData.E_id);
+    numberNeurons   = cal.neurons.num_neurons;%length(bData.E_id);
     
     %pre-allocating arrays
-    single_bool = 1; 
-    if single_bool
-        Fbuffer = single(nan(numberNeurons, movingAverageFrames));  %define a windows buffer
-    else
-        Fbuffer = double(nan(numberNeurons, movingAverageFrames));  %define a windows buffer
-    end
-
+    Fbuffer         = single(nan(numberNeurons, movingAverageFrames));  %define a windows buffer
+    data.cursor     = double(nan(1,ceil(expectedLengthExperiment)));  %define a very long vector for cursor
     data.fb_freq    = double(nan(1,ceil(expectedLengthExperiment)));  %define a very long vector for fb_freq
-    data.bmiAct = double(nan(numberNeurons, ceil(expectedLengthExperiment)));
+    data.bmiAct     = double(nan(numberNeurons, ceil(expectedLengthExperiment)));
 %     data.bmidffz = double(nan(numberNeurons, ceil(expectedLengthExperiment)));
     data.baseVector = double(nan(numberNeurons,ceil(expectedLengthExperiment)));  %define a very long vector for cursor    
-    data.selfHits = single(zeros(1,ceil(expectedLengthExperiment)));  %define a very long vector for hits
-    data.holoHits = single(zeros(1,ceil(expectedLengthExperiment)));  %define a very long vector for hits    
-    data.selfVTA = single(zeros(1,ceil(expectedLengthExperiment)));  %define a very long vector for hits    
-    data.holoVTA = single(zeros(1,ceil(expectedLengthExperiment)));  %define a very long vector for hits    
-    data.holoDelivery = single(zeros(1,ceil(expectedLengthExperiment)));  %define a very long vector for hits    
+    data.selfHits   = single(zeros(1,ceil(expectedLengthExperiment)));  %define a very long vector for hits
+    data.E1Hits     = single(zeros(1,ceil(expectedLengthExperiment)));  %define a very long vector for hits
+    data.holoHits   = single(zeros(1,ceil(expectedLengthExperiment)));  %define a very long vector for hits    
+    data.selfVTA    = single(zeros(1,ceil(expectedLengthExperiment)));  %define a very long vector for hits    
+    data.holoVTA    = single(zeros(1,ceil(expectedLengthExperiment)));  %define a very long vector for hits    
+    data.holoDelivery   = single(zeros(1,ceil(expectedLengthExperiment)));  %define a very long vector for hits    
     data.trialStart = single(zeros(1,ceil(expectedLengthExperiment)));  %define a very long vector trialStart
     %to debug!!! TODO REMOVE after debugging
     data.timeVector = double(nan(1,ceil(expectedLengthExperiment)));  %define a very long vector for cursor
     data.vectorHolo = vectorHolo; 
-    data.vectorHoloCL = vectorHolo;     
-    data.vectorVTA = vectorVTA;
-
-    data.c2_val     = double(nan(1, ceil(expectedLengthExperiment)));
-    data.c2_bool    = double(nan(1, ceil(expectedLengthExperiment)));
-    data.c3_val     = double(nan(1, ceil(expectedLengthExperiment)));
-    data.c3_bool    = double(nan(1, ceil(expectedLengthExperiment)));     
-    if(debug_bool)
-        if single_bool
-            data.fsmooth    = single(nan(numberNeurons, ceil(expectedLengthExperiment)));
-        else
-            data.fsmooth    = double(nan(numberNeurons, ceil(expectedLengthExperiment)));
-        end
-        data.dff        = double(nan(numberNeurons, ceil(expectedLengthExperiment)));
-        data.c1_bool    = double(nan(1, ceil(expectedLengthExperiment)));
-    end
-
+    data.vectorHoloCL   = vectorHolo;     
+    data.vectorVTA  = vectorVTA; 
+    
     %initializing general flags and counters 
+    data.E1TargetCounter = 0;
     data.selfTargetCounter = 0; 
     data.holoTargetCounter = 0; 
     data.selfTargetVTACounter = 0; 
@@ -219,28 +201,32 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v6(folder, animal, day, 
      
     data.trialCounter = 0; %todo remove one
     trialFlag = 1;
-    nonBufferUpdateCounter = 40;  %counter when we dont want to update the buffer: 
+    nonBufferUpdateCounter = prefixFrames;  %counter when we dont want to update the buffer
+    %initialize nonBufferUpdateCounter to 'prefixFrames' in order to
+    %exclude these frames when BMI is starting
     initFrameBase = nonBufferUpdateCounter + 1;
     %beginning of experiment and VTA stim
     BufferUpdateCounter = 0;
     
     %Only useful if: flagBMI=false; flagHolosched = true; flagVTAtrig = true;
-    HoloTargetWin = 30; %number of frames after a holo stim to look for target
+    HoloTargetWin = 20; %number of frames after a holo stim to look for target
     HoloTargetDelayTimer = 0; %if this timer is >0 check for a holo target
 %     detectHoloTargetFlag = 0; %if this is 1, start looking for a holo target
 
     deliver_reward      = 0; 
-    rewardDelayCounter  = 0; 
-    rewardDelayFrames   = 10; 
+    rewardDelayCounter  = 0;  
     
     back2BaseCounter = 0;
-    back2BaseFrameThresh = 2; %need to be back2Base for two frames before another target can be achieved
+    %Counts how many frames the cursor is in baseline range, if
+    %'backtobaselineFlag' is on
     %TODO: make this an input/variable loaded from calibration
-    backtobaselineFlag = 0;
+    E1_backtobaselineFlag = 0;
+    E2_backtobaselineFlag = 0;
+    
     data.frame = 1; % initialize frames
     
     %% Cleaning 
-    finishup = onCleanup(@() cleanMeUp(savePath, bData, debug_bool));  %in case of ctrl-c it will launch cleanmeup
+    finishup = onCleanup(@() cleanMeUp(savePath, cal, task_settings, debug_bool));  %in case of ctrl-c it will launch cleanmeup
 
 %     %% Prepare the nidaq
     if(~debug_bool)
@@ -256,6 +242,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v6(folder, animal, day, 
 %       Line 0: GetImage Pulse
 %       Line 1: Triggers VTA stim / reward 
 %       Line 2: Triggers holo stim
+%TODO: line for audio feedback ts
 
     %% Prepare for Prairie
     % connection to Prairie
@@ -275,7 +262,9 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v6(folder, animal, day, 
         lastFrame = zeros(px, py); % to compare with new incoming frames
 
         % set the environment for the Time Series in PrairieView
-        loadCommand = ['-tsl ' fullfile('G:/VivekNuria/utils', 'Tseries_VivekNuria_40.env')];
+        %TODO: don't hard code this, take it from the settings: 
+        loadCommand = '-tsl ' + task_settings.bmi_env; 
+%         fullfile('F:/VivekNuria/utils', 'Tseries_VivekNuria_40.env');
         pl.SendScriptCommands(loadCommand);   
 
         % set the path where to store the imaging data -SetSavePath (-p) "path" ["addDateTime"]
@@ -288,24 +277,24 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v6(folder, animal, day, 
     end
     
     
-    %% load masks
+    %% load ROI masks
+    %Data was saved in 'redcompBMI.mat' in 'baseline2target_vE1strict.m'
+    %TODO: just pass the strcMask
     if(~debug_bool)
-        load(fullfile(savePath, 'strcMask.mat'), 'strcMask');
+%         load(fullfile(savePath, 'redcompBMI.mat'), 'strcMask');
+        load(cal.paths.BMI_roi_path, 'strcMask');
     end
     
     %% Create the file where to store info in case matlab crashes
-    fileName = fullfile(savePath, 'bmiExp.dat');
+    fileName = [savePath, 'bmiExp.dat'];
     % creates a file with the correct shape
     fileID = fopen(fileName,'w');
     fwrite(fileID, data.cursor ,'double');
-    fwrite(fileID, data.c2_val ,'double');
-    fwrite(fileID, data.c2_bool ,'double');
-    fwrite(fileID, data.c3_val ,'double');
-    fwrite(fileID, data.c3_bool ,'double');    
     fwrite(fileID, data.fb_freq,'double');
     fwrite(fileID, data.bmiAct, 'double'); 
     fwrite(fileID, data.baseVector, 'double');     
     fwrite(fileID, data.selfHits ,'single');
+    fwrite(fileID, data.E1Hits ,'single');
     fwrite(fileID, data.holoHits ,'single');
     fwrite(fileID, data.selfVTA ,'single');
     fwrite(fileID, data.holoVTA ,'single');
@@ -314,14 +303,11 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v6(folder, animal, day, 
     % maps the file into memory
     m = memmapfile(fileName, 'Format',...
         {'double',size(data.cursor),'cursor'; ...
-        'double',size(data.c2_val),'c2_val'; ...
-        'double',size(data.c2_bool),'c2_bool'; ...
-        'double',size(data.c3_val),'c3_val'; ...
-        'double',size(data.c3_bool),'c3_bool'; ...
         'double',size(data.fb_freq),'fb_freq'; ...
         'double',size(data.bmiAct),'bmiAct'; ...
         'double',size(data.baseVector),'baseVector'; ...
         'single',size(data.selfHits),'selfHits'; ...
+        'single',size(data.E1Hits),'E1Hits'; ...
         'single',size(data.holoHits),'holoHits'; ...
         'single',size(data.selfVTA),'selfVTA'; ...
         'single',size(data.holoVTA),'holoVTA'; ...
@@ -341,6 +327,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v6(folder, animal, day, 
     %initialize the values of the memmap
     m.Data.trialStart   = data.trialStart;
     m.Data.selfHits     = data.selfHits;
+    m.Data.E1Hits       = data.E1Hits;
     m.Data.holoHits     = data.holoHits;
     m.Data.selfVTA      = data.selfVTA;
     m.Data.holoVTA      = data.holoVTA;
@@ -361,11 +348,11 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v6(folder, animal, day, 
     
     disp('STARTING RECORDING!!!')
     counterSame = 0; %Counts how many frames are the same as past,
-    counterSameThresh = 500;
+    counterSameThresh = 500; %TODO put in task_settings
     baseBuffer_full = 0; %bool indicating the Fbuffer filled
     %---
     disp('baseBuffer filling!...')
-    while (~debug_bool && counterSame < counterSameThresh) || (debug_bool && data.frame <= size(debug_input,2)) %while data.frame <= expectedLengthExperiment
+    while (~debug_bool && counterSame < counterSameThresh) || (debug_bool && data.frame < size(debug_input,2)) %while data.frame <= expectedLengthExperiment
         if ~debug_bool
             Im = pl.GetImage_2(chanIdx, px, py);
         else
@@ -379,7 +366,6 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v6(folder, animal, day, 
                 outputSingleScan(s,ni_getimage); pause(0.001); outputSingleScan(s,[0 0 0]);
             end
             
-%             if nonBufferUpdat
             if nonBufferUpdateCounter == 0
                 % obtain value of the neurons fluorescence
                 if(~debug_bool)
@@ -396,42 +382,25 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v6(folder, animal, day, 
                 
                 % calculate F0 baseline activity 
                 if data.frame == initFrameBase
-                    if ~isnan(sum(baseValSeed))
-                        baseBuffer_full = 1; 
-                        baseval = baseValSeed; 
-                        disp('baseBuffer seeded!'); 
-                    else
-                        if single_bool
-                            baseval = single(ones(numberNeurons,1)).*unitVals/baseFrames;
-                        else
-                            baseval = double(ones(numberNeurons,1)).*unitVals/baseFrames;                        
-                        end
-                    end
+%                     baseval = single(ones(numberNeurons,1)).*unitVals;
+                    baseval = single(ones(numberNeurons,1)).*unitVals/baseFrames;
                     %---
-                elseif ~baseBuffer_full && data.frame <= (initFrameBase+baseFrames)
+                elseif data.frame <= (initFrameBase+baseFrames)
 %                     baseval = base(baseval*(data.frame - 1) + signal)./data.frame;
                     baseval = baseval + unitVals/baseFrames;
-%                     disp(data.frame);
+                    disp(data.frame);
                     if data.frame == (initFrameBase+baseFrames)
                         baseBuffer_full = 1;
                         disp('baseBuffer FULL!'); 
                     end
-                else %data.frame > (initFrameBase+baseFrames)
+                elseif data.frame > (initFrameBase+baseFrames)
                     baseval = (baseval*(baseFrames - 1) + unitVals)./baseFrames;
                 end
                 data.baseVector(:,data.frame) = baseval;
                 m.Data.baseVector(:,data.frame) = baseval; % saving in memmap
                 
                 %Smooth F
-                if single_bool
-                    Fsmooth = single(nanmean(Fbuffer, 2));
-                else
-                    Fsmooth = double(nanmean(Fbuffer, 2));
-                end
-                
-                if debug_bool
-                    data.fsmooth(:,data.frame) = Fsmooth;
-                end
+                Fsmooth = single(nanmean(Fbuffer, 2));                
                 
                 if baseBuffer_full
                     %----------------------------------------------------------
@@ -439,46 +408,32 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v6(folder, animal, day, 
                     % calculate (smoothed) DFF
                     dff = (Fsmooth - baseval) ./ baseval;
                     %Passing smoothed dff to "decoder"
-                    [~, cursor_i, target_hit, c1_bool, c2_val, c2_bool, c3_val, c3_bool] = ...
-                        dff2cursor_target(dff, bData, cursor_zscore_bool);
+%                     [cursor_i, target_hit, c1_bool, ~, c2_bool, ~, c3_bool] = ...
+%                         dff2cursor_target_v2(dff, cal);
+                    [cursor_i, E2_hit, E1_hit] = ...
+                        dff2cursor_target_Esymm(dff, cal); 
+                    target_hit = E2_hit; 
 %                     data.bmidffz(:,data.frame) = dff_z;
 %--------------------------------------------------------------------------
-                    disp(['Cursor: ' num2str(cursor_i)]); 
-                    
-                    %SAVE: 
                     data.cursor(data.frame) = cursor_i;
-                    data.c2_val(data.frame)     = c2_val;
-                    data.c2_bool(data.frame)    = c2_bool;
-                    data.c3_val(data.frame)     = c3_val;
-                    data.c3_bool(data.frame)    = c3_bool;  
                     m.Data.cursor(data.frame) = data.cursor(data.frame); % saving in memmap
-                    m.Data.c2_val(data.frame) = data.c2_val(data.frame); % saving in memmap
-                    m.Data.c2_bool(data.frame) = data.c2_bool(data.frame); % saving in memmap
-                    m.Data.c3_val(data.frame) = data.c3_val(data.frame); % saving in memmap
-                    m.Data.c3_bool(data.frame) = data.c3_bool(data.frame); % saving in memmap                  
-%--------------------------------------------------------------------------                    
-                    if debug_bool
-                        data.dff(:,data.frame)      = dff;
-                        data.c1_bool(data.frame)    = c1_bool; 
-                    end
+%--------------------------------------------------------------------------
+                    disp(['Cursor: ' num2str(cursor_i)]); 
+
                     %fb: 
-%-------------------------------------------------------------------------- 
-                    fb_freq_i = cursor2audio_freq_v3_E1_E2_state(cursor_i, c2_bool, c3_bool, fb_cal);
-%                     fb_freq_i = cursor2audio_freq_v2(cursor_i, fb_cal);  
-%                     if(debug_bool)
-%                         disp(['FB Freq: ' num2str(fb_freq_i)]);
-%                     end
+%--------------------------------------------------------------------------                    
+                    fb_freq_i = cursor2audio_freq(cursor_i, cal);  
+%                     disp(['FB Freq: ' num2str(fb_freq_i)]);
                     data.fb_freq(data.frame) = fb_freq_i;
                     m.Data.fb_freq(data.frame) = data.fb_freq(data.frame); % saving in memmap    
-%--------------------------------------------------------------------------
-
-                    if(fb_bool)
+%--------------------------------------------------------------------------                    
+                    if(task_settings.fb.fb_bool)
                         %Send tone arduino
                         playTone(a,...
-                            fb_cal.settings.arduino.pin,...
+                            task_settings.fb.arduino.pin,...
                             fb_freq_i,...
-                            fb_cal.settings.arduino.duration)
-                    end                    
+                            task_settings.fb.arduino.duration)
+                    end
                     
 %                     disp(['Target : ' num2str(target_hit)]); 
 %                     disp(['C1 - cursor: ' num2str(c1_bool)]); 
@@ -493,7 +448,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v6(folder, animal, day, 
                 if (BufferUpdateCounter == 0) && baseBuffer_full
 %                     disp('HERE'); 
                     % Is it a new trial?
-                    if trialFlag && ~backtobaselineFlag
+                    if trialFlag && ~(E1_backtobaselineFlag || E2_backtobaselineFlag)
                         data.trialStart(data.frame) = 1;
                         m.Data.trialStart(data.frame) = 1;
                         data.trialCounter = data.trialCounter + 1;
@@ -501,21 +456,40 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v6(folder, animal, day, 
                         %start running the timer again
                         disp('New Trial!')
                     end
-
-                    if backtobaselineFlag 
-                        if data.cursor(data.frame) <= back2Base 
-                            back2BaseCounter = back2BaseCounter+1;
-
+%                     data.E1Hits(data.frame) = E1_hit; 
+                    if (E1_backtobaselineFlag || E2_backtobaselineFlag)
+                        
+                        if(E1_backtobaselineFlag)
+                            if data.cursor(data.frame) >= back2Base 
+                                back2BaseCounter = back2BaseCounter+1;
+                            end
+                        elseif(E2_backtobaselineFlag)
+                            if data.cursor(data.frame) <= back2Base 
+                                back2BaseCounter = back2BaseCounter+1;
+                            end
                         end
+                        
                         if back2BaseCounter >= back2BaseFrameThresh
-                            backtobaselineFlag = 0;
+                            E1_backtobaselineFlag = 0; 
+                            E2_backtobaselineFlag = 0; 
                             back2BaseCounter = 0;
                             disp('back to baseline')
                         end
                     else
 %                         disp('HERE2'); 
-                        if target_hit      %if it hit the target
+                        if E1_hit
+                            %Update count
+                            data.E1TargetCounter = data.E1TargetCounter + 1;
+                            %Save the point it happened at
+                            data.E1Hits(data.frame) = 1;
+                            m.Data.E1Hits(data.frame) = 1;
+                            disp(['Num E1 Hits: ', num2str(data.E1TargetCounter)]); 
+                            
+                        elseif target_hit      %if it hit the target
                             disp('target hit')
+                            
+                            %Holo Triggered: 
+                            %----------------------------------------------
                             if(HoloTargetDelayTimer > 0)
                                 disp('Holo Target Achieved')
                                 HoloTargetDelayTimer = 0; 
@@ -526,7 +500,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v6(folder, animal, day, 
                                 if flagVTAtrig
                                     disp('RewardTone delivery!')
                                     if(~debug_bool)
-%                                         play(reward_sound);
+                                        play(reward_sound);
 %                                         outputSingleScan(s,ni_reward); pause(0.001); outputSingleScan(s,ni_out)
                                     end
                                     rewardDelayCounter = rewardDelayFrames; 
@@ -543,33 +517,35 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v6(folder, animal, day, 
                                 backtobaselineFlag = 1;
                                 disp(['Trial: ', num2str(data.trialCounter), 'VTA STIMS: ', num2str(data.holoTargetVTACounter + data.selfTargetVTACounter)]);
                                 % update trials and hits vector
-                                trialFlag = 1; 
+                                trialFlag = 1;
+                                
+                            %Self Hit!
+                            %----------------------------------------------                                
                             else
                                 %Self hit:
                                 data.selfTargetCounter = data.selfTargetCounter + 1;
                                 data.selfHits(data.frame) = 1;
                                 m.Data.selfHits(data.frame) =1;
                                 disp('self hit')
-                                if(flagBMI)
-                                    if(flagVTAtrig)
-                                        deliver_reward = 1;
-                                        data.selfTargetVTACounter = data.selfTargetVTACounter + 1;
-                                        data.selfVTA(data.frame) = 1;
-                                        m.Data.selfVTA(data.frame) = 1;
-                                        disp(['Trial: ', num2str(data.trialCounter), 'VTA STIMS: ', num2str(data.holoTargetVTACounter + data.selfTargetVTACounter)]);
-                                    else
-                                        disp(['Trial: ', num2str(data.trialCounter), 'Num Self Hits: ', num2str(data.selfTargetCounter)]); 
-                                    end
-                                    
+                                if(flagBMI && flagVTAtrig)
                                     nonBufferUpdateCounter = shutterVTA;
                                     disp('Target Achieved! (self-target)')
-                                    disp('RewardTone delivery!')
-                                    if ~debug_bool
+%                                     disp('RewardTone delivery!')
+%                                     if ~debug_bool
 %                                         play(reward_sound);
-                                    end                                        
+%                                     end                                        
                                     rewardDelayCounter = rewardDelayFrames; 
+                                    deliver_reward = 1;                                         
+%                                         outputSingleScan(s,ni_reward); pause(0.001); outputSingleScan(s,ni_out);                                    
+
+                                    
+                                    data.selfTargetVTACounter = data.selfTargetVTACounter + 1;
+                                    data.selfVTA(data.frame) = 1;
+                                    m.Data.selfVTA(data.frame) = 1;                                    
+
                                     BufferUpdateCounter = relaxationFrames; 
                                     backtobaselineFlag = 1;
+                                    disp(['Trial: ', num2str(data.trialCounter), 'VTA STIMS: ', num2str(data.holoTargetVTACounter + data.selfTargetVTACounter)]);
                                     % update trials and hits vector
                                     trialFlag = 1;                                    
                                 else
@@ -579,6 +555,9 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v6(folder, animal, day, 
                         end
                         if ~trialFlag
 %                             disp(['HERE ' num2str(data.frame)]); 
+
+                            %Scheduled Stimulation
+                            %----------------------------------------------
                             if flagHolosched
                                 if ismember(data.frame, data.vectorHoloCL)
                                     disp('SCHEDULED HOLO STIM'); 
@@ -603,7 +582,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v6(folder, animal, day, 
                                     disp('scheduled VTA STIM')
                                     disp('RewardTone delivered!'); 
                                     if(~debug_bool)
-%                                         play(reward_sound); 
+                                        play(reward_sound); 
 %                                         outputSingleScan(s,ni_reward); pause(0.001); outputSingleScan(s,ni_out)
                                     end
                                     rewardDelayCounter = rewardDelayFrames; 
@@ -614,7 +593,6 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v6(folder, animal, day, 
                                 end
                             end
                         end
-                            
                     end
                 else
                     if(BufferUpdateCounter>0)
@@ -636,6 +614,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v6(folder, animal, day, 
             elseif(deliver_reward && rewardDelayCounter==0)
                 if(~debug_bool)
                     outputSingleScan(s,ni_reward); pause(0.001); outputSingleScan(s,ni_out);
+                    %This triggers arduino to control solenoid
                 end
                 deliver_reward = 0; 
                 disp('reward delivered!'); 
@@ -644,7 +623,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v6(folder, animal, day, 
             data.frame = data.frame + 1;
             data.timeVector(data.frame) = toc;
             counterSame = 0;
-            if (~debug_bool && data.timeVector(data.frame) < 1/(frameRate*1.2))
+            if data.timeVector(data.frame) < 1/(frameRate*1.2)
                 pause(1/(frameRate*1.2) - data.timeVector(data.frame))
             end
         else
@@ -656,12 +635,12 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_v6(folder, animal, day, 
 end
 % 
 % % fires when main function terminates (normal, error or interruption)
-function cleanMeUp(savePath, bData, debug_bool)
+function cleanMeUp(savePath, cal, task_settings, debug_bool)
     global pl data
     disp('cleaning')
     % evalin('base','save baseVars.mat'); %do we want to save workspace?
     % saving the global variables
-    save(fullfile(savePath, ['BMI_online', datestr(datetime('now'), 'yymmddTHHMMSS'), '.mat']), 'data', 'bData')
+    save(fullfile(savePath, ['BMI_online', datestr(datetime('now'), 'yymmddTHHMMSS'), '.mat']), 'data', 'cal', 'task_settings')
     if ~debug_bool
         if pl.Connected()
             pl.Disconnect();
