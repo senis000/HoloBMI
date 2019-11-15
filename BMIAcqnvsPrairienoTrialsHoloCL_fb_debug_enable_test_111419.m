@@ -263,7 +263,8 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_111419(folder, anim
 
         % set the environment for the Time Series in PrairieView
         %TODO: don't hard code this, take it from the settings: 
-        loadCommand = '-tsl ' + task_settings.bmi_env; 
+        loadCommand = ['-tsl ' task_settings.bmi_env]
+        %'-tsl ' + task_settings.bmi_env; 
 %         fullfile('F:/VivekNuria/utils', 'Tseries_VivekNuria_40.env');
         pl.SendScriptCommands(loadCommand);   
 

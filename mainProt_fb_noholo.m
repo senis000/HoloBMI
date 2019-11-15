@@ -44,8 +44,8 @@ duration of stim
 %--------------------------------------------------------------------------
 
 % define Animal, day and folder where to save
-animal = 'NY127'; day = '2019-11-12';
-folder = 'E:\ines';
+animal = 'NY127'; day = '2019-11-15';
+folder = 'H:\ines_h';
 % folder = 'F:\Vivek\training';
 
 % define posz TODO can we get this from prairie?
@@ -337,8 +337,8 @@ plotSelNeuronsBaseline(baseActivity, CComp, YrA, totalneurons, sel);
 %D1
 %[7 1 11 2]
 %%
-red_sel = [1 24 25 13 34 36 28 26 5 20 85 27 112 102 6 79 22 124 30 90 15 8 111 32 98 105 84]
-red_sel = red_sel(4:23); 
+red_sel_candidates = [18 27 13 19 21 23 14 10 5 74 58 71]
+red_sel = red_sel_candidates(1:4); 
 length(red_sel)
 %%
 %Plot Green:
@@ -350,8 +350,8 @@ plotSelNeuronsBaseline(baseActivity, CComp, YrA, totalneurons, sel);
 %D2
 %[42 31 40 26]
 %%
-green_sel = [52 38 55 50 74 115 116 101 76 63 83 77 41 37 110 42 61 44 80 73 46 39 48 103 123 91 60 119]
-green_sel = green_sel(1:20)
+green_sel_candidates = [53 52 37 42 38 65 70 66 44]
+green_sel = green_sel_candidates(1:4)
 length(green_sel)
 %%
 %--------------------------------------------------------------------------
@@ -364,11 +364,11 @@ length(green_sel)
 % E2_base = sort([red_sel(1:5) red_sel(16:20) green_sel(1:5) green_sel(16:20)], 'ascend') %Activity needs to increase 
 % E1_base = sort([red_sel(6:15) green_sel(6:15)], 'ascend') %Activity needs to decrease
 
-% E2_base = sort([red_sel(1:10) green_sel(1:10)], 'ascend') %Activity needs to increase 
-% E1_base = sort([red_sel(11:20) green_sel(11:20)], 'ascend') %Activity needs to decrease
+E2_base = sort([red_sel(3) red_sel(4) green_sel(1) green_sel(4)], 'ascend') %Activity needs to increase 
+E1_base = sort([red_sel(1) red_sel(2) green_sel(3) green_sel(2)], 'ascend') %Activity needs to decrease
 
-E2_base = sort(green_sel, 'ascend') %Activity needs to increase 
-E1_base = sort(red_sel, 'ascend') %Activity needs to decrease
+% E2_base = sort(green_sel, 'ascend') %Activity needs to increase 
+% E1_base = sort(red_sel, 'ascend') %Activity needs to decrease
 
 length(E2_base)
 %8 21 30 45
@@ -391,15 +391,6 @@ plotNeuronsEnsemble(baseActivity, ensembleNeurons, ensembleID)
 
 %%
 % calibration_settings_bmi1 = calibration_settings; 
-
-%%
-% calibration_settings_bmi2 = calibration_settings; 
-
-%%
-% calibration_settings_bmi3 = calibration_settings;
-
-%%
-% calibration_settings_bmi4   = calibration_settings;
 
 %% Calibrate Target with Baseline simulation
 %--------------------------------------------------------------------------
@@ -428,7 +419,7 @@ close all;
 % task_settings.calibration.sec_per_reward_range = [100 80]
 
 [cal, BMI_roi_path] = baseline2two_target_linear_fb(n_f_file, roi_data_file, task_settings, ...
-    E1_base, E2_base, save_dir);
+    E1_base, E2_base, savePath);
 
 % [cal, fb_cal, BMI_roi_path] = baseline2target_fb_objective_2pop(n_f_file, roi_data_file, task_settings, ...
 %     E1_base, E2_base, savePath);
@@ -506,9 +497,13 @@ debug_bool = 0;
 debug_input = []; 
 expt_str = 'BMI'; 
 
-BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_110719(folder, animal, day, ...
-    expt_str, cal, fb_cal, task_settings, a, vectorHolo, vectorVTA, ...
-    debug_bool, debug_input); 
+BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_111419(folder, animal, day, ...
+    expt_str, cal, task_settings, a, vectorHolo, vectorVTA, ...
+    debug_bool, debug_input);
+
+% BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_110719(folder, animal, day, ...
+%     expt_str, cal, fb_cal, task_settings, a, vectorHolo, vectorVTA, ...
+%     debug_bool, debug_input); 
 % BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable(folder, animal, day, ...
 %     expt_str, calibration_settings, task_settings, a, vectorHolo, vectorVTA, ...
 %     debug_bool, debug_input)
