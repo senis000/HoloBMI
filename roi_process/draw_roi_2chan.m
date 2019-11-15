@@ -1,4 +1,4 @@
-function [roi_data] = draw_roi_2chan(plot_images, roi_data)
+function [roi_data] = draw_roi_2chan(plot_images, roi_data, roi_data_file)
 %TODO: DATA FOR TWO CHANNELS:
 %Allows user to draw shapes onto an image
 %roi_data fields: 
@@ -134,7 +134,10 @@ while(~roi_complete_bool)
                     roi_data.im_roi_rg(:,:,2) = g_mod;
                     chan_selected_bool = 1; 
                 end
-            end            
+            end
+            
+            %Save results: 
+            save(roi_data_file, 'roi_data'); 
         end
     else
         roi_complete_bool = 1;
@@ -147,7 +150,10 @@ while(~roi_complete_bool)
         end
                 
         %Channel specific information: 
-        roi_data = roi_data2chan(roi_data); 
+        roi_data = roi_data2chan(roi_data);
+        
+        %Save results: 
+        save(roi_data_file, 'roi_data'); 
         
         h = figure('Position', [screen_size(3)/2 1 screen_size(3)/2 screen_size(4)]);
         imagesc(roi_data.im_roi_rg); axis square

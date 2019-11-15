@@ -162,6 +162,8 @@ im_bg = rg_struct(i).im;
 h = figure; imagesc(im_bg); axis square; 
 
 %% Select Red +  Green neurons
+roi_data_file = fullfile(savePath, 'roi_data.mat');
+
 plot_images = struct('im', [], 'label', ''); 
 plot_images(1).im = green_im; 
 plot_images(1).label = 'Green Mean'; 
@@ -179,13 +181,14 @@ if(roi_init_bool)
     roi_data = init_roi_data(im_bg, num_chan, chan_data)
 end
 
-%%
-disp('Adding ROIs to image!'); 
-[roi_data] = draw_roi_2chan(plot_images, roi_data);
+save(roi_data_file, 'roi_data'); 
 
 %%
+load(roi_data_file); 
+disp('Adding ROIs to image!'); 
 %Add more ROI if needed: 
-[roi_data] = draw_roi_2chan(plot_images, roi_data);
+[roi_data] = draw_roi_2chan(plot_images, roi_data, roi_data_file);
+
 %%
 %Delete ROI if needed: 
 [roi_data] = delete_roi_2chan(plot_images, roi_data);
