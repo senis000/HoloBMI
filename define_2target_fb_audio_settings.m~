@@ -12,7 +12,7 @@ fb_settings.arduino.duration        = 0.3; %ms, tones update at rate of BMI code
 %For calibration: 
 fb_settings.max_prctile             = 100; 
 fb_settings.min_prctile             = 94;
-fb_settings.middle_prctile          = 50; 
+fb_settings_middle_prctile 
 
 % %target_buffer: how much frequency separation there should be between 
 % %feedback for target achievement vs intermediate feedback

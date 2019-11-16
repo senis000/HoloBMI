@@ -88,7 +88,11 @@ n_f_file            = base_file;
 % [fb_settings]       = define_fb_audio_settings()
 save_dir            = savePath;
 
-[cal, BMI_roi_path] = baseline2two_target_linear_fb(n_f_file, roi_data_file, task_settings, ...
+
+task_settings_test = task_settings;
+task_settings_test.fb.target_low_freq = 1; 
+
+[cal, BMI_roi_path] = baseline2two_target_linear_fb(n_f_file, roi_data_file, task_settings_test, ...
     E1_base, E2_base, save_dir);
 
 %Consider: 

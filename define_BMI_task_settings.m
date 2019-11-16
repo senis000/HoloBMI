@@ -63,6 +63,7 @@ task_settings.fb.arduino.pin            = 'D3';
 task_settings.fb.arduino.duration       = 0.3; %ms, tones update at rate of BMI code, this is the longest a tone will play for
 task_settings.fb.min_prctile            = 10; %The lowest percentile allowed for E2 minus E1
 task_settings.fb.max_prctile            = 100; %The lowest percentile allowed for E2 minus E1
+task_settings.fb.middle_prctile         = 50; 
 task_settings.fb.obj_max_perctile       = 90; 
 
 

@@ -130,8 +130,6 @@ end
 % red_path      = fullfile('E:\ines_e\redgreen-000', 'red.tif'); 
 % green_path    = fullfile('E:\ines_e\redgreen-000', 'green.tif'); 
 
- 
-
 %Initialize data structure to save overlays:
 rg_struct = struct(...
     'im', [], ...
@@ -500,7 +498,7 @@ debug_bool = 0;
 debug_input = []; 
 expt_str = 'BMI'; 
 
-BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_111419(folder, animal, day, ...
+BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_111519(folder, animal, day, ...
     expt_str, cal, task_settings, a, vectorHolo, vectorVTA, ...
     debug_bool, debug_input);
 

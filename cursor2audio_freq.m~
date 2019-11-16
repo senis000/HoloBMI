@@ -43,11 +43,19 @@ else
 end
 
 %%
-
 cursor_trunc    = max(cursor, cursor_min); 
 cursor_trunc    = min(cursor_trunc, cursor_max); 
 freq = cal.fb.a*exp(cal.fb.b*(cursor_trunc-cursor_min));
 freq = double(freq); 
 % h = figure;
 % plot(cursor, freq); 
+
+%%
+num_intervals = 1
+linspace(cal.fb.cursor_min
+freq_interval_boundaries = [cal.fb.freq_min; cal.fb.freq_max]
+
+%%
+cursor_interval_boundaries 
+cursor_interval_boundaries = [cal.fb.cursor_min; cal.fb.cursor_max]
 

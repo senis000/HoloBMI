@@ -142,7 +142,7 @@ plot_o = [0.8500    0.3250    0.0980];
 E_color = {plot_b, plot_o}; 
 %E1: blue-ish.  E2: orange-ish
 
-plot_bool           = 1; 
+plot_bool           = 0; 
 plot_raw_bool       = 1 && plot_bool; 
 plot_f0_bool        = 1 && plot_bool; 
 plot_smooth_bool    = 1 && plot_bool; 
@@ -495,8 +495,9 @@ best_cal.E1_mean            = E1_mean;
 best_cal.E2_std             = E2_std; 
 best_cal.E1_std             = E1_std; 
 
-best_cal.E1_hit_cal             = E1_hit_cal; 
-best_cal.E2_hit_cal             = E2_hit_cal; 
+best_cal.E1_hit_cal         = E1_hit_cal; 
+best_cal.E2_hit_cal         = E2_hit_cal;
+best_cal.cursor_middle      = prctile(cursor_obs, task_settings.fb.middle_prctile); 
 
 best_cal.T_prctile          = []; 
 best_cal.score              = 1000; 
@@ -594,6 +595,19 @@ end
 %%
 %Target parameters: 
 cal.target = best_cal;
+% best_cal.n_mean
+% best_cal.n_std
+% best_cal.E2_mean
+% best_cal.E1_mean
+% best_cal.E2_std
+% best_cal.E1_std
+% best_cal.E1_hit_cal
+% best_cal.E2_hit_cal
+% best_cal.cursor_middle
+% best_cal.T_prctile
+% best_cal.score
+% best_cal_data.E1_hit_data
+% best_cal_data.E2_hit_data
 
 %%
 %Summary results: 
@@ -614,7 +628,7 @@ best_cal.E1_hit_cal.num_hits_no_b2base
 
 %%
 % Calculate parameters for auditory feedback
-[cal]   = cursor2audio_fb(cal, cursor_obs, task_settings);
+[cal]   = cursor_cal2audio_fb(cal, task_settings);
 
 %%
 %PLOTS
@@ -624,7 +638,8 @@ best_cal.E1_hit_cal.num_hits_no_b2base
 %Plot auditory feedback
 % plot_cursor = linspace(cal.fb.cursor_min, cal.fb.cursor_max, 1000); 
 plot_cursor = linspace(min(cursor_obs), max(cursor_obs), 1000); 
-plot_freq   = cursor2audio_freq(plot_cursor, cal);
+plot_freq   = cursor2audio_freq_middle_match(plot_cursor, cal);
+% plot_freq   = cursor2audio_freq(plot_cursor, cal);
 h = figure;
 hold on;
 plot(plot_cursor, plot_freq); 
@@ -635,7 +650,8 @@ vline([best_cal.E1_hit_cal.T best_cal.E2_hit_cal.T]);
 saveas(h, fullfile(plotPath, 'cursor2freq.png')); 
 
 %%
-fb_obs = cursor2audio_freq(cursor_obs, cal);
+% fb_obs = cursor2audio_freq(cursor_obs, cal);
+fb_obs = cursor2audio_freq_middle_match(cursor_obs, cal)
 num_fb_bins = 100; 
 h = figure;
 hist(fb_obs, num_fb_bins); 
@@ -695,53 +711,53 @@ title(['E2: T: ' num2str(E2_T) ' hits b2base: ' num2str(E2_hits_b2base) ' hits n
     ' E1: T: ' num2str(E1_T) ' hits b2base: ' num2str(E1_hits_b2base) ' hits no b2b: ' num2str(E1_hits_no_b2base)]); 
 saveas(h, fullfile(plotPath, 'cursor_dist_T.png'));
 
-%%
-%Plot PSTH of neural activity locked to E2 target hit: 
-valid_hit_idxs = best_cal_data.E2_hit_data.T_idxs_b2base;
-
-psth_win = [-30 30]*3; 
-[psth_mean, psth_sem, psth_mat] = calc_psth(n_analyze, valid_hit_idxs, psth_win);
-h = figure; hold on;
-offset = 0; 
-for i=1:num_neurons
-    y_plot = psth_mean(:,i); 
-    y_plot = y_plot-min(y_plot);
-    y_amp = max(y_plot); 
-    offset = offset + y_amp; 
-    y_sem = psth_sem(:,i)-min(y_plot); 
-    
-    plot(y_plot-offset, 'Color', E_color{(E_id(i))}); 
-    errbar(1:length(y_plot), y_plot-offset,y_sem, 'Color', E_color{(E_id(i))}); 
-end
-% vline((psth_win(2)-psth_win(1))/2+1); 
-xlabel('frame')
-title('PSTH of Baseline Activity Locked to Target Hit'); 
-
-saveas(h, fullfile(plotPath, 'E2_PSTH_locked_to_hit_baseline.png')); 
-
-%%
-%Plot PSTH of neural activity locked to E2 target hit: 
-valid_hit_idxs = best_cal_data.E1_hit_data.T_idxs_b2base;
-
-psth_win = [-30 30]*3; 
-[psth_mean, psth_sem, psth_mat] = calc_psth(n_analyze, valid_hit_idxs, psth_win);
-h = figure; hold on;
-offset = 0; 
-for i=1:num_neurons
-    y_plot = psth_mean(:,i); 
-    y_plot = y_plot-min(y_plot);
-    y_amp = max(y_plot); 
-    offset = offset + y_amp; 
-    y_sem = psth_sem(:,i)-min(y_plot); 
-    
-    plot(y_plot-offset, 'Color', E_color{(E_id(i))}); 
-    errbar(1:length(y_plot), y_plot-offset,y_sem, 'Color', E_color{(E_id(i))}); 
-end
-% vline((psth_win(2)-psth_win(1))/2+1); 
-xlabel('frame')
-title('PSTH of Baseline Activity Locked to Target Hit'); 
-
-saveas(h, fullfile(plotPath, 'E1_PSTH_locked_to_hit_baseline.png')); 
+% %%
+% %Plot PSTH of neural activity locked to E2 target hit: 
+% valid_hit_idxs = best_cal_data.E2_hit_data.T_idxs_b2base;
+% 
+% psth_win = [-30 30]*3; 
+% [psth_mean, psth_sem, psth_mat] = calc_psth(n_analyze, valid_hit_idxs, psth_win);
+% h = figure; hold on;
+% offset = 0; 
+% for i=1:num_neurons
+%     y_plot = psth_mean(:,i); 
+%     y_plot = y_plot-min(y_plot);
+%     y_amp = max(y_plot); 
+%     offset = offset + y_amp; 
+%     y_sem = psth_sem(:,i)-min(y_plot); 
+%     
+%     plot(y_plot-offset, 'Color', E_color{(E_id(i))}); 
+%     errbar(1:length(y_plot), y_plot-offset,y_sem, 'Color', E_color{(E_id(i))}); 
+% end
+% % vline((psth_win(2)-psth_win(1))/2+1); 
+% xlabel('frame')
+% title('PSTH of Baseline Activity Locked to Target Hit'); 
+% 
+% saveas(h, fullfile(plotPath, 'E2_PSTH_locked_to_hit_baseline.png')); 
+% 
+% %%
+% %Plot PSTH of neural activity locked to E2 target hit: 
+% valid_hit_idxs = best_cal_data.E1_hit_data.T_idxs_b2base;
+% 
+% psth_win = [-30 30]*3; 
+% [psth_mean, psth_sem, psth_mat] = calc_psth(n_analyze, valid_hit_idxs, psth_win);
+% h = figure; hold on;
+% offset = 0; 
+% for i=1:num_neurons
+%     y_plot = psth_mean(:,i); 
+%     y_plot = y_plot-min(y_plot);
+%     y_amp = max(y_plot); 
+%     offset = offset + y_amp; 
+%     y_sem = psth_sem(:,i)-min(y_plot); 
+%     
+%     plot(y_plot-offset, 'Color', E_color{(E_id(i))}); 
+%     errbar(1:length(y_plot), y_plot-offset,y_sem, 'Color', E_color{(E_id(i))}); 
+% end
+% % vline((psth_win(2)-psth_win(1))/2+1); 
+% xlabel('frame')
+% title('PSTH of Baseline Activity Locked to Target Hit'); 
+% 
+% saveas(h, fullfile(plotPath, 'E1_PSTH_locked_to_hit_baseline.png')); 
 
 %%
 %Save the results: 
@@ -799,7 +815,7 @@ disp('decoder:')
 decoder = E2_proj - E1_proj
 end
 
-function [cal] = cursor2audio_fb(cal, cursor_obs, task_settings)
+function [cal] = cursor_cal2audio_fb(cal, task_settings)
 %INPUT: 
 %cursor_obs
 %cal
@@ -819,21 +835,55 @@ cal.fb.freq_max = ...
     task_settings.fb.freq_max; 
 
 %Calculate:
-% cal.fb.min_perctile     = ...
-%     10; 
 cal.fb.cursor_min         = ...
     cal.target.E1_hit_cal.T; 
 %negate because E1 was calibrated to E1mE2
-
 cal.fb.cursor_max         = ...
     cal.target.E2_hit_cal.T; %for fb, cursor is floor to this value
 cal.fb.cursor_range       = ...
     cal.fb.cursor_max - cal.fb.cursor_min; 
 % freq = a*exp(b*(cursor_trunc-cursor_min))
+
 cal.fb.a                  = ...
     cal.fb.freq_min; 
 cal.fb.b                  = ...
     (log(cal.fb.freq_max) - log(cal.fb.a))/cal.fb.cursor_range; 
+
+%Divide into Lower Half, Upper Half mapping of cursor to frequency
+cal.fb.cursor_middle    = ...
+    cal.target.cursor_middle;
+
+cal.fb.freq_middle    = ...
+    cal.fb.a*exp(cal.fb.b*cal.fb.cursor_range/2);    
+%cursor2audio_freq(cal.fb.cursor_middle, cal);
+
+cal.fb.a_bin = zeros(1,2); 
+cal.fb.b_bin = zeros(1,2); 
+
+
+if cal.fb.target_low_freq == 1
+    %This means cursor up makes auditory freq go down:
+    cursor_min      = -cal.fb.cursor_max;
+    cursor_middle   = -cal.fb.cursor_middle; 
+    cursor_max      = -cal.fb.cursor_min;
+    
+else
+    %This means cursor up makes auditory freq go up:
+    cursor_min      = cal.fb.cursor_min;
+    cursor_middle   = cal.fb.cursor_middle; 
+    cursor_max      = cal.fb.cursor_max;    
+end
+
+%Lower Half:
+cal.fb.a_bin(1) = ...
+    cal.fb.freq_min;
+cal.fb.b_bin(1) = ...
+    (log(cal.fb.freq_middle) - log(cal.fb.a_bin(1)))/(cursor_middle - cursor_min); 
+%Upper Half:
+cal.fb.a_bin(2) = ...
+    cal.fb.freq_middle;
+cal.fb.b_bin(2) = ...
+    (log(cal.fb.freq_max) - log(cal.fb.a_bin(2)))/(cursor_max - cursor_middle); 
 
 end
 
