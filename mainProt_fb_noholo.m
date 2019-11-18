@@ -190,6 +190,7 @@ disp('Adding ROIs to image!');
 %%
 %Delete ROI if needed: 
 [roi_data] = delete_roi_2chan(plot_images, roi_data);
+save(roi_data_file, 'roi_data');
 %%
 %See the roi_mask:
 h = figure('Position', [screen_size(3)/2 1 screen_size(3)/2 screen_size(4)]);
@@ -316,9 +317,10 @@ clear s
 %5) B: Drag video to folder
 %--------------------------------------------------------------------------
 %%
-visual_roi = unique([93 82 6 83 5 73 84 7 14 15 24 101 38 1 74 13 4 63 91 71 2 57 94 67 19])
+visual_roi = unique([53 1 13 76 71 15 47 68 42 59 62 78 57 3])
 %real good: 
-%6
+%53 1 71 76 22 31 80 
+%be careful with 1, it's VERY ACTIVE
 
 %% Selection of neurons
 % plots neurons so we can select which ones we like the most 
@@ -342,7 +344,7 @@ plotSelNeuronsBaseline(baseActivity, CComp, YrA, totalneurons, sel);
 %D1
 %[7 1 11 2]
 %%
-red_sel_candidates = [6 84 7 63 5 19 32]
+red_sel_candidates = [1 59 71 70]
 red_sel = red_sel_candidates(1:4); 
 length(red_sel)
 %%
@@ -355,7 +357,7 @@ plotSelNeuronsBaseline(baseActivity, CComp, YrA, totalneurons, sel);
 %D2
 %[42 31 40 26]
 %%
-green_sel_candidates = [74 83 93 73 31 56 66]
+green_sel_candidates = [53 47 68 3]
 green_sel = green_sel_candidates(1:4)
 length(green_sel)
 %%
@@ -530,18 +532,30 @@ BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_111719(folder, animal, day, 
 %%
 %NOTES:
 %{
-E2 units had higher rate than E1, make sure they are more balanced. 
-Try doing z-score of units so that each unit can have the same
-contribution.  striatum imaging snr makes it so this is not a concern.  
-In future, try running caiman denoiser before onacid.  
+beautiful cells.  we range normalized individual neurons.
+not all neurons could individually achieve the target.
+in future, distinguish between two types of experiments: 
+one where cells co-activate in baseline, so the task will demand
+co-activation
+two where cells don't co-activate in baseline, so task does Not demand it.
+One cell in E2 with all other cells silent is enough.
 
-Event based anaysis is very important.  
-What is the time between events within ensemble?  
-Maybe that decreases.  
-number of events
-magnitude of events
+we ran a short second bmi period, and animal's performance tanked.  imaging
+didn't seem to lower in quality.  maybe the break between first and second
+bmi impaired him.  
 
-I think there is learning here though, we can analyze
+todo: 
+seeding F0 needs to be added back
+implement a calibration, where we feed in candidate neurons.  we also
+specify if we want a task where one cell is sufficient, or more is
+necessary.
+the calibration loops over combinations of neurons to find an appropriate setting.
+
+two important parameters:
+how frequently does a cell have a big event.
+how frequently does the cell's big event co-occur with another cells'
+event.  
+
 %
 %
 %}

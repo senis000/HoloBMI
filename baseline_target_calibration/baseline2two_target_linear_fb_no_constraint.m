@@ -371,10 +371,10 @@ n_std = nanstd(dffc, 0, 1); %var(dffc, 0, 1).^(1/2); %1 x num_neurons
 dff_z = dffc./repmat(n_std, [size(dff,1) 1]); 
 
 %range normalize: 
-valid_idxs  = find(~isanan(dff(:,1))); 
+valid_idxs  = find(~isnan(dff(:,1))); 
 dff_valid   = dff(valid_idxs, :);
-n_max = prctile(dff_valid, 99.5, 1); 
-n_min = prctile(dff_valid, 0.5, 1);
+n_max = prctile(dff_valid, 100, 1); 
+n_min = prctile(dff_valid, 1, 1);
 n_range = n_max - n_min; 
 dff_range_norm = dff./repmat(n_range, [size(dff,1) 1]); 
 
