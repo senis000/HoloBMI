@@ -1,4 +1,4 @@
-function [cal, BMI_roi_path] = baseline2two_target_linear_fb(n_f_file, roi_data_file, task_settings, ...
+function [cal, BMI_roi_path] = baseline2two_target_linear_fb_no_constraint(n_f_file, roi_data_file, task_settings, ...
     E1_base, E2_base, save_dir)
 
 
@@ -63,7 +63,8 @@ cal.neurons.E2_sel_idxs = ...
 [decoder, E1_proj, E2_proj, E1_norm, E2_norm] = ...
     def_decoder(num_neurons, E1_sel, E2_sel);
 cal.decoder = decoder; 
-cal.cursor_zscore_bool = task_settings.cursor_zscore_bool; 
+cal.cursor_zscore_bool  = task_settings.cursor_zscore_bool; 
+cal.range_norm_bool     = task_settings.range_norm_bool; 
 
 %Target (assigned later)
 %--------------------------------------------------------------------------
@@ -368,6 +369,15 @@ dffc = dff-mean_mat;
 %divide by std:
 n_std = nanstd(dffc, 0, 1); %var(dffc, 0, 1).^(1/2); %1 x num_neurons
 dff_z = dffc./repmat(n_std, [size(dff,1) 1]); 
+
+%range normalize: 
+valid_idxs  = find(~isanan(dff(:,1))); 
+dff_valid   = dff(valid_idxs, :);
+n_max = prctile(dff_valid, 99.5, 1); 
+n_min = prctile(dff_valid, 0.5, 1);
+n_range = n_max - n_min; 
+dff_range_norm = dff./repmat(n_range, [size(dff,1) 1]); 
+
 if(plot_dff_bool)
     %plot dff
     h = plot_E_activity(1:length(dff), dff, E_id, E_color,0);
@@ -378,18 +388,29 @@ if(plot_dff_bool)
     saveas(h, im_path);
     
     %plot dffz
-    h = plot_E_activity(1:length(dff_z), dff_z, E_id, E_color, 0);
-    xlabel('frame'); 
-    ylabel('dff_z');    
-    title('zscore dff'); 
-    im_path = fullfile(plotPath, 'dffz.png'); 
-    saveas(h, im_path); 
+    if(task_settings.cursor_zscore_bool)
+        h = plot_E_activity(1:length(dff_z), dff_z, E_id, E_color, 0);
+        xlabel('frame'); 
+        ylabel('dff_z');    
+        title('zscore dff'); 
+        im_path = fullfile(plotPath, 'dffz.png'); 
+        saveas(h, im_path); 
+    elseif(task_settings.range_norm_bool)
+        h = plot_E_activity(1:length(dff_range_norm), dff_range_norm, E_id, E_color, 0);
+        xlabel('frame'); 
+        ylabel('dff_range_norm');    
+        title('range norm dff'); 
+        im_path = fullfile(plotPath, 'dffrangenorm.png'); 
+        saveas(h, im_path);         
+    end
 end
 
 
 %%
 if task_settings.cursor_zscore_bool
     n_analyze = dff_z;
+elseif task_settings.range_norm_bool
+    n_analyze = dff_range_norm; 
 else
     n_analyze = dff;
 end
@@ -491,6 +512,7 @@ E2_reward_per_frame_vec     = [];
 init_best_cal               = 1; 
 best_cal.n_mean             = n_mean;
 best_cal.n_std              = n_std;
+best_cal.n_range            = n_range; 
 best_cal.E2_mean            = E2_mean; 
 best_cal.E1_mean            = E1_mean; 
 best_cal.E2_std             = E2_std; 
@@ -934,7 +956,7 @@ else
 end
 
 %Intersection of these are the target hits without b2base constraint:
-T_idxs_no_b2base        = intersect(intersect(E1_valid, E2_valid), T_hits); 
+T_idxs_no_b2base        = T_hits; %intersect(intersect(E1_valid, E2_valid), T_hits); 
  
 hits_valid              = ones(length(T_idxs_no_b2base),1); 
 if length(T_idxs_no_b2base) > 1

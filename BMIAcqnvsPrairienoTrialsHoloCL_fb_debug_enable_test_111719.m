@@ -414,7 +414,9 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_111519(folder, anim
 %                     [cursor_i, target_hit, c1_bool, ~, c2_bool, ~, c3_bool] = ...
 %                         dff2cursor_target_v2(dff, cal);
                     [cursor_i, E2_hit, E1_hit] = ...
-                        dff2cursor_target_Esymm(dff, cal); 
+                        dff2cursor_target_Esymm_no_constraint(dff, cal);
+%                     [cursor_i, E2_hit, E1_hit] = ...
+%                         dff2cursor_target_Esymm(dff, cal); 
                     target_hit = E2_hit; 
 %                     data.bmidffz(:,data.frame) = dff_z;
 %--------------------------------------------------------------------------

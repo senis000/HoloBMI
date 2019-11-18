@@ -13,7 +13,7 @@ task_settings.bmi_env = ...
 
 %calibration: 
 task_settings.calibration.target_on_cov_bool     = 0; 
-task_settings.calibration.sec_per_reward_range   = [100 80]; 
+task_settings.calibration.sec_per_reward_range   = [75 60]; 
 task_settings.calibration.baseline_len           = 15*60; %seconds
 task_settings.calibration.f0_win_bool            = 1; %during calibration, 
 %estimate f0 using the window
@@ -36,6 +36,9 @@ task_settings.f0_win                    = 2*60*ceil(task_settings.frameRate);
 
 task_settings.dff_win                   = 4; 
 %'movingAverageFrames', number of frames to use for smoothing dff
+
+task_settings.range_norm_bool           = 1; 
+%normalize each neuron by its range
 
 task_settings.cursor_zscore_bool        = 0; 
 %- if 1, neural activity is zscored before going into

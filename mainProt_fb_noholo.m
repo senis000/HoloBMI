@@ -44,8 +44,8 @@ duration of stim
 %--------------------------------------------------------------------------
 
 % define Animal, day and folder where to save
-animal = 'NY127'; day = '2019-11-15';
-folder = 'H:\ines_h';
+animal = 'NY127'; day = '2019-11-18';
+folder = 'E:\ines';
 % folder = 'F:\Vivek\training';
 
 % define posz TODO can we get this from prairie?
@@ -119,7 +119,7 @@ else
     exist(redgreen_dir)
     red_path      = fullfile(redgreen_dir, 'red.tif'); 
     exist(red_path)
-    green_path    = fullfile(redgreen_dir, 'green_mean.tif'); 
+    green_path    = fullfile(redgreen_dir, 'green_std.tif'); 
     exist(green_path)    
     green_im    = imread(green_path); 
     red_im      = imread(red_path); 
@@ -315,6 +315,10 @@ clear s
 %4) B: Drag load cell data to folder
 %5) B: Drag video to folder
 %--------------------------------------------------------------------------
+%%
+visual_roi = unique([93 82 6 83 5 73 84 7 14 15 24 101 38 1 74 13 4 63 91 71 2 57 94 67 19])
+%real good: 
+%6
 
 %% Selection of neurons
 % plots neurons so we can select which ones we like the most 
@@ -338,7 +342,7 @@ plotSelNeuronsBaseline(baseActivity, CComp, YrA, totalneurons, sel);
 %D1
 %[7 1 11 2]
 %%
-red_sel_candidates = [18 27 13 19 21 23 14 10 5 74 58 71]
+red_sel_candidates = [6 84 7 63 5 19 32]
 red_sel = red_sel_candidates(1:4); 
 length(red_sel)
 %%
@@ -351,7 +355,7 @@ plotSelNeuronsBaseline(baseActivity, CComp, YrA, totalneurons, sel);
 %D2
 %[42 31 40 26]
 %%
-green_sel_candidates = [53 52 37 42 38 65 70 66 44]
+green_sel_candidates = [74 83 93 73 31 56 66]
 green_sel = green_sel_candidates(1:4)
 length(green_sel)
 %%
@@ -365,8 +369,8 @@ length(green_sel)
 % E2_base = sort([red_sel(1:5) red_sel(16:20) green_sel(1:5) green_sel(16:20)], 'ascend') %Activity needs to increase 
 % E1_base = sort([red_sel(6:15) green_sel(6:15)], 'ascend') %Activity needs to decrease
 
-E2_base = sort([red_sel(3) red_sel(4) green_sel(1) green_sel(4)], 'ascend') %Activity needs to increase 
-E1_base = sort([red_sel(1) red_sel(2) green_sel(3) green_sel(2)], 'ascend') %Activity needs to decrease
+E2_base = sort([red_sel(3) red_sel(1) green_sel(1) green_sel(2)], 'ascend') %Activity needs to increase 
+E1_base = sort([red_sel(4) red_sel(2) green_sel(3) green_sel(4)], 'ascend') %Activity needs to decrease
 
 % E2_base = sort(green_sel, 'ascend') %Activity needs to increase 
 % E1_base = sort(red_sel, 'ascend') %Activity needs to decrease
@@ -417,9 +421,9 @@ exist(baseline_mat)
 n_f_file = baseline_mat;
 close all;
 % Manually adjust task difficulty: 
-% task_settings.calibration.sec_per_reward_range = [100 80]
+task_settings.calibration.sec_per_reward_range = [75 60]
 
-[cal, BMI_roi_path] = baseline2two_target_linear_fb(n_f_file, roi_data_file, task_settings, ...
+[cal, BMI_roi_path] = baseline2two_target_linear_fb_no_constraint(n_f_file, roi_data_file, task_settings, ...
     E1_base, E2_base, savePath);
 
 % [cal, fb_cal, BMI_roi_path] = baseline2target_fb_objective_2pop(n_f_file, roi_data_file, task_settings, ...
@@ -498,7 +502,7 @@ debug_bool = 0;
 debug_input = []; 
 expt_str = 'BMI'; 
 
-BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_111519(folder, animal, day, ...
+BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_111719(folder, animal, day, ...
     expt_str, cal, task_settings, a, vectorHolo, vectorVTA, ...
     debug_bool, debug_input);
 
@@ -526,7 +530,18 @@ BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_111519(folder, animal, day, 
 %%
 %NOTES:
 %{
-Adjusted imaging window around 53000 frame.  
+E2 units had higher rate than E1, make sure they are more balanced. 
+Try doing z-score of units so that each unit can have the same
+contribution.  striatum imaging snr makes it so this is not a concern.  
+In future, try running caiman denoiser before onacid.  
+
+Event based anaysis is very important.  
+What is the time between events within ensemble?  
+Maybe that decreases.  
+number of events
+magnitude of events
+
+I think there is learning here though, we can analyze
 %
 %
 %}

@@ -52,7 +52,7 @@ duration of stim
 %Input 'folder', as directory to write to.
 %--------------------------------------------------------------------------
 [task_settings]     = define_BMI_task_settings();
-[fb_settings]       = define_fb_audio_settings()
+[fb_settings] = define_fb_objective_audio_settings();
 %define_fb_objective_audio_settings();
 fb_bool = 1; %If any experiment will need audio
 %Initialize arduino:
@@ -79,8 +79,8 @@ cd(home_dir)
 env_dir = 'G:\VivekNuria\utils'
 
 % define Animal, day and folder where to save
-animal = 'NVI18'; day = '2019-11-12';
-folder = 'H:\ines_h';
+animal = 'NVI18'; day = '2019-11-17';
+folder = 'E:\ines';
 savePath = fullfile(folder, animal,  day);
 if ~exist(savePath, 'dir')
     mkdir(savePath);
@@ -241,6 +241,7 @@ end
 
 %%
 %Visualize: 
+%FIX THIS
 screen_size = get(0,'ScreenSize');
 h = figure('Position', [screen_size(3)/2 1 screen_size(3)/2 screen_size(4)]);
 hold on;
@@ -660,8 +661,8 @@ plotNeuronsBaseline(baseActivity, CComp, YrA, totalneurons)
 %
 %Manually enter and confirm the BMI neurons:
 % E2_candidate = unique([8 28 16 19]); %unique also sorts
-E2_base = sort([8 17 2 6], 'ascend') %3 6 5 4 35
-E1_base = sort([5 1 10 23], 'ascend')  % 27 5 13 9 4 3010
+E2_base = sort([7 25 27 20], 'ascend') %3 6 5 4 35
+E1_base = sort([8 3 21 19], 'ascend')  % 27 5 13 9 4 3010
 ensembleNeurons = [E1_base, E2_base];
 plotNeuronsEnsemble(baseActivity, ensembleNeurons, [ones(1,length(E1_base)) 2*ones(1,length(E2_base))])
 select_roi_data(roi_data, [E2_base, unique(E1_base)]); 
@@ -709,7 +710,7 @@ A_file = roi_data_file; %fullfile(savePath, 'red.mat');
 exist(A_file)
 onacid_bool = 0
 
-sec_per_reward_range = [120 90]; 
+sec_per_reward_range = [80 70] 
 % sec_per_reward_range = [120 90]; 
 % sec_per_reward_range = [10 5]
 
@@ -1147,5 +1148,10 @@ end
 %--------------------------------------------------------------------------
 %%
 %NOTES:
-%Ran an extra 20 minutes.  Animal may have improved more in that extra 20.
-% 
+%{
+Ran two sessions of BMI. 
+ROI 3 and 6 went silent.  
+ROI7 was doing a  lot of work.  
+imaging was overall good but the animal still did terribly
+%}
+

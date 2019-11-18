@@ -10,9 +10,9 @@ fb_settings.arduino.pin            = 'D3';
 fb_settings.arduino.duration       = 0.3; %ms, tones update at rate of BMI code, this is the longest a tone will play for
 fb_settings.obj_max_perctile       = 90; 
 
-fb_settings.lambda_E2mE1 = 0.5; 
-fb_settings.lambda_E1 = 0.25; 
-fb_settings.lambda_E2 = 0.25; 
+fb_settings.lambda_E2mE1 = 0.8; 
+fb_settings.lambda_E1 = 0.1; 
+fb_settings.lambda_E2 = 0.1; 
 
 % %Added 11.5.19 to have feedback dependent on E1, E2 state
 % %target_buffer: how much frequency separation there should be between 

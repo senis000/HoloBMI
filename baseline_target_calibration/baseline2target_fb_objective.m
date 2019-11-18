@@ -464,7 +464,7 @@ E1_coeff            = E1_coeff0;
 E1_thresh           = E1_mean + E1_coeff*E1_std; %E1_mean_max; %E1_mean;
 
 
-T_delta             = 0.05;
+T_delta             = 0.01;
 E2_coeff_delta      = 0.05; %0.05 
 E1_coeff_delta      = 0.05; %0.05 
 task_complete       = 0;
@@ -475,7 +475,7 @@ E1_coeff_vec        = [];
 
 reward_per_frame_vec = []; 
 
-max_iter = 10000;
+max_iter = 1000;
 iter = 0;
 
 %%
