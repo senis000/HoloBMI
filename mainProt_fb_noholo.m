@@ -44,8 +44,8 @@ duration of stim
 %--------------------------------------------------------------------------
 
 % define Animal, day and folder where to save
-animal = 'NY127'; day = '2019-11-18';
-folder = 'E:\ines';
+animal = 'NY127'; day = '2019-11-19';
+folder = 'H:\ines_h';
 % folder = 'F:\Vivek\training';
 
 % define posz TODO can we get this from prairie?
@@ -119,7 +119,7 @@ else
     exist(redgreen_dir)
     red_path      = fullfile(redgreen_dir, 'red.tif'); 
     exist(red_path)
-    green_path    = fullfile(redgreen_dir, 'green_std.tif'); 
+    green_path    = fullfile(redgreen_dir, 'green_mean.tif'); 
     exist(green_path)    
     green_im    = imread(green_path); 
     red_im      = imread(red_path); 
@@ -238,6 +238,8 @@ x_roi = roi_ctr.xy(1,:);
 y_roi = roi_ctr.xy(2,:); 
 bot_base_path = fullfile(savePath, 'Bot_base.cfg'); 
 createBot(bot_base_path, x_roi,y_roi)
+% bot_candidates_path = fullfile(savePath, 'BOT_candidates.cfg'); 
+% createBot_v2(bot_candidates_path, sel_roi_data.x, sel_roi_data.y, sel_roi_data.r)
 
 %%
 % roi_ind = unique(roi_data.chan(1).roi_mask(:));
@@ -317,7 +319,8 @@ clear s
 %5) B: Drag video to folder
 %--------------------------------------------------------------------------
 %%
-visual_roi = unique([53 1 13 76 71 15 47 68 42 59 62 78 57 3])
+visual_roi = ...
+    unique([54 26 40 50 16 93 62 79 1 65 73 79 85 62 55 65 6 5 41 38 97 76])
 %real good: 
 %53 1 71 76 22 31 80 
 %be careful with 1, it's VERY ACTIVE
@@ -344,7 +347,7 @@ plotSelNeuronsBaseline(baseActivity, CComp, YrA, totalneurons, sel);
 %D1
 %[7 1 11 2]
 %%
-red_sel_candidates = [1 59 71 70]
+red_sel_candidates = [26 79 73 32]
 red_sel = red_sel_candidates(1:4); 
 length(red_sel)
 %%
@@ -357,7 +360,7 @@ plotSelNeuronsBaseline(baseActivity, CComp, YrA, totalneurons, sel);
 %D2
 %[42 31 40 26]
 %%
-green_sel_candidates = [53 47 68 3]
+green_sel_candidates = [54 85 62 40]
 green_sel = green_sel_candidates(1:4)
 length(green_sel)
 %%
@@ -371,8 +374,8 @@ length(green_sel)
 % E2_base = sort([red_sel(1:5) red_sel(16:20) green_sel(1:5) green_sel(16:20)], 'ascend') %Activity needs to increase 
 % E1_base = sort([red_sel(6:15) green_sel(6:15)], 'ascend') %Activity needs to decrease
 
-E2_base = sort([red_sel(3) red_sel(1) green_sel(1) green_sel(2)], 'ascend') %Activity needs to increase 
-E1_base = sort([red_sel(4) red_sel(2) green_sel(3) green_sel(4)], 'ascend') %Activity needs to decrease
+E2_base = sort([red_sel(3) red_sel(1) green_sel(4) green_sel(2)], 'ascend') %Activity needs to increase 
+E1_base = sort([red_sel(4) red_sel(2) green_sel(3) green_sel(1)], 'ascend') %Activity needs to decrease
 
 % E2_base = sort(green_sel, 'ascend') %Activity needs to increase 
 % E1_base = sort(red_sel, 'ascend') %Activity needs to decrease
@@ -532,29 +535,16 @@ BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_111719(folder, animal, day, 
 %%
 %NOTES:
 %{
-beautiful cells.  we range normalized individual neurons.
-not all neurons could individually achieve the target.
-in future, distinguish between two types of experiments: 
-one where cells co-activate in baseline, so the task will demand
-co-activation
-two where cells don't co-activate in baseline, so task does Not demand it.
-One cell in E2 with all other cells silent is enough.
+looked like good cells.  
+the E1 side got way more hits than the E2 side, making me suspect something
+is off with the calibration.  Need to re-simulate.  
+BMI was aborted early.  
+ToDo:
+analyze what happened
+plot BOT the right size
+change tones to come from computer instead of arduino
+(figure out how to give the analog frequency, maybe by quantizing tones, maybe by computing freq on the fly)
 
-we ran a short second bmi period, and animal's performance tanked.  imaging
-didn't seem to lower in quality.  maybe the break between first and second
-bmi impaired him.  
-
-todo: 
-seeding F0 needs to be added back
-implement a calibration, where we feed in candidate neurons.  we also
-specify if we want a task where one cell is sufficient, or more is
-necessary.
-the calibration loops over combinations of neurons to find an appropriate setting.
-
-two important parameters:
-how frequently does a cell have a big event.
-how frequently does the cell's big event co-occur with another cells'
-event.  
 
 %
 %
