@@ -462,6 +462,10 @@ figure('Position', [600,300, 256, 256])
 imshow(ensembleMask);
 title('Mask for Ensemble Neurons'); 
 
+%createBot_v2(bot_candidates_path, sel_roi_data.x, sel_roi_data.y, sel_roi_data.r)
+%%
+% createBot_v2(bot_candidates_path, sel_roi_data.x, sel_roi_data.y, sel_roi_data.r)
+
 %%
 %Seed BMI baseVal, if you already ran BMI, and need to run again
 %--------------------------------------------------------------------------
