@@ -39,7 +39,8 @@ if(cal.cursor_zscore_bool)
     dff_z = dff_z(:).'; %set dff_z to be a row
     n_analyze = dff_z;
 elseif(cal.range_norm_bool)
-    n_analyze = dff./cal.target.n_range; 
+    n_analyze = (dff-cal.target.n_min)./cal.target.n_range; 
+%     n_analyze = (dff)./cal.target.n_range; 
 else
     n_analyze = dff;
 end

@@ -77,8 +77,8 @@ cd(home_dir)
 env_dir = 'G:\VivekNuria\utils'
 
 % define Animal, day and folder where to save
-animal = 'NVI17'; day = 'D13';
-folder = 'E:\holobmi_E\191117';
+animal = 'NVI17'; day = 'D14';
+folder = 'H:\holobmi_H\191118';
 savePath = fullfile(folder, animal,  day);
 if ~exist(savePath, 'dir')
     mkdir(savePath);
@@ -267,6 +267,7 @@ title('ROI Mask');
 %% Delete ROI if needed
 %--------------------------------------------------------------------------
 %DO:
+
 %-If auto detected ROI suck, delete ROI
 %--------------------------------------------------------------------------
 close all;
@@ -475,7 +476,7 @@ plotHoloStimTimeLock(holoActivity, voltageRec, min_duration, plot_win)
 % (I often choose more than 4 neurons, manually stim the neurons.
 % then re-run once you've chosen your 4.)
 %--------------------------------------------------------------------------
-E2_candidate =[17 14 7 30]; % 5 16 15 31 10 9 24
+E2_candidate =[5 28 10 13 ]; % 27 8 32 23 19 4 30 14 24 12
 % E2_base = sort([21    36   127   196], 'ascend')
 
 %% Holo stim of Ensemble neurons
@@ -676,7 +677,7 @@ plotNeuronsBaseline(baseActivity, CComp, YrA, 20)
 %Manually enter and confirm the BMI neurons:
 % E2_candidate = unique([9 15 23 29]); %unique also sorts
 % E2_base = sort([7 9 12 29]; %8 21 10 6 17 3 18
-E1_base = sort([16 8 24 10], 'ascend')  % 10 8 2 4 13
+E1_base = sort([17 14 15 11], 'ascend')  % 10 18 23  12 30 
 ensembleNeurons = [E1_base, E2_base];
 plotNeuronsEnsemble(baseActivity, ensembleNeurons, [ones(1,length(E1_base)) 2*ones(1,length(E2_base))])
 select_roi_data(roi_data, [E2_base, unique(E1_base)]); 
@@ -776,9 +777,9 @@ close all
 %D0:
 %Note down: 
 % - T value
-% T = 0.21
+% T = 0.259
 % num_valid_hits:7
-% num_hits: 82
+% num_hits: 142
 %--------------------------------------------------------------------------
 %% Holo stim checking connectivity
 % create randomize run for each individual neuron of the ensemple
@@ -1208,5 +1209,6 @@ end
 
 %--------------------------------------------------------------------------
 %%
-%NOTES:
-% rr 
+%NOTES
+% holoBMI the moron moved the water away so there is 2 pretrains
+% I think this is not usable.

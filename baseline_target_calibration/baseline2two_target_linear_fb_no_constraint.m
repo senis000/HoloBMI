@@ -376,7 +376,9 @@ dff_valid   = dff(valid_idxs, :);
 n_max = prctile(dff_valid, 100, 1); 
 n_min = prctile(dff_valid, 1, 1);
 n_range = n_max - n_min; 
-dff_range_norm = dff./repmat(n_range, [size(dff,1) 1]); 
+dff_min_c = dff-repmat(n_min, size(dff,1), 1);
+dff_range_norm = dff_min_c./repmat(n_range, [size(dff,1) 1]); 
+% dff_range_norm = dff./repmat(n_range, [size(dff,1) 1]); 
 
 if(plot_dff_bool)
     %plot dff
@@ -512,6 +514,7 @@ E2_reward_per_frame_vec     = [];
 init_best_cal               = 1; 
 best_cal.n_mean             = n_mean;
 best_cal.n_std              = n_std;
+best_cal.n_min              = n_min;
 best_cal.n_range            = n_range; 
 best_cal.E2_mean            = E2_mean; 
 best_cal.E1_mean            = E1_mean; 
