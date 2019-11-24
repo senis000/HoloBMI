@@ -44,7 +44,8 @@ duration of stim
 %--------------------------------------------------------------------------
 
 % define Animal, day and folder where to save
-animal = 'NY127'; day = '2019-11-19';
+animal = 'NY127'; day = '2019-11-22';
+% folder = 'E:\ines';
 folder = 'H:\ines_h';
 % folder = 'F:\Vivek\training';
 
@@ -119,7 +120,7 @@ else
     exist(redgreen_dir)
     red_path      = fullfile(redgreen_dir, 'red.tif'); 
     exist(red_path)
-    green_path    = fullfile(redgreen_dir, 'green_mean.tif'); 
+    green_path    = fullfile(redgreen_dir, 'green_std.tif'); 
     exist(green_path)    
     green_im    = imread(green_path); 
     red_im      = imread(red_path); 
@@ -320,7 +321,7 @@ clear s
 %--------------------------------------------------------------------------
 %%
 visual_roi = ...
-    unique([54 26 40 50 16 93 62 79 1 65 73 79 85 62 55 65 6 5 41 38 97 76])
+    unique([1 2 3 6 25 8 16 22 20 10 4 14 21 ])
 %real good: 
 %53 1 71 76 22 31 80 
 %be careful with 1, it's VERY ACTIVE
@@ -347,7 +348,7 @@ plotSelNeuronsBaseline(baseActivity, CComp, YrA, totalneurons, sel);
 %D1
 %[7 1 11 2]
 %%
-red_sel_candidates = [26 79 73 32]
+red_sel_candidates = [20 25 21 26 6]
 red_sel = red_sel_candidates(1:4); 
 length(red_sel)
 %%
@@ -360,7 +361,7 @@ plotSelNeuronsBaseline(baseActivity, CComp, YrA, totalneurons, sel);
 %D2
 %[42 31 40 26]
 %%
-green_sel_candidates = [54 85 62 40]
+green_sel_candidates = [1 2 16 8 12 15]
 green_sel = green_sel_candidates(1:4)
 length(green_sel)
 %%
@@ -379,6 +380,9 @@ E1_base = sort([red_sel(4) red_sel(2) green_sel(3) green_sel(1)], 'ascend') %Act
 
 % E2_base = sort(green_sel, 'ascend') %Activity needs to increase 
 % E1_base = sort(red_sel, 'ascend') %Activity needs to decrease
+
+% E1_base = [1 16 8 12]
+% E2_base = [14 7 11 10]
 
 length(E2_base)
 %8 21 30 45
@@ -401,6 +405,38 @@ plotNeuronsEnsemble(baseActivity, ensembleNeurons, ensembleID)
 
 %%
 % calibration_settings_bmi1 = calibration_settings; 
+%%
+% ensemble_swap = 1; 
+% E1_base_past = E1_base; 
+% E2_base_past = E2_base; 
+% E1_base = E2_base_past
+% E2_base = E1_base_past
+% 
+% ensembleNeurons = [E1_base, E2_base];
+% ensembleID = [ones(1,length(E1_base)) 2*ones(1,length(E2_base))];
+
+% %%
+% %Add: be able to use bmi data to do calibration
+% %make a new n_f_file, using the bmiAct from BMI.  
+% %load bmi_online_file: 
+% bmi_file2cal = fullfile('H:\ines_h\NY127\2019-11-21', 'BMI_online191121T104607.mat'); 
+% exist(bmi_file2cal)
+% 
+% bmi_file2cal_data = load(bmi_file2cal); 
+% bmi_n_f = bmi_file2cal_data.data.bmiAct;
+% baseActivity_trunc = bmi_n_f(:, ~isnan(bmi_n_f(1,:))); 
+% baseActivity = zeros(72, size(baseActivity_trunc, 2)); 
+% 
+% baseActivity(E1_base, :) = baseActivity_trunc(1:4, :); 
+% baseActivity(E2_base, :) = baseActivity_trunc(5:8, :); 
+% bmi_n_f_file = fullfile('H:\ines_h\NY127\2019-11-21', 'BMI2cal.mat'); 
+% save(bmi_n_f_file, 'baseActivity'); 
+% %%
+% %using bmi_data: 
+% task_settings.calibration.sec_per_reward_range = [55 50]
+% task_settings.fb.target_low_freq = 0
+% [cal, BMI_roi_path] = baseline2two_target_linear_fb_no_constraint(bmi_n_f_file, roi_data_file, task_settings, ...
+%     E1_base, E2_base, savePath);
 
 %% Calibrate Target with Baseline simulation
 %--------------------------------------------------------------------------
@@ -426,8 +462,8 @@ exist(baseline_mat)
 n_f_file = baseline_mat;
 close all;
 % Manually adjust task difficulty: 
-task_settings.calibration.sec_per_reward_range = [75 60]
-
+task_settings.calibration.sec_per_reward_range = [65 60]
+task_settings.fb.target_low_freq = 1 %set to 0 for: high pitch -> reward.  
 [cal, BMI_roi_path] = baseline2two_target_linear_fb_no_constraint(n_f_file, roi_data_file, task_settings, ...
     E1_base, E2_base, savePath);
 
@@ -535,17 +571,10 @@ BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_111719(folder, animal, day, 
 %%
 %NOTES:
 %{
-looked like good cells.  
-the E1 side got way more hits than the E2 side, making me suspect something
-is off with the calibration.  Need to re-simulate.  
-BMI was aborted early.  
-ToDo:
-analyze what happened
-plot BOT the right size
-change tones to come from computer instead of arduino
-(figure out how to give the analog frequency, maybe by quantizing tones, maybe by computing freq on the fly)
-
-
+around 64000 frames power dropped.  we changed pockel cell bias (lowered
+from 96 to 69)
+the water at the edges went away. 
+next time let's do gel.  
 %
 %
 %}

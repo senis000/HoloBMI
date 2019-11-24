@@ -146,6 +146,8 @@ f_base = baseActivity;
 f_base(:,isnan(f_base(1,:))) = [];
 f_base = f_base.'; %num_samples X num_neurons
 
+%f_base = f_base(1:18000,:)
+
 % f_base = f_base(1:1000, :); %debugging input data with nans... 
 %Assume variable is called f_base
 
