@@ -44,8 +44,7 @@ duration of stim
 %--------------------------------------------------------------------------
 
 % define Animal, day and folder where to save
-animal = 'NY127'; day = '2019-11-22';
-% folder = 'E:\ines';
+animal = 'NY127'; day = '2019-11-19';
 folder = 'H:\ines_h';
 % folder = 'F:\Vivek\training';
 
@@ -120,7 +119,7 @@ else
     exist(redgreen_dir)
     red_path      = fullfile(redgreen_dir, 'red.tif'); 
     exist(red_path)
-    green_path    = fullfile(redgreen_dir, 'green_std.tif'); 
+    green_path    = fullfile(redgreen_dir, 'green_mean.tif'); 
     exist(green_path)    
     green_im    = imread(green_path); 
     red_im      = imread(red_path); 
@@ -296,10 +295,13 @@ end
 
 
 % Baseline environment already removes MARKPOINTS and set the reps to 27000
+playback_data   = load(task_settings.clda.playback_path).fb_obs;
 
+%ToDo make environment
 clear s
 [baseline_mat, baseline_dat] = ...
-    BaselineAcqnvsPrairie(folder, animal, day, AComp, roi_mask, task_settings);
+    BaselineAcqnvsPrairie_fb_playback(folder, animal, day, AComp, roi_mask, task_settings, ...
+    a, playback_data, playback_bool);
 
 % BaselineAcqnvsPrairie(folder, animal, day, AComp, holoMaskRedGreen, onacid_bool, frameRate);
 % saves in [savePath, 'baselineActivity.dat'] the activity of all the
@@ -321,7 +323,7 @@ clear s
 %--------------------------------------------------------------------------
 %%
 visual_roi = ...
-    unique([1 2 3 6 25 8 16 22 20 10 4 14 21 ])
+    unique([54 26 40 50 16 93 62 79 1 65 73 79 85 62 55 65 6 5 41 38 97 76])
 %real good: 
 %53 1 71 76 22 31 80 
 %be careful with 1, it's VERY ACTIVE
@@ -348,7 +350,7 @@ plotSelNeuronsBaseline(baseActivity, CComp, YrA, totalneurons, sel);
 %D1
 %[7 1 11 2]
 %%
-red_sel_candidates = [20 25 21 26 6]
+red_sel_candidates = [26 79 73 32]
 red_sel = red_sel_candidates(1:4); 
 length(red_sel)
 %%
@@ -361,7 +363,7 @@ plotSelNeuronsBaseline(baseActivity, CComp, YrA, totalneurons, sel);
 %D2
 %[42 31 40 26]
 %%
-green_sel_candidates = [1 2 16 8 12 15]
+green_sel_candidates = [54 85 62 40]
 green_sel = green_sel_candidates(1:4)
 length(green_sel)
 %%
@@ -380,9 +382,6 @@ E1_base = sort([red_sel(4) red_sel(2) green_sel(3) green_sel(1)], 'ascend') %Act
 
 % E2_base = sort(green_sel, 'ascend') %Activity needs to increase 
 % E1_base = sort(red_sel, 'ascend') %Activity needs to decrease
-
-% E1_base = [1 16 8 12]
-% E2_base = [14 7 11 10]
 
 length(E2_base)
 %8 21 30 45
@@ -405,38 +404,6 @@ plotNeuronsEnsemble(baseActivity, ensembleNeurons, ensembleID)
 
 %%
 % calibration_settings_bmi1 = calibration_settings; 
-%%
-% ensemble_swap = 1; 
-% E1_base_past = E1_base; 
-% E2_base_past = E2_base; 
-% E1_base = E2_base_past
-% E2_base = E1_base_past
-% 
-% ensembleNeurons = [E1_base, E2_base];
-% ensembleID = [ones(1,length(E1_base)) 2*ones(1,length(E2_base))];
-
-% %%
-% %Add: be able to use bmi data to do calibration
-% %make a new n_f_file, using the bmiAct from BMI.  
-% %load bmi_online_file: 
-% bmi_file2cal = fullfile('H:\ines_h\NY127\2019-11-21', 'BMI_online191121T104607.mat'); 
-% exist(bmi_file2cal)
-% 
-% bmi_file2cal_data = load(bmi_file2cal); 
-% bmi_n_f = bmi_file2cal_data.data.bmiAct;
-% baseActivity_trunc = bmi_n_f(:, ~isnan(bmi_n_f(1,:))); 
-% baseActivity = zeros(72, size(baseActivity_trunc, 2)); 
-% 
-% baseActivity(E1_base, :) = baseActivity_trunc(1:4, :); 
-% baseActivity(E2_base, :) = baseActivity_trunc(5:8, :); 
-% bmi_n_f_file = fullfile('H:\ines_h\NY127\2019-11-21', 'BMI2cal.mat'); 
-% save(bmi_n_f_file, 'baseActivity'); 
-% %%
-% %using bmi_data: 
-% task_settings.calibration.sec_per_reward_range = [55 50]
-% task_settings.fb.target_low_freq = 0
-% [cal, BMI_roi_path] = baseline2two_target_linear_fb_no_constraint(bmi_n_f_file, roi_data_file, task_settings, ...
-%     E1_base, E2_base, savePath);
 
 %% Calibrate Target with Baseline simulation
 %--------------------------------------------------------------------------
@@ -462,8 +429,8 @@ exist(baseline_mat)
 n_f_file = baseline_mat;
 close all;
 % Manually adjust task difficulty: 
-task_settings.calibration.sec_per_reward_range = [65 60]
-task_settings.fb.target_low_freq = 1 %set to 0 for: high pitch -> reward.  
+task_settings.calibration.sec_per_reward_range = [75 60]
+
 [cal, BMI_roi_path] = baseline2two_target_linear_fb_no_constraint(n_f_file, roi_data_file, task_settings, ...
     E1_base, E2_base, savePath);
 
@@ -501,9 +468,30 @@ figure('Position', [600,300, 256, 256])
 imshow(ensembleMask);
 title('Mask for Ensemble Neurons'); 
 
+%To Do: draw BOT the correct size: 
+%To Do: update drawing for our zoom.  
 %createBot_v2(bot_candidates_path, sel_roi_data.x, sel_roi_data.y, sel_roi_data.r)
 %%
 % createBot_v2(bot_candidates_path, sel_roi_data.x, sel_roi_data.y, sel_roi_data.r)
+
+%% Baseline Data to Start CLDA: 
+%baseline_cursor_samples for closed loop parameter adaptation: 
+base_cursor_samples         = load(cal.paths.cal_all, 'cursor_obs'); 
+base_cursor_samples         = base_cursor_samples.cursor_obs; 
+num_base_cursor_samples     = min(task_settings.clda.min_samples_for_adapt, length(base_cursor_samples)); 
+base_cursor_samples         = base_cursor_samples(1:num_base_cursor_samples); 
+
+%% Run CLDA: 
+%TODO: update the number of frames this will run for. (Environment file)
+%Add extra minutes for the F0 buffer
+[cal, clda_mat] = BMI_CLDA(folder, animal, day, ...
+    expt_str, cal, task_settings, a, vectorHolo, vectorVTA, ...
+    base_cursor_samples, ...
+    debug_bool, debug_input);
+
+%%
+[cal_update] = plot_CLDA(clda_mat, save_dir);
+
 
 %%
 %Seed BMI baseVal, if you already ran BMI, and need to run again
@@ -513,15 +501,16 @@ title('Mask for Ensemble Neurons');
 % - if seedBase 0, we wait for baseline before starting stims
 %2) Copy-paste BMI_target_info filename (into 'pretrain_file')
 %--------------------------------------------------------------------------
-seedBase = 0; 
-seed_file = 'BMI_online190719T163934'
+seedBase = 1; 
+seed_path = clda_mat; 
 baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan
 if seedBase
     %ENTER HERE:
-    load(fullfile(savePath, seed_file)); 
+%     load(fullfile(savePath, seed_file));
+    load(seed_path); 
     pretrain_base = data.baseVector; 
     pretrain_base(:, isnan(pretrain_base(1,:))) = [];
-    baseValSeed = pretrain_base(:,end)
+    baseValSeed = pretrain_base(:,end); 
 end
 
 %%
@@ -547,9 +536,9 @@ debug_bool = 0;
 debug_input = []; 
 expt_str = 'BMI'; 
 
-BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_111719(folder, animal, day, ...
+[saveFile] = BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_111719(folder, animal, day, ...
     expt_str, cal, task_settings, a, vectorHolo, vectorVTA, ...
-    debug_bool, debug_input);
+    debug_bool, debug_input, baseValSeed);
 
 % BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_110719(folder, animal, day, ...
 %     expt_str, cal, fb_cal, task_settings, a, vectorHolo, vectorVTA, ...
@@ -575,10 +564,17 @@ BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_111719(folder, animal, day, 
 %%
 %NOTES:
 %{
-around 64000 frames power dropped.  we changed pockel cell bias (lowered
-from 96 to 69)
-the water at the edges went away. 
-next time let's do gel.  
+looked like good cells.  
+the E1 side got way more hits than the E2 side, making me suspect something
+is off with the calibration.  Need to re-simulate.  
+BMI was aborted early.  
+ToDo:
+analyze what happened
+plot BOT the right size
+change tones to come from computer instead of arduino
+(figure out how to give the analog frequency, maybe by quantizing tones, maybe by computing freq on the fly)
+
+
 %
 %
 %}

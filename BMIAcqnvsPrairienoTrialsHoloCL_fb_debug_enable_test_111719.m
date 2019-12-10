@@ -1,6 +1,6 @@
-function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_111519(folder, animal, day, ...
+function [saveFile] = BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_111719(folder, animal, day, ...
     expt_str, cal, task_settings, a, vectorHolo, vectorVTA, ...
-    debug_bool, debug_input)
+    debug_bool, debug_input, baseValSeed)
 % BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable(folder, animal, day, ...
 %     expt_str, baselineCalibrationFile, frameRate, vectorHolo, vectorVTA, ...
 %     cursor_zscore_bool, debug_bool, debug_input)
@@ -110,6 +110,8 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_111519(folder, anim
     
     %% BMI parameters 
     savePath = fullfile(folder, animal, day); %[folder, animal, '/',  day, '/'];
+    saveFile = fullfile(savePath, ['BMI_online', datestr(datetime('now'), 'yymmddTHHMMSS'), '.mat']);
+    
     if ~exist(savePath, 'dir')
         mkdir(savePath);
     end
@@ -228,7 +230,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_111519(folder, anim
     data.frame = 1; % initialize frames
     
     %% Cleaning 
-    finishup = onCleanup(@() cleanMeUp(savePath, cal, task_settings, debug_bool));  %in case of ctrl-c it will launch cleanmeup
+    finishup = onCleanup(@() cleanMeUp(saveFile, cal, task_settings, debug_bool));  %in case of ctrl-c it will launch cleanmeup
 
 %     %% Prepare the nidaq
     if(~debug_bool)
@@ -385,10 +387,20 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_111519(folder, anim
                 
                 % calculate F0 baseline activity 
                 if data.frame == initFrameBase
-%                     baseval = single(ones(numberNeurons,1)).*unitVals;
-                    baseval = single(ones(numberNeurons,1)).*unitVals/baseFrames;
+                    if ~isnan(sum(baseValSeed))
+                        baseBuffer_full = 1; 
+                        baseval = baseValSeed; 
+                        disp('baseBuffer seeded!'); 
+                    else
+                        baseval = single(ones(numberNeurons,1)).*unitVals/baseFrames;
+%                         if single_bool
+%                             baseval = single(ones(numberNeurons,1)).*unitVals/baseFrames;
+%                         else
+%                             baseval = double(ones(numberNeurons,1)).*unitVals/baseFrames;                        
+%                         end
+                    end                    
                     %---
-                elseif data.frame <= (initFrameBase+baseFrames)
+                elseif ~baseBuffer_full && data.frame <= (initFrameBase+baseFrames)
 %                     baseval = base(baseval*(data.frame - 1) + signal)./data.frame;
                     baseval = baseval + unitVals/baseFrames;
                     disp(data.frame);
@@ -396,7 +408,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_111519(folder, anim
                         baseBuffer_full = 1;
                         disp('baseBuffer FULL!'); 
                     end
-                elseif data.frame > (initFrameBase+baseFrames)
+                else %if data.frame > (initFrameBase+baseFrames)
                     baseval = (baseval*(baseFrames - 1) + unitVals)./baseFrames;
                 end
                 data.baseVector(:,data.frame) = baseval;
@@ -433,7 +445,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_111519(folder, anim
                     data.fb_freq(data.frame) = fb_freq_i;
                     m.Data.fb_freq(data.frame) = data.fb_freq(data.frame); % saving in memmap    
 %--------------------------------------------------------------------------                    
-                    if(task_settings.fb.fb_bool)
+                    if(task_settings.fb.fb_bool && ~debug_bool)
                         %Send tone arduino
                         playTone(a,...
                             task_settings.fb.arduino.pin,...
@@ -463,7 +475,6 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_111519(folder, anim
                         disp('New Trial!')
                     end 
                     if (E1_backtobaselineFlag || E2_backtobaselineFlag)
-                        
                         if(E1_backtobaselineFlag)
                             if data.cursor(data.frame) >= E1_back2Base 
                                 back2BaseCounter = back2BaseCounter+1;
@@ -641,12 +652,12 @@ function BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_111519(folder, anim
 end
 % 
 % % fires when main function terminates (normal, error or interruption)
-function cleanMeUp(savePath, cal, task_settings, debug_bool)
+function cleanMeUp(saveFile, cal, task_settings, debug_bool)
     global pl data
     disp('cleaning')
     % evalin('base','save baseVars.mat'); %do we want to save workspace?
     % saving the global variables
-    save(fullfile(savePath, ['BMI_online', datestr(datetime('now'), 'yymmddTHHMMSS'), '.mat']), 'data', 'cal', 'task_settings')
+    save(saveFile, 'data', 'cal', 'task_settings')
     if ~debug_bool
         if pl.Connected()
             pl.Disconnect();

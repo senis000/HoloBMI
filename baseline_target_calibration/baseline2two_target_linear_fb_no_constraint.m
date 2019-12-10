@@ -654,7 +654,8 @@ best_cal.E1_hit_cal.num_hits_no_b2base
 
 %%
 % Calculate parameters for auditory feedback
-[cal]   = cursor_cal2audio_fb(cal, task_settings);
+[cal]   = cal2fb_Tsymm_midmapped(cal, task_settings);
+%[cal]   = cursor_cal2audio_fb(cal, task_settings);
 
 %%
 %PLOTS
