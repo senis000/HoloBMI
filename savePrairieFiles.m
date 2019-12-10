@@ -13,5 +13,4 @@ function savePrairieFiles(savePath, pl, expt_str)
     pl.SendScriptCommands(saveCommand);
     saveFilePrairie = "-fn Tseries " + expt_str + "_" + datestr(datetime('now'), 'yymmddTHHMMSS');
     pl.SendScriptCommands(saveFilePrairie);
-    % run tseries with holoStim one neuron at a time ~2min and save the images.
 end
