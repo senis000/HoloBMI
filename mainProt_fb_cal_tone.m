@@ -329,8 +329,8 @@ visual_roi = ...
 %be careful with 1, it's VERY ACTIVE
 
 %% Selection of neurons
-% plots neurons so we can select which ones we like the most 
-%--------------------------------------------------------------------------
+%     plots neurons so we can select which ones we like the most 
+%-------------------------- ------------------------------------------------
 %D0:
 %1) Copy paste base_file name 'BaselineOnlineX.mat'
 %--------------------------------------------------------------------------
