@@ -240,7 +240,7 @@ function [cal, saveFile] = BMI_CLDA(folder, animal, day, ...
     data.frame = 1; % initialize frames
     
     %% Cleaning 
-    finishup = onCleanup(@() cleanMeUp(saveFile, cal, task_settings, debug_bool));  %in case of ctrl-c it will launch cleanmeup
+    finishup = onCleanup(@() cleanMeUp(saveFile, cal_init, cal, task_settings, debug_bool));  %in case of ctrl-c it will launch cleanmeup
 
 %     %% Prepare the nidaq
     if(~debug_bool)
@@ -329,9 +329,9 @@ function [cal, saveFile] = BMI_CLDA(folder, animal, day, ...
         'single',size(data.selfVTA),'selfVTA'; ...
         'single',size(data.holoVTA),'holoVTA'; ...
         'single',size(data.trialStart),'trialStart'; ...
-        'double',size(data.E2_T), 'double', ...
-        'double',size(data.E1_T), 'double', ...
-        'double',size(data.mid_T), 'double'}, 'repeat', 1);
+        'double',size(data.E2_T), 'E2_T';...
+        'double',size(data.E1_T), 'E1_T'; ...
+        'double',size(data.mid_T), 'mid_T'}, 'repeat', 1);
     m.Writable = true;
     
 %     %TODO: fix this given bData
@@ -645,14 +645,21 @@ function [cal, saveFile] = BMI_CLDA(folder, animal, day, ...
             end
             
             %Check if CLDA should be done: 
-            if(num_cursor_valid >= task_settings.clda.min_samples_for_adapt && ...
-                    (num_cursor_online - last_clda) >= task_settings.clda.period_for_adapt)
+            if(num_cursor_valid > task_settings.clda.min_samples_for_adapt && ...
+                    (num_cursor_online - last_clda) > task_settings.clda.period_for_adapt)
                 disp('Adapting Thresholds!'); 
                 last_clda = num_cursor_online; 
-                [cal] = adapt_params(task_settings, cal, base_cursor_samples, frame);
-                data.E1_T(frame)   = cal.target.E1_hit_cal.T; 
-                data.E2_T(frame)   = cal.target.E2_hit_cal.T; 
-                data.mid_T(frame)  = cal.target.cursor_middle; 
+                [cal] = adapt_params(task_settings, cal, base_cursor_samples, data.frame);
+                data.E1_T(data.frame)   = cal.target.E1_hit_cal.T; 
+                data.E2_T(data.frame)   = cal.target.E2_hit_cal.T; 
+                data.mid_T(data.frame)  = cal.target.cursor_middle; 
+                disp('E1 T: ')
+                cal.target.E1_hit_cal.T
+                disp('E2 T: ')
+                cal.target.E2_hit_cal.T                
+                
+                E1_back2Base = cal.target.E1_hit_cal.b2base_thresh;
+                E2_back2Base = cal.target.E2_hit_cal.b2base_thresh;
             end
             
             %Updates:
@@ -672,7 +679,7 @@ function [cal, saveFile] = BMI_CLDA(folder, animal, day, ...
 end
 % 
 % % fires when main function terminates (normal, error or interruption)
-function cleanMeUp(saveFile, cal, task_settings, debug_bool)
+function cleanMeUp(saveFile, cal_init, cal, task_settings, debug_bool)
     global pl data
     disp('cleaning')
     % evalin('base','save baseVars.mat'); %do we want to save workspace?

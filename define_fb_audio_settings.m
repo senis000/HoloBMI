@@ -10,6 +10,7 @@ fb_settings.arduino.pin            = 'D3';
 fb_settings.arduino.duration       = 0.3; %ms, tones update at rate of BMI code, this is the longest a tone will play for
 fb_settings.min_perctile            = 90; 
 
+
 %Added 11.5.19 to have feedback dependent on E1, E2 state
 %target_buffer: how much frequency separation there should be between 
 %feedback for target achievement vs intermediate feedback
@@ -24,3 +25,13 @@ else
     fb_settings.trunc_freq_E1_state     = 15000; 
 end
 
+
+% added by nuria to solve an error:
+fb_settings.lambda_E2mE1 = 0.5; 
+fb_settings.lambda_E1 = 0.25; 
+fb_settings.lambda_E2 = 0.25;
+
+fb_settings.min_prctile            = 10; %The lowest percentile allowed for E2 minus E1
+fb_settings.max_prctile            = 100; %The lowest percentile allowed for E2 minus E1
+fb_settings.middle_prctile         = 50; 
+fb_settings.obj_max_perctile       = 90; 

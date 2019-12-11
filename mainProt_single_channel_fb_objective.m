@@ -53,7 +53,7 @@ duration of stim
 %--------------------------------------------------------------------------
 [task_settings] = define_BMI_task_settings();
 [fb_settings]   = define_fb_audio_settings();
-fb_bool = 0; %If any experiment will need audio
+fb_bool = 1; %If any experiment will need audio
 %Initialize arduino:
 if(fb_bool) 
     a = arduino(fb_settings.arduino.com, ...
@@ -77,8 +77,8 @@ cd(home_dir)
 env_dir = 'G:\VivekNuria\utils'
 
 % define Animal, day and folder where to save
-animal = 'NVI17'; day = 'D19';
-folder = 'E:\holobmi_E\191123';
+animal = 'NVI20'; day = 'D26';
+folder = 'H:\holobmi_H\191130';
 savePath = fullfile(folder, animal,  day);
 if ~exist(savePath, 'dir')
     mkdir(savePath);
@@ -476,7 +476,7 @@ plotHoloStimTimeLock(holoActivity, voltageRec, min_duration, plot_win)
 % (I often choose more than 4 neurons, manually stim the neurons.
 % then re-run once you've chosen your 4.)
 %--------------------------------------------------------------------------
-E2_candidate =[11 6 31 28]; %  46 3 29 8 13 17 15 
+E2_candidate =[21 15 47 22 ]; % 6 47 3 8 10 48 39
 % E2_base = sort([21    36   127   196], 'ascend')
 
 %% Holo stim of Ensemble neurons
@@ -679,7 +679,7 @@ plotNeuronsBaseline(baseActivity, CComp, YrA, 30)
 %Manually enter and confirm the BMI neurons:
 % E2_candidate = unique([9 15 23 29]); %unique also sorts
 % E2_base = sort([7 9 12 29]; %8 21 10 6 17 3 18
-E1_base = sort([25 15 10 26], 'ascend')  % 34 17 7 28
+E1_base = sort([39 8 36 6], 'ascend')  %11 10 32 2 44 52 1 5 9 31
 ensembleNeurons = [E1_base, E2_base];
 plotNeuronsEnsemble(baseActivity, ensembleNeurons, [ones(1,length(E1_base)) 2*ones(1,length(E2_base))])
 select_roi_data(roi_data, [E2_base, unique(E1_base)]); 
@@ -784,9 +784,9 @@ close all
 %D0:
 %Note down: 
 % - T value
-% T = 0.31
+% T = 0.22
 % num_valid_hits:7
-% num_hits: 91
+% num_hits: 24
 %--------------------------------------------------------------------------
 %% Holo stim checking connectivity
 % create randomize run for each individual neuron of the ensemple
@@ -1069,6 +1069,8 @@ end
 %Define vectorVTA
 %Clear vectorHolo
 random_reward_bool = 1; 
+baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan
+baselineCalibrationFile = target_info_path;
 
 if random_reward_bool
 
@@ -1205,10 +1207,6 @@ end
 %--------------------------------------------------------------------------
 %%
 %NOTES
-% rr. During Baseline the laser acted up. Because it was already the 2nd
-% baseline and I didn't want to have the animal for another 15min there. I
-% did the calibration with the full 15min and taking only the first 10min,
-% the results were the same, so I kept the calibration and did NOT redo
-% baseline
-% second problem, the water went down. I've been refilling it, but it is
-% not ideal
+% bmi holo feedback 
+% at 65k frames the stim didn't want to work, I increased power
+%hopefully it wont kill the neurons
