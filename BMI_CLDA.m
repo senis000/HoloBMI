@@ -1,5 +1,5 @@
 function [cal, saveFile] = BMI_CLDA(folder, animal, day, ...
-    expt_str, cal, task_settings, a, vectorHolo, vectorVTA, ...
+    expt_str, cal_init, task_settings, a, vectorHolo, vectorVTA, ...
     base_cursor_samples, ...
     debug_bool, debug_input)
 % BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable(folder, animal, day, ...
@@ -137,7 +137,6 @@ function [cal, saveFile] = BMI_CLDA(folder, animal, day, ...
     %need to be back2Base for two frames before another target can be achieved
     
     %% CLDA Parameters
-    cal_init                = cal; 
     num_cursor_base         = length(base_cursor_samples); 
     num_cursor_online       = 0; %Needs to be updated
     num_cursor_valid        = num_cursor_base + num_cursor_online; 
@@ -175,9 +174,10 @@ function [cal, saveFile] = BMI_CLDA(folder, animal, day, ...
     %******************  INITIALIZE  ***********************************
     %*********************************************************************
     
-    global pl data
+    global pl data cal
 %     cursor hits trialStart bmiAct baseVector timeVector %TODO remove timeVector
     
+    cal             = cal_init; 
     numberNeurons   = cal.neurons.num_neurons;%length(bData.E_id);
     
     %pre-allocating arrays
@@ -240,7 +240,7 @@ function [cal, saveFile] = BMI_CLDA(folder, animal, day, ...
     data.frame = 1; % initialize frames
     
     %% Cleaning 
-    finishup = onCleanup(@() cleanMeUp(saveFile, cal_init, cal, task_settings, debug_bool));  %in case of ctrl-c it will launch cleanmeup
+    finishup = onCleanup(@() cleanMeUp(saveFile, cal_init, task_settings, debug_bool));  %in case of ctrl-c it will launch cleanmeup
 
 %     %% Prepare the nidaq
     if(~debug_bool)
@@ -679,8 +679,8 @@ function [cal, saveFile] = BMI_CLDA(folder, animal, day, ...
 end
 % 
 % % fires when main function terminates (normal, error or interruption)
-function cleanMeUp(saveFile, cal_init, cal, task_settings, debug_bool)
-    global pl data
+function cleanMeUp(saveFile, cal_init, task_settings, debug_bool)
+    global pl data cal
     disp('cleaning')
     % evalin('base','save baseVars.mat'); %do we want to save workspace?
     % saving the global variables
@@ -692,8 +692,8 @@ function cleanMeUp(saveFile, cal_init, cal, task_settings, debug_bool)
     end
 end
 
-function [cal_CLDA] = adapt_params(task_settings, cal, base_cursor_samples, frame)
-    global data
+function adapt_params(task_settings, base_cursor_samples, frame)
+    global data cal
     
     %Get the valid online cursor samples
     first_valid_idx = 1 +  ...
@@ -716,14 +716,14 @@ function [cal_CLDA] = adapt_params(task_settings, cal, base_cursor_samples, fram
     E2_T    = prctile(cursor_samples_use, cal.target.T_prctile); 
     mid_T   = prctile(cursor_samples_use, task_settings.fb.middle_prctile); 
     
-    cal_CLDA                                    = cal;
-    cal_CLDA.target.E1_hit_cal.T                = E1_T;
-    cal_CLDA.target.E1_hit_cal.b2base_thresh    = E1_T*task_settings.b2base_coeff;
-    cal_CLDA.target.E2_hit_cal.T                = E2_T; 
-    cal_CLDA.target.E2_hit_cal.b2base_thresh    = E2_T*task_settings.b2base_coeff;
-    cal_CLDA.target.cursor_middle               = mid_T; 
+%     cal_CLDA                                    = cal;
+    cal.target.E1_hit_cal.T                = E1_T;
+    cal.target.E1_hit_cal.b2base_thresh    = E1_T*task_settings.b2base_coeff;
+    cal.target.E2_hit_cal.T                = E2_T; 
+    cal.target.E2_hit_cal.b2base_thresh    = E2_T*task_settings.b2base_coeff;
+    cal.target.cursor_middle               = mid_T; 
     
     %Update the feedback parameters: 
-    [cal_CLDA] = cal2fb_Tsymm_midmapped(cal_CLDA, task_settings);
+    [cal] = cal2fb_Tsymm_midmapped(cal, task_settings);
 end
 
