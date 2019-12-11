@@ -550,6 +550,8 @@ while(~task_complete)
         T_prctile, cursor_analyze, ...
         E2_mean_analyze, E1_mean_analyze, ...
         b2base_coeff, b2baseFrameThresh);
+    disp('E2 hits: '); 
+    E2_hit_cal.num_hits_b2base
     
     E1_bool = 1; 
     E1_prctile = 100-T_prctile;
@@ -557,7 +559,9 @@ while(~task_complete)
         compute_hits_b2base(E1_bool, E1_hit_cal, ...
         E1_prctile, cursor_analyze, ...
         E2_mean_analyze, E1_mean_analyze, ...
-        b2base_coeff, b2baseFrameThresh);      
+        b2base_coeff, b2baseFrameThresh);  
+    disp('E1 hits: '); 
+    E1_hit_cal.num_hits_b2base
     
     %Return Values:
     %T_value
@@ -572,7 +576,9 @@ while(~task_complete)
     E1_reward_prob = E1_hit_data.reward_prob_per_frame;
     [score, E2_score, E1_score] = ...
         score_calibration_2target(E1_reward_prob, E2_reward_prob, reward_per_frame_range);
-
+    disp('E2 score'); 
+    E2_score 
+    
     update_best_cal = ((E2_score == 0) && score <= best_cal.score); 
     if(update_best_cal)
         init_best_cal = 0; 

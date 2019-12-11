@@ -44,9 +44,9 @@ duration of stim
 %--------------------------------------------------------------------------
 
 % define Animal, day and folder where to save
-animal = 'NY127'; day = '2019-11-19';
-folder = 'H:\ines_h';
-% folder = 'F:\Vivek\training';
+animal = 'NY127'; day = '2019-12-10';
+% folder = 'H:\ines_h';
+folder = 'E:\ines';
 
 % define posz TODO can we get this from prairie?
 posz = 0;
@@ -295,9 +295,18 @@ end
 
 
 % Baseline environment already removes MARKPOINTS and set the reps to 27000
-playback_data   = load(task_settings.clda.playback_path).fb_obs;
+playback_data   = load(task_settings.clda.playback_path);
+playback_data   = double(playback_data.fb_obs);
+playback_bool = 1; 
+%
+% fb_idx = 3
+% fb_freq_i = playback_data(fb_idx) 
+% playTone(a, ...
+%     task_settings.fb.arduino.pin, ...
+%     fb_freq_i, ...
+%     task_settings.fb.arduino.duration);
 
-%ToDo make environment
+%%
 clear s
 [baseline_mat, baseline_dat] = ...
     BaselineAcqnvsPrairie_fb_playback(folder, animal, day, AComp, roi_mask, task_settings, ...
@@ -323,7 +332,7 @@ clear s
 %--------------------------------------------------------------------------
 %%
 visual_roi = ...
-    unique([54 26 40 50 16 93 62 79 1 65 73 79 85 62 55 65 6 5 41 38 97 76])
+    unique([24 10 19 12 1 2 48 35 13 17 4 22 21 16 36 27])
 %real good: 
 %53 1 71 76 22 31 80 
 %be careful with 1, it's VERY ACTIVE
@@ -341,7 +350,9 @@ else
     CComp = [];
     YrA = []; 
 end
+
 load(baseline_mat); 
+%%
 %Plot Red: 
 totalneurons = length(roi_data.chan(1).idxs) %53
 sel = roi_data.chan(1).idxs; 
@@ -350,7 +361,7 @@ plotSelNeuronsBaseline(baseActivity, CComp, YrA, totalneurons, sel);
 %D1
 %[7 1 11 2]
 %%
-red_sel_candidates = [26 79 73 32]
+red_sel_candidates = [35 19 9 2]
 red_sel = red_sel_candidates(1:4); 
 length(red_sel)
 %%
@@ -363,7 +374,7 @@ plotSelNeuronsBaseline(baseActivity, CComp, YrA, totalneurons, sel);
 %D2
 %[42 31 40 26]
 %%
-green_sel_candidates = [54 85 62 40]
+green_sel_candidates = [10 24 17 13]
 green_sel = green_sel_candidates(1:4)
 length(green_sel)
 %%
@@ -379,6 +390,9 @@ length(green_sel)
 
 E2_base = sort([red_sel(3) red_sel(1) green_sel(4) green_sel(2)], 'ascend') %Activity needs to increase 
 E1_base = sort([red_sel(4) red_sel(2) green_sel(3) green_sel(1)], 'ascend') %Activity needs to decrease
+
+% E2_base = sort(green_sel(1:4), 'ascend')
+% E1_base = sort(green_sel(5:8), 'ascend')
 
 % E2_base = sort(green_sel, 'ascend') %Activity needs to increase 
 % E1_base = sort(red_sel, 'ascend') %Activity needs to decrease
@@ -428,8 +442,9 @@ plotNeuronsEnsemble(baseActivity, ensembleNeurons, ensembleID)
 exist(baseline_mat)
 n_f_file = baseline_mat;
 close all;
-% Manually adjust task difficulty: 
-task_settings.calibration.sec_per_reward_range = [75 60]
+% Manually adjust task parameters: 
+task_settings.calibration.baseline_len              = 7.5*60; %seconds
+task_settings.calibration.sec_per_reward_range      = [60 40]
 
 [cal, BMI_roi_path] = baseline2two_target_linear_fb_no_constraint(n_f_file, roi_data_file, task_settings, ...
     E1_base, E2_base, savePath);
@@ -483,14 +498,26 @@ base_cursor_samples         = base_cursor_samples(1:num_base_cursor_samples);
 
 %% Run CLDA: 
 %TODO: update the number of frames this will run for. (Environment file)
-%Add extra minutes for the F0 buffer
+%Add 2 extra minutes for the F0 buffer
+vectorHolo = [];
+vectorVTA= []; 
+debug_bool = 0; 
+debug_input = []; 
+expt_str = 'BMI'
+
+task_settings.f0_win = 3600; 
 [cal, clda_mat] = BMI_CLDA(folder, animal, day, ...
     expt_str, cal, task_settings, a, vectorHolo, vectorVTA, ...
     base_cursor_samples, ...
     debug_bool, debug_input);
 
 %%
-[cal_update] = plot_CLDA(clda_mat, save_dir);
+test = load(clda_mat)
+%%
+clda_dir = fullfile(savePath, 'clda_plot'); 
+mkdir(clda_dir); 
+close all
+[cal_update] = plot_CLDA(clda_mat, clda_dir);
 
 
 %%
@@ -510,7 +537,7 @@ if seedBase
     load(seed_path); 
     pretrain_base = data.baseVector; 
     pretrain_base(:, isnan(pretrain_base(1,:))) = [];
-    baseValSeed = pretrain_base(:,end); 
+    baseValSeed = pretrain_base(:,end)
 end
 
 %%
@@ -536,8 +563,8 @@ debug_bool = 0;
 debug_input = []; 
 expt_str = 'BMI'; 
 
-[saveFile] = BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_111719(folder, animal, day, ...
-    expt_str, cal, task_settings, a, vectorHolo, vectorVTA, ...
+[bmiFile] = BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_111719(folder, animal, day, ...
+    expt_str, cal_update, task_settings, a, vectorHolo, vectorVTA, ...
     debug_bool, debug_input, baseValSeed);
 
 % BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_110719(folder, animal, day, ...

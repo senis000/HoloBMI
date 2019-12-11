@@ -76,7 +76,7 @@ neuronMask -> matrix for spatial filters with px*py*unit
     lastFrame = zeros(px, py); % to compare with new incoming frames
 
     % set the environment for the Time Series in PrairieView
-    loadCommand = "-tsl " + task_settings.baseline_env
+    loadCommand = "-tsl " + task_settings.playback_env
     pl.SendScriptCommands(loadCommand);  
     
     %% Load Baseline variables
@@ -127,8 +127,8 @@ neuronMask -> matrix for spatial filters with px*py*unit
             tic
             %Play tone: 
             if playback_bool
-                fb_idx = 1+mod(frame-1, playback_data);
-                fb_freq_i = playback_data(fb_idx); 
+                fb_idx = 1+mod(frame-1, length(playback_data))
+                fb_freq_i = playback_data(fb_idx) 
                 playTone(a, ...
                     task_settings.fb.arduino.pin, ...
                     fb_freq_i, ...

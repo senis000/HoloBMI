@@ -17,8 +17,8 @@ task_settings.playback_env = ...
 %--------------------------------------------------------------------------
 %calibration: 
 task_settings.calibration.target_on_cov_bool     = 0; 
-task_settings.calibration.sec_per_reward_range   = [75 60]; 
-task_settings.calibration.baseline_len           = 15*60; %seconds
+task_settings.calibration.sec_per_reward_range   = [70 60]; 
+task_settings.calibration.baseline_len           = 7.5*60; %seconds
 task_settings.calibration.f0_win_bool            = 1; %during calibration, 
 %estimate f0 using the window
 task_settings.calibration.f0_init_slide          = 0; %during calibration, 
@@ -31,6 +31,7 @@ task_settings.calibration.f0_init_slide          = 0; %during calibration,
 
 %--------------------------------------------------------------------------
 %CLDA: 
+% task_settings.clda.playback_len           = 7.5*60; %seconds
 task_settings.clda.playback_path        = 'G:\vivek\DATA\playback_base111619.mat'; 
 task_settings.clda.use_win_for_adapt    = 1; 
 %If '1', use 'win_for_adapt' most recent samples to update

@@ -23,15 +23,15 @@ E2_T_valid      = data.E2_T(valid_idxs);
 E1_T_valid      = data.E1_T(valid_idxs); 
 mid_T_valid     = data.mid_T(valid_idxs); 
 h = figure;
-plot(data.E2_T); 
+plot(E2_T_valid); 
 title('E2 T'); 
 
 h = figure;
-plot(data.E1_T); 
+plot(E1_T_valid); 
 title('E1 T'); 
 
 h = figure;
-plot(data.mid_T); 
+plot(mid_T_valid); 
 title('Mid T'); 
 %%
 %Get the correct number of hits with the final calibration parameters: 
@@ -39,7 +39,6 @@ cal_update = cal;
 
 E1_bool     = 1; 
 E_cal       = cal.target.E1_hit_cal; 
-T_prctile   = 100-cal.target.T_prctile;
 cursor_obs  = data.cursor; 
 mean_E2     = []; 
 mean_E1     = []; 
@@ -47,16 +46,15 @@ mean_E1     = [];
 b2base_coeff        = task_settings.b2base_coeff;
 b2baseFrameThresh   = task_settings.back2BaseFrameThresh;
 
-[E1_hit_cal, E1_hit_data] = compute_hits_b2base(E1_bool, E_cal, ...
-    T_prctile, cursor_obs, ...
+[E1_hit_cal, E1_hit_data] = compute_thresh_hits_b2base(E1_bool, E_cal, ...
+    cursor_obs, ...
     mean_E2, mean_E1, ...
     b2base_coeff, b2baseFrameThresh);
-cal_update.E1_hit_cal = E1_hit_cal; 
+cal_update.target.E1_hit_cal = E1_hit_cal; 
 
 %%
 E1_bool     = 0; 
 E_cal       = cal.target.E2_hit_cal; 
-T_prctile   = cal.target.T_prctile;
 cursor_obs  = data.cursor; 
 mean_E2     = []; 
 mean_E1     = []; 
@@ -64,27 +62,28 @@ mean_E1     = [];
 b2base_coeff        = task_settings.b2base_coeff;
 b2baseFrameThresh   = task_settings.back2BaseFrameThresh;
 
-[E2_hit_cal, E2_hit_data] = compute_hits_b2base(E1_bool, E_cal, ...
-    T_prctile, cursor_obs, ...
+[E2_hit_cal, E2_hit_data] = compute_thresh_hits_b2base(E1_bool, E_cal, ...
+    cursor_obs, ...
     mean_E2, mean_E1, ...
     b2base_coeff, b2baseFrameThresh);
+
 cal_update.target.E2_hit_cal = E2_hit_cal; 
 %%
 %Summary results: 
 disp('E2mE1 T:'); 
-cal_update.E2_hit_cal.T
+cal_update.target.E2_hit_cal.T
 
 disp('E2 HIGH: num valid hits (WITH B2BASE):'); 
-cal_update.E2_hit_cal.num_hits_b2base
+cal_update.target.E2_hit_cal.num_hits_b2base
 
 disp('E2 HIGH: num baseline hits WITHOUT B2BASE:'); 
-cal_update.E2_hit_cal.num_hits_no_b2base
+cal_update.target.E2_hit_cal.num_hits_no_b2base
 
 disp('E1 HIGH: num valid hits (WITH B2BASE):'); 
-cal_update.E1_hit_cal.num_hits_b2base
+cal_update.target.E1_hit_cal.num_hits_b2base
 
 disp('E1 HIGH: num baseline hits WITHOUT B2BASE:'); 
-cal_update.E1_hit_cal.num_hits_no_b2base
+cal_update.target.E1_hit_cal.num_hits_no_b2base
 
 %%
 %Plot cursor histogram: 
@@ -118,20 +117,24 @@ saveas(h, fullfile(save_dir, 'cursor_dist_T.png'));
 %Plot auditory feedback
 % plot_cursor = linspace(cal.fb.cursor_min, cal.fb.cursor_max, 1000); 
 plot_cursor = linspace(min(data.cursor), max(data.cursor), 1000); 
-plot_freq   = cursor2audio_freq_middle_match(plot_cursor, cal);
+plot_freq   = cursor2audio_freq_middle_match(plot_cursor, cal_update);
 % plot_freq   = cursor2audio_freq(plot_cursor, cal);
 h = figure;
 hold on;
 plot(plot_cursor, plot_freq); 
 xlabel('Cursor E2-E1'); 
 ylabel('Audiory Freq'); 
-vline([best_cal.E1_hit_cal.T best_cal.E2_hit_cal.T]); 
+vline([cal_update.target.E1_hit_cal.T cal_update.target.E2_hit_cal.T]); 
 % vline(); 
 saveas(h, fullfile(save_dir, 'cursor2freq.png')); 
 
 %%
 % fb_obs = cursor2audio_freq(cursor_obs, cal);
-fb_obs = cursor2audio_freq_middle_match(cursor_obs, cal);
+cursor_obs_valid = cursor_obs; 
+cursor_obs_valid(isnan(cursor_obs_valid)) = []; 
+
+
+fb_obs = cursor2audio_freq_middle_match(cursor_obs_valid, cal);
 num_fb_bins = 100; 
 h = figure;
 hist(fb_obs, num_fb_bins); 
@@ -190,6 +193,7 @@ else
 end
 
 %%
+E_id = cal_update.neurons.E_id;
 [h, offset_vec] = plot_E_activity(1:length(f_postf0), f_postf0, E_id, E_color, 0);
 xlabel('frame'); 
 ylabel('fluorescence'); 
