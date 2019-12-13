@@ -53,7 +53,7 @@ duration of stim
 %--------------------------------------------------------------------------
 fb_bool = 0;
 cd G:\VivekNuria\Code\HoloBMI
-[task_settings] = define_BMI_task_settings(fb_bool);
+[task_settings] = define_BMI_task_settings();
 
 %DEFINE PATH_DATA: 
 %
@@ -66,8 +66,9 @@ cd(home_dir)
 env_dir = 'G:\VivekNuria\utils'
 
 % define Animal, day and folder where to save
-animal = 'NVI16'; day = 'D28';
-folder = 'E:\holobmi_E\191028';
+animal = 'NVI22'; day = 'D27';
+% folder = 'E:\holobmi_E\191212';
+folder = 'H:\holobmi_H\191212';
 savePath = fullfile(folder, animal,  day);
 if ~exist(savePath, 'dir')
     mkdir(savePath);
@@ -456,14 +457,15 @@ plotHoloStimTimeLock(holoActivity, voltageRec, min_duration, plot_win)
 % (I often choose more than 4 neurons, manually stim the neurons.
 % then re-run once you've chosen your 4.)
 %--------------------------------------------------------------------------
-E2_candidate = unique([36 42 22 26]); %unique also sorts 47 38 19 34 9 45 
+% E2_candidate =unique([23 42 35 36 14 4 28 26 38]); %unique also sorts 47 38 19 34 9 45 
+E2_candidate =[22 3 47 46 ]
 % E2_base = sort([21    36   127   196], 'ascend')
 
 %% Holo stim of Ensemble neurons
 % Make GPL (points), BOT (measure activity)
 % -select markpoints_data for 
 close all
-sel_idxs = unique(E2_candidate); 
+sel_idxs = E2_candidate; %unique(E2_candidate); 
 [sel_roi_data, sel_idxs] = select_roi_data(roi_data, sel_idxs); 
 sel_markpoints_data = markpoints_data(sel_idxs); 
 
@@ -546,7 +548,7 @@ copyfile(xml_candidates_path, xml_path)
 
 %--------------------------------------------------------------------------
 % % E2_base = E2_base([2 11 9 15])
-E2_base = E2_candidate; 
+E2_base = E2_candidate;
 % %GPL (define the points):
 % sel_idxs = unique(E2_base); 
 % [stim_roi_data, stim_idxs] = select_roi_data(roi_data, sel_idxs);
@@ -650,7 +652,7 @@ plotNeuronsBaseline(baseActivity, CComp, YrA, 20)
 %Manually enter and confirm the BMI neurons:
 % E2_candidate = unique([9 15 23 29]); %unique also sorts
 % 27 24 28 36]); %unique also sorts 9 6 4 37 
-E1_base = sort([15 13 18 23], 'ascend') % 16 9 17
+E1_base = sort([10 23 33 20], 'ascend') % 16 9 17
 ensembleNeurons = [E1_base, E2_base];
 plotNeuronsEnsemble(baseActivity, ensembleNeurons, [ones(1,length(E1_base)) 2*ones(1,length(E2_base))])
 select_roi_data(roi_data, [E2_base, unique(E1_base)]); 
@@ -660,7 +662,7 @@ select_roi_data(roi_data, [E2_base, unique(E1_base)]);
 %% for E3 experiments:
 % E2_candidate = unique([36 42 22 26]); %unique also sorts 47 38 19 34 9 45 
 E3_base = unique([36 42 22 26]); %unique also sorts  50 12 15 8 67 53 
-E2_base = sort([47 38 19 34], 'ascend'); % 
+% E2_base = sort([47 38 19 34], 'ascend'); % 
 
 %%
 %OPTION: Use previously collected BMI data as the baseline data: 
@@ -983,6 +985,7 @@ BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
 bmi_no_reward_bool = 1; 
 
 baselineCalibrationFile = target_info_path;
+baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan;
 if bmi_no_reward_bool
 
     close all
@@ -1200,4 +1203,10 @@ end
 %--------------------------------------------------------------------------
 %%
 %NOTES: 15min baseline 
-% E3 control he clearly learned I ran extinction
+%{
+i forgot to give the spout until right before baseline.
+ he's touching the spout a LOT during the baseline.  
+maybe this will calibrate to have large thresholds...
+
+%}
+

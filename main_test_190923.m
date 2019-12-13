@@ -14,7 +14,7 @@ ni_holo     = [0 0 1];
 
 %%
 %TRIGGER FRAME 
-pause_len = 0.05; %0.001
+pause_len = 0.01; %0.001
 outputSingleScan(s,ni_getimage); pause(pause_len); outputSingleScan(s,ni_out);
 
 %%

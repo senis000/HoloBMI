@@ -596,7 +596,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
             if(rewardDelayCounter > 0)
                 rewardDelayCounter = rewardDelayCounter -1; 
             elseif(deliver_reward && rewardDelayCounter==0)
-                if(~debug_bool)
+                if(~debug_bool && ~strcmp(expt_str, 'BMI_no_reward'))
                     outputSingleScan(s,ni_reward); pause(0.001); outputSingleScan(s,ni_out);
                 end
                 deliver_reward = 0; 

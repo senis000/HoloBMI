@@ -1,4 +1,4 @@
-function [cal, saveFile] = BMI_CLDA(folder, animal, day, ...
+function [saveFile] = BMI_CLDA(folder, animal, day, ...
     expt_str, cal_init, task_settings, a, vectorHolo, vectorVTA, ...
     base_cursor_samples, ...
     debug_bool, debug_input)
@@ -109,6 +109,8 @@ function [cal, saveFile] = BMI_CLDA(folder, animal, day, ...
 %     flagHolosched = false;
 %     flagVTAsched  = false;    
     
+    global cal
+    cal = cal_init; 
     %% BMI parameters 
     savePath = fullfile(folder, animal, day); %[folder, animal, '/',  day, '/'];
     saveFile = fullfile(savePath, ['CLDA_', datestr(datetime('now'), 'yymmddTHHMMSS'), '.mat']);
@@ -174,10 +176,9 @@ function [cal, saveFile] = BMI_CLDA(folder, animal, day, ...
     %******************  INITIALIZE  ***********************************
     %*********************************************************************
     
-    global pl data cal
+    global pl data
 %     cursor hits trialStart bmiAct baseVector timeVector %TODO remove timeVector
     
-    cal             = cal_init; 
     numberNeurons   = cal.neurons.num_neurons;%length(bData.E_id);
     
     %pre-allocating arrays
@@ -649,7 +650,7 @@ function [cal, saveFile] = BMI_CLDA(folder, animal, day, ...
                     (num_cursor_online - last_clda) > task_settings.clda.period_for_adapt)
                 disp('Adapting Thresholds!'); 
                 last_clda = num_cursor_online; 
-                [cal] = adapt_params(task_settings, cal, base_cursor_samples, data.frame);
+                adapt_params(task_settings, base_cursor_samples, data.frame);
                 data.E1_T(data.frame)   = cal.target.E1_hit_cal.T; 
                 data.E2_T(data.frame)   = cal.target.E2_hit_cal.T; 
                 data.mid_T(data.frame)  = cal.target.cursor_middle; 

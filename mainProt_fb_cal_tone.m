@@ -44,7 +44,7 @@ duration of stim
 %--------------------------------------------------------------------------
 
 % define Animal, day and folder where to save
-animal = 'NY127'; day = '2019-12-10';
+animal = 'NY127'; day = '2019-12-13';
 % folder = 'H:\ines_h';
 folder = 'E:\ines';
 
@@ -102,7 +102,6 @@ disp('Disconnected from prairie');
 %%
 %Option 1: load images from prairie directly
 
-
 option1_bool = 0; 
 if option1_bool
     pl = actxserver('PrairieLink.Application');
@@ -119,6 +118,7 @@ else
     exist(redgreen_dir)
     red_path      = fullfile(redgreen_dir, 'red.tif'); 
     exist(red_path)
+%     green_path    = fullfile(redgreen_dir, 'green.tif'); 
     green_path    = fullfile(redgreen_dir, 'green_mean.tif'); 
     exist(green_path)    
     green_im    = imread(green_path); 
@@ -332,10 +332,9 @@ clear s
 %--------------------------------------------------------------------------
 %%
 visual_roi = ...
-    unique([24 10 19 12 1 2 48 35 13 17 4 22 21 16 36 27])
+    unique([37 49 48 36 1 32 12 21 19 40 5 6 18 12 28 9 ])
 %real good: 
-%53 1 71 76 22 31 80 
-%be careful with 1, it's VERY ACTIVE
+%1 37 12 5 
 
 %% Selection of neurons
 %     plots neurons so we can select which ones we like the most 
@@ -361,7 +360,7 @@ plotSelNeuronsBaseline(baseActivity, CComp, YrA, totalneurons, sel);
 %D1
 %[7 1 11 2]
 %%
-red_sel_candidates = [35 19 9 2]
+red_sel_candidates = [37 12 18 23]
 red_sel = red_sel_candidates(1:4); 
 length(red_sel)
 %%
@@ -374,7 +373,7 @@ plotSelNeuronsBaseline(baseActivity, CComp, YrA, totalneurons, sel);
 %D2
 %[42 31 40 26]
 %%
-green_sel_candidates = [10 24 17 13]
+green_sel_candidates = [1 5 2 40]
 green_sel = green_sel_candidates(1:4)
 length(green_sel)
 %%
@@ -388,8 +387,8 @@ length(green_sel)
 % E2_base = sort([red_sel(1:5) red_sel(16:20) green_sel(1:5) green_sel(16:20)], 'ascend') %Activity needs to increase 
 % E1_base = sort([red_sel(6:15) green_sel(6:15)], 'ascend') %Activity needs to decrease
 
-E2_base = sort([red_sel(3) red_sel(1) green_sel(4) green_sel(2)], 'ascend') %Activity needs to increase 
-E1_base = sort([red_sel(4) red_sel(2) green_sel(3) green_sel(1)], 'ascend') %Activity needs to decrease
+E2_base = sort([red_sel(2) red_sel(1) green_sel(4) green_sel(2)], 'ascend') %Activity needs to increase 
+E1_base = sort([red_sel(4) red_sel(3) green_sel(3) green_sel(1)], 'ascend') %Activity needs to decrease
 
 % E2_base = sort(green_sel(1:4), 'ascend')
 % E1_base = sort(green_sel(5:8), 'ascend')
@@ -444,7 +443,7 @@ n_f_file = baseline_mat;
 close all;
 % Manually adjust task parameters: 
 task_settings.calibration.baseline_len              = 7.5*60; %seconds
-task_settings.calibration.sec_per_reward_range      = [60 40]
+task_settings.calibration.sec_per_reward_range      = [50 35]
 
 [cal, BMI_roi_path] = baseline2two_target_linear_fb_no_constraint(n_f_file, roi_data_file, task_settings, ...
     E1_base, E2_base, savePath);
@@ -506,14 +505,17 @@ debug_input = [];
 expt_str = 'BMI'
 
 task_settings.f0_win = 3600; 
-[cal, clda_mat] = BMI_CLDA(folder, animal, day, ...
+[clda_mat] = BMI_CLDA(folder, animal, day, ...
     expt_str, cal, task_settings, a, vectorHolo, vectorVTA, ...
     base_cursor_samples, ...
     debug_bool, debug_input);
 
 %%
-test = load(clda_mat)
-%%
+%Load cal: 
+clda_data = load(clda_mat); 
+cal = clda_data.cal; 
+
+%
 clda_dir = fullfile(savePath, 'clda_plot'); 
 mkdir(clda_dir); 
 close all
@@ -530,7 +532,7 @@ close all
 %--------------------------------------------------------------------------
 seedBase = 1; 
 seed_path = clda_mat; 
-baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan
+% baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan
 if seedBase
     %ENTER HERE:
 %     load(fullfile(savePath, seed_file));
@@ -552,6 +554,7 @@ playTone(a,...
 %--------------------------------------------------------------------------
 %D0:
 % Before running cell:
+%PUT THE SPOUT SPOUT SPUT SPOUT SPOUT
 %0) put water under objective
 %1) start video
 %2) start load cells
@@ -563,8 +566,10 @@ debug_bool = 0;
 debug_input = []; 
 expt_str = 'BMI'; 
 
+cal_bmi = cal; %cal_update; 
+
 [bmiFile] = BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_111719(folder, animal, day, ...
-    expt_str, cal_update, task_settings, a, vectorHolo, vectorVTA, ...
+    expt_str, cal_bmi, task_settings, a, vectorHolo, vectorVTA, ...
     debug_bool, debug_input, baseValSeed);
 
 % BMIAcqnvsPrairienoTrialsHoloCL_fb_debug_enable_test_110719(folder, animal, day, ...
@@ -591,17 +596,9 @@ expt_str = 'BMI';
 %%
 %NOTES:
 %{
-looked like good cells.  
-the E1 side got way more hits than the E2 side, making me suspect something
-is off with the calibration.  Need to re-simulate.  
-BMI was aborted early.  
-ToDo:
-analyze what happened
-plot BOT the right size
-change tones to come from computer instead of arduino
-(figure out how to give the analog frequency, maybe by quantizing tones, maybe by computing freq on the fly)
-
-
+In future: zero z once we've chosen an imaging plane. (FOV)
+TODO: Change baseline code to be able to use the CLDA data to do a new baseline
+TODO: check if deltaf/f range changes over teh course of training.
 %
 %
 %}
