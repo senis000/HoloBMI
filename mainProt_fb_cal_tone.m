@@ -521,6 +521,16 @@ mkdir(clda_dir);
 close all
 [cal_update] = plot_CLDA(clda_mat, clda_dir);
 
+%%
+%Recalibrate to clda neural data: 
+full_clda_recal = 1; 
+if full_clda_recal
+    baseActivity = clda_data.data.bmiAct;
+    [cal, BMI_roi_path] = baseline2two_target_linear_fb_no_constraint_input_data(...
+        baseActivity, roi_data_file, task_settings, ...
+        E1_base, E2_base, savePath);
+end
+
 
 %%
 %Seed BMI baseVal, if you already ran BMI, and need to run again
