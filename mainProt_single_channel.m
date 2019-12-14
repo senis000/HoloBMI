@@ -66,9 +66,9 @@ cd(home_dir)
 env_dir = 'G:\VivekNuria\utils'
 
 % define Animal, day and folder where to save
-animal = 'NVI22'; day = 'D27';
-% folder = 'E:\holobmi_E\191212';
-folder = 'H:\holobmi_H\191212';
+animal = 'NVI22'; day = 'D28';
+% folder = 'E:\holobmi_E\191213';
+folder = 'H:\holobmi_H\191213';
 savePath = fullfile(folder, animal,  day);
 if ~exist(savePath, 'dir')
     mkdir(savePath);
@@ -458,7 +458,7 @@ plotHoloStimTimeLock(holoActivity, voltageRec, min_duration, plot_win)
 % then re-run once you've chosen your 4.)
 %--------------------------------------------------------------------------
 % E2_candidate =unique([23 42 35 36 14 4 28 26 38]); %unique also sorts 47 38 19 34 9 45 
-E2_candidate =[22 3 47 46 ]
+E2_candidate = [8 28 15 22] ; %[]
 % E2_base = sort([21    36   127   196], 'ascend')
 
 %% Holo stim of Ensemble neurons
@@ -639,8 +639,8 @@ else
 end
 load(base_file); 
 % totalneurons = 40; 
-% plotNeuronsBaseline(baseActivity, CComp, YrA, totalneurons)
-plotNeuronsBaseline(baseActivity, CComp, YrA, 20)
+plotNeuronsBaseline(baseActivity, CComp, YrA, totalneurons)
+% plotNeuronsBaseline(baseActivity, CComp, YrA, 20)
 %TODO:  
 %ToDo: for plotting, do sliding window deltaf/f
 %%
@@ -652,7 +652,7 @@ plotNeuronsBaseline(baseActivity, CComp, YrA, 20)
 %Manually enter and confirm the BMI neurons:
 % E2_candidate = unique([9 15 23 29]); %unique also sorts
 % 27 24 28 36]); %unique also sorts 9 6 4 37 
-E1_base = sort([10 23 33 20], 'ascend') % 16 9 17
+E1_base = sort([27 21 29 30 ], 'ascend') % 16 9 17
 ensembleNeurons = [E1_base, E2_base];
 plotNeuronsEnsemble(baseActivity, ensembleNeurons, [ones(1,length(E1_base)) 2*ones(1,length(E2_base))])
 select_roi_data(roi_data, [E2_base, unique(E1_base)]); 
@@ -736,7 +736,7 @@ close all
 %D0:
 %Note down: 
 % - T value
-% T: 0.30//0.35
+% T: 0.3738
 % num_valid_hits: 7//7
 % num_hits:141//211
 %--------------------------------------------------------------------------

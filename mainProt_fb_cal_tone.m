@@ -525,9 +525,13 @@ close all
 %Recalibrate to clda neural data: 
 full_clda_recal = 1; 
 if full_clda_recal
-    baseActivity = clda_data.data.bmiAct;
+    clda_n = clda_data.data.bmiAct;
+    clda_base = zeros(roi_data.num_rois, size(clda_n, 2)); 
+    clda_base(E1_base, :) = clda_n(1:length(E1_base), :); 
+    clda_base(E2_base, :) = clda_n((length(E1_base)+1):(length(E1_base)+length(E2_base)), :); 
     [cal, BMI_roi_path] = baseline2two_target_linear_fb_no_constraint_input_data(...
-        baseActivity, roi_data_file, task_settings, ...
+        clda_base, ...
+        roi_data_file, task_settings, ...
         E1_base, E2_base, savePath);
 end
 
@@ -609,6 +613,11 @@ cal_bmi = cal; %cal_update;
 In future: zero z once we've chosen an imaging plane. (FOV)
 TODO: Change baseline code to be able to use the CLDA data to do a new baseline
 TODO: check if deltaf/f range changes over teh course of training.
+TODO: why did calibrating on full clda data lead me to a harder threshold
+than what was calculated online?  Why is plot_CLDA giving me lower number
+of hits than full recalibration? 
+%TODO: check range normalization, at the end of data collection there's
+invalid data that can throw off the range calculation
 %
 %
 %}
