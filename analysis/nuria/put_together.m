@@ -58,13 +58,34 @@ animal(6).days.fhbmi = [191125, 191127, 191129];
 
 %preparing the structure
 dirpath = 'C:/Data/HoloBMI/experiments/';
+
+%% MEASURES OF LEARNING definitions
+%measures of learning
+TH = zeros(length(animal),6); %(total hits -baseline hits) / baseline hits
+HPM = zeros(length(animal),6); %hits per minute
+
+%measures of learning when baseline is first 3 min of BMI
+THb = zeros(length(animal),6); %total hits / baseline hits
+HPMb = zeros(length(animal),6); %hits per minute
+
+%measures of learning based on gain from early/late
+HitGain = zeros(length(animal),6); % ((hits Early -hits Late )/ hits early)
+HPMGain = zeros(length(animal),6); % ((hpm early - hpm late )/ hpm early)
+
+%measures based on cursor occupancy
+CO = zeros(length(animal),6); % % of occupancy
+COGain = zeros(length(animal),6); % gain in occupancy from E1-E2
+
+%% 
+
+session = 1;
 for aa=1:length(animal)
     typeDays = fieldnames(animal(aa).days);
     for tt=1:length(typeDays)
         daystoGet = animal(aa).days.(typeDays{tt});
-        for dd = daystoGet
+        for dd = 1:length(daystoGet)
             %this is all to find the bmi_online files
-            folderPath = fullfile(dirpath,num2str(dd),animal(aa).name);
+            folderPath = fullfile(dirpath,num2str(daystoGet(dd)),animal(aa).name);
             filesPath = dir(folderPath);
             ibmi=1;
             itar=1;
@@ -89,6 +110,8 @@ for aa=1:length(animal)
                 load(fileBMIOpen, 'data');
                 load(fileTarOpen, 'cursor_obs', 'hits', 'hits_valid');
             end
+            aux_TH{dd} = (nansum(data.selfHits) - nansum(hits_valid))/nansum(hits_valid);
+            aux_hpm{dd} = 
         end
     end
 end
