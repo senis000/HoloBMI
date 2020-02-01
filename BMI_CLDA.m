@@ -118,6 +118,7 @@ function [saveFile] = BMI_CLDA(folder, animal, day, ...
     if ~exist(savePath, 'dir')
         mkdir(savePath);
     end
+    
     reward_enable           = 0; 
     frameRate               = task_settings.frameRate; % TODO check if it can be obtained from prairie 
     relaxationTime          = task_settings.relaxationTime;  % there can't be another hit in this many sec
@@ -277,7 +278,6 @@ function [saveFile] = BMI_CLDA(folder, animal, day, ...
         lastFrame = zeros(px, py); % to compare with new incoming frames
 
         % set the environment for the Time Series in PrairieView
-        %TODO: don't hard code this, take it from the settings: 
         loadCommand = ['-tsl ' task_settings.clda_env]
         pl.SendScriptCommands(loadCommand);   
 
