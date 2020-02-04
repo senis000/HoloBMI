@@ -267,6 +267,7 @@ for aa=1:length(animal)
                 task_rev_settings.calibration.f0_win_bool = task_rev_settings.f0_win_bool;
                 task_rev_settings.calibration.f0_init_slide = task_rev_settings.f0_init_slide;
                 task_rev_settings.back2BaseFrameThresh = task_rev_settings.back2BaseFramesThresh;
+                save(fullfile(folder.simPathcont,'task_rev.mat'), 'task_rev_settings');
                 [sim_saved_path_cursor] = sim_bmi_vE1strict_fb(data.bmiAct, task_rev_settings, target_rev_info, folder.simPathcont);
                 close('all')
             else
@@ -279,15 +280,15 @@ for aa=1:length(animal)
                     end
                 end
                 sim_saved_path_cursor = fullfile(folder.simPathcont, simFilescont{end});
-
+                load(fullfile(folder.simPathcont,'task_rev.mat'), 'task_rev_settings');
             end
             simDataCursor = load(sim_saved_path_cursor, 'cursor_obs', 'valid_hit_idxs');
             length_rev_cursor = length(find(simDataCursor.cursor_obs > task_rev_settings.T));
             length_cursor = length(find(data.cursor > target_info.T1));
             % measure with the simulated cursor of opposite E2
-            aux.CO(dd) = length_cursor/data.frame*100;
-            aux.COGain(dd) = (length_cursor - length_rev_cursor)/length_rev_cursor*100;
-            aux.COHits(dd) = (nansum(data.selfHits) - length(simDataCursor.valid_hit_idxs))/length(simDataCursor.valid_hit_idxs)*100;
+            aux.CO(dd) = length_cursor/data.frame;
+            aux.COGain(dd) = length_cursor/length_rev_cursor;
+            aux.COHits(dd) = nansum(data.selfHits)/length(simDataCursor.valid_hit_idxs);
             
             if toplot
                 plot(1.5:41.5, aux_hpmb_curve)
