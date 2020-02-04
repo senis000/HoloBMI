@@ -322,7 +322,9 @@ plot(E2_subord_mean_analyze-2*cursor_amp);
 xlabel('frame'); 
 title(['hits with b2base: ' num2str(num_valid_hits)]); 
 legend({'c1', 'c2 - E1 cond', 'c3 - E2 cond', 'cursor', 'E1 mean', 'E2 subord mean'}); 
-vline(valid_hit_idxs); 
+if ~isempty(valid_hit_idxs)
+    vline(valid_hit_idxs); 
+end
 saveas(h, fullfile(plotPath, 'cursor_hit_ts.png')); 
 
 %%
