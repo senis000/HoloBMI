@@ -129,8 +129,10 @@ plot_cov_bool = 1;
 %-
 
 plotPath = fullfile(save_dir, 'plots'); 
-mkdir(plotPath); 
-%%
+if ~exist(plotPath,'dir')
+    mkdir(plotPath); 
+end
+%%sa
 %Select BMI ensemble temporal activity from baseline
 %Create Ensemble Information
 %Select BMI ensemble spatial components

@@ -17,7 +17,9 @@ plot_dff_bool = 1;
 plot_cov_bool = 1; 
 
 plotPath = fullfile(save_dir, 'plots'); 
-mkdir(plotPath); 
+if ~exist(plotPath, 'dir')
+    mkdir(plotPath); 
+end
 
 %%
 %1) remove nans: 
