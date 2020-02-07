@@ -388,4 +388,152 @@ save(MLpathanalysis, 'ML', 'animal')
 %% plot results and save
 bar(nanmean(ML.aa.TH))
 
+%% plots
+subplot(221)
+bar(nanmean(ML.aa.TH(:,1:4),1),'FaceColor', uint8([110 110 110]));
+hold on;
+SEM = nanstd(ML.aa.TH(:,1:4),1)/sqrt(length(6));
+errorbar(nanmean(ML.aa.TH(:,1:4),1), SEM, '.k')
+title('Total Hits')
+ylabel('Hits')
+xticklabels({'Stim', 'E3', 'NR', 'RR', 'FRR', 'FS'})
+[~,p2] = ttest2(ML.aa.TH(:,1),ML.aa.TH(:,2));
+[~,p3] = ttest2(ML.aa.TH(:,1),ML.aa.TH(:,3));
+[~,p4] = ttest2(ML.aa.TH(:,1),ML.aa.TH(:,4));
 
+sigstar([1,2],p2);
+sigstar([1,3],p3);
+sigstar([1,4],p4);
+ylim([0,50])
+
+
+subplot(222)
+bar(nanmean(ML.aa.HPM(:,1:4),1),'FaceColor', uint8([110 110 110]));
+hold on;
+SEM = nanstd(ML.aa.HPM(:,1:4),1)/sqrt(length(6));
+errorbar(nanmean(ML.aa.HPM(:,1:4),1), SEM, '.k')
+title('Hits per min')
+ylabel('Hpm')
+xticklabels({'Stim', 'E3', 'NR', 'RR', 'FRR', 'FS'})
+[~,p2] = ttest2(ML.aa.HPM(:,1),ML.aa.HPM(:,2));
+[~,p3] = ttest2(ML.aa.HPM(:,1),ML.aa.HPM(:,3));
+[~,p4] = ttest2(ML.aa.HPM(:,1),ML.aa.HPM(:,4));
+
+sigstar([1,2],p2);
+sigstar([1,3],p3);
+sigstar([1,4],p4);
+ylim([0,1.3])
+
+subplot(223)
+bar(nanmean(ML.aa.THg(:,1:4),1),'FaceColor', uint8([110 110 110]));
+hold on;
+SEM = nanstd(ML.aa.THg(:,1:4),1)/sqrt(length(6));
+errorbar(nanmean(ML.aa.THg(:,1:4),1), SEM, '.k')
+title('Hits gain')
+ylabel('Increase Hits (%)')
+xticklabels({'Stim', 'E3', 'NR', 'RR', 'FRR', 'FS'})
+[~,p2] = ttest2(ML.aa.THg(:,1),ML.aa.THg(:,2));
+[~,p3] = ttest2(ML.aa.THg(:,1),ML.aa.THg(:,3));
+[~,p4] = ttest2(ML.aa.THg(:,1),ML.aa.THg(:,4));
+
+sigstar([1,2],p2);
+sigstar([1,3],p3);
+sigstar([1,4],p4);
+ylim([-70,140])
+
+
+subplot(224)
+bar(nanmean(ML.aa.HPMg(:,1:4),1),'FaceColor', uint8([110 110 110]));
+hold on;
+SEM = nanstd(ML.aa.HPMg(:,1:4),1)/sqrt(length(6));
+errorbar(nanmean(ML.aa.HPMg(:,1:4),1), SEM, '.k')
+title('HPM Gain')
+ylabel('Increase Hpm (%)')
+xticklabels({'Stim', 'E3', 'NR', 'RR', 'FRR', 'FS'})
+[~,p2] = ttest(ML.aa.HPMg(:,1),ML.aa.HPMg(:,2));
+[~,p3] = ttest(ML.aa.HPMg(:,1),ML.aa.HPMg(:,3));
+[~,p4] = ttest(ML.aa.HPMg(:,1),ML.aa.HPMg(:,4));
+
+sigstar([1,2],p2);
+sigstar([1,3],p3);
+sigstar([1,4],p4);
+ylim([-70,140])
+
+%% individual mice
+figure()
+for i=1:6
+    subplot(3,2,i)
+    bar(ML.aa.HPM(i,1:4),'FaceColor', uint8([110 110 110]));
+    xlabel(animal(i).name)
+    ylabel('HPM')
+    ylim([0,1])
+    xticklabels({'Stim', 'E3', 'NR', 'RR', 'FRR', 'FS'})
+end
+
+%% learning from baseline
+
+figure
+bar([nanmean(ML.aa.THbase(:,1)/15,1), nanmean(ML.aa.TH(:,1)/40,1)],'FaceColor', uint8([110 110 110]));
+SEM = [nanstd(ML.aa.THbase(:,1)/15,1), nanstd(ML.aa.TH(:,1)/40,1)]/sqrt(length(6));
+hold on
+errorbar([nanmean(ML.aa.THbase(:,1)/15,1), nanmean(ML.aa.TH(:,1)/40,1)], SEM, '.k')
+title('Hits per min')
+ylabel('Hits per min')
+xticklabels({'Baseline', 'BMI'})
+[~,p2] = ttest(ML.aa.THbase(:,1)/15,ML.aa.TH(:,1)/40);
+sigstar([1,2],p2);
+ylim([0,1.3])
+
+%% plots of CO
+figure()
+subplot(221)
+bar(nanmean(ML.aa.CO(:,1:4),1)*100,'FaceColor', uint8([110 110 110]));
+hold on;
+SEM = nanstd(ML.aa.CO(:,1:4),1)*100/sqrt(length(6));
+errorbar(nanmean(ML.aa.CO(:,1:4),1)*100, SEM, '.k')
+title('Ocupancy T1')
+ylabel('Occupancy (%)')
+xticklabels({'Stim', 'E3', 'NR', 'RR', 'FRR', 'FS'})
+[~,p2] = ttest(ML.aa.CO(:,1),ML.aa.CO(:,2));
+[~,p3] = ttest(ML.aa.CO(:,1),ML.aa.CO(:,3));
+[~,p4] = ttest(ML.aa.CO(:,1),ML.aa.CO(:,4));
+
+sigstar([1,2],p2);
+sigstar([1,3],p3);
+sigstar([1,4],p4);
+ylim([0,4])
+
+
+subplot(222)
+bar(nanmean(ML.aa.COGain(:,1:4),1),'FaceColor', uint8([110 110 110]));
+hold on;
+SEM = nanstd(ML.aa.COGain(:,1:4),1)/sqrt(length(6));
+errorbar(nanmean(ML.aa.COGain(:,1:4),1), SEM, '.k')
+title('T1/T2 hit ratio')
+ylabel('ratio')
+xticklabels({'Stim', 'E3', 'NR', 'RR', 'FRR', 'FS'})
+[~,p2] = ttest2(ML.aa.COGain(:,1),ML.aa.COGain(:,2));
+[~,p3] = ttest2(ML.aa.COGain(:,1),ML.aa.COGain(:,3));
+[~,p4] = ttest2(ML.aa.COGain(:,1),ML.aa.COGain(:,4));
+
+sigstar([1,2],p2);
+sigstar([1,3],p3);
+sigstar([1,4],p4);
+ylim([0,2.7])
+
+subplot(223)
+bar(nanmean(ML.aa.COHits(:,1:4),1),'FaceColor', uint8([110 110 110]));
+hold on;
+SEM = nanstd(ML.aa.COHits(:,1:4),1)/sqrt(length(6));
+errorbar(nanmean(ML.aa.COHits(:,1:4),1), SEM, '.k')
+title('T1/T2 increase')
+ylabel('ratio')
+xticklabels({'Stim', 'E3', 'NR', 'RR', 'FRR', 'FS'})
+[~,p2] = ttest2(ML.aa.COHits(:,1),ML.aa.COHits(:,2));
+[~,p3] = ttest2(ML.aa.COHits(:,1),ML.aa.COHits(:,3));
+[~,p4] = ttest2(ML.aa.COHits(:,1),ML.aa.COHits(:,4));
+
+sigstar([1,2],p2);
+sigstar([1,3],p3);
+sigstar([1,4],p4);
+ylim([0,1.3])
