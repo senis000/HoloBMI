@@ -203,7 +203,9 @@ for aa=1:length(animal)
             binsExp = linspace(3600, data.frame, 40);  % for bins starting after the 2 min
             %because if I start at 0 I'm biasing the results to have lower
             %hits/min during the first 5min of baseline I start from task_settings.prefix_win
-            binsExpb = linspace(task_settings.prefix_win, data.frame+task_settings.prefix_win, 42); % for bins starting at 0 ~ task_settings.prefix_win
+            binsExpb = linspace(task_settings.prefix_win, data.frame+task_settings.prefix_win, 42); % for bins 
+
+starting at 0 ~ task_settings.prefix_win
       
             basehits = nansum(baseData.hits_valid)*40/15; % hits if baseline would be 40min
             basehpm = nansum(baseData.hits_valid)/15; %hpm of baseline
@@ -222,7 +224,9 @@ for aa=1:length(animal)
             % if the plots dir doesn't exist most likely the sim file
             % doesn't exist either
             if ~exist(fullfile(folder.simPath,'plots'),'dir')
-                [sim_saved_path] = sim_bmi_vE1strict_fb(data.bmiAct, task_settings, target_info, folder.simPath);
+                [sim_saved_path] = sim_bmi_vE1strict_fb(data.bmiAct, task_settings, target_info, 
+
+folder.simPath);
                 close('all')
             else
                 isim = 1;
@@ -240,14 +244,20 @@ for aa=1:length(animal)
             % measures with baseline define at the begining of BMI
             aux_hpmb_curve = histcounts(simData.valid_hit_idxs, binsExpb);
             if nansum(aux_hpmb_curve(1:basemin)) > 0
-                basehitsb = nansum(aux_hpmb_curve(1:basemin))*(41-basemin)/basemin; %total hits if baseline would be 42 - basemin minutes
+                basehitsb = nansum(aux_hpmb_curve(1:basemin))*(41-basemin)/basemin; %total hits if baseline 
+
+would be 42 - basemin minutes
                 basehpmb = nanmean(aux_hpmb_curve(1:basemin)); %hpm 
                 aux.THbg(dd) = (nansum(aux_hpmb_curve(basemin+1:end)) - basehitsb)/ basehitsb*100;
                 aux.HPMbg(dd) = (nanmean(aux_hpmb_curve(basemin+1:end)) - basehpmb)/ basehpmb*100;
 
                 % measures of early vs late
-                aux.HitGain(dd) = (nansum(aux_hpmb_curve(end-ELtime+1:end)) - nansum(aux_hpmb_curve(1:ELtime)))/ nansum(aux_hpmb_curve(1:ELtime))*100;
-                aux.HPMGain(dd) = (nanmean(aux_hpmb_curve(end-ELtime+1:end)) - nanmean(aux_hpmb_curve(1:ELtime)))/ nanmean(aux_hpmb_curve(1:ELtime))*100;
+                aux.HitGain(dd) = (nansum(aux_hpmb_curve(end-ELtime+1:end)) - nansum(aux_hpmb_curve
+
+(1:ELtime)))/ nansum(aux_hpmb_curve(1:ELtime))*100;
+                aux.HPMGain(dd) = (nanmean(aux_hpmb_curve(end-ELtime+1:end)) - nanmean(aux_hpmb_curve
+
+(1:ELtime)))/ nanmean(aux_hpmb_curve(1:ELtime))*100;
             end
             %lets deal with the cursor occupancy now
             task_settings.calibration.f0_init_slide = 0;
@@ -263,9 +273,13 @@ for aa=1:length(animal)
                 calibrat.basename = fullfile(folder.dirPath, strcat(auxbasename, auxext));
                 calibrat.roiname = fullfile(folder.dirPath, strcat(auxroiname, auxroiext));
                 % calibrate with the oposite E1 and E2
-                [target_rev_path, target_rev_ALL_path, ~] = baseline2target_vE1strict_fb(calibrat.basename, calibrat.roiname, 0,  ...
+                [target_rev_path, target_rev_ALL_path, ~] = baseline2target_vE1strict_fb(calibrat.basename, 
+
+calibrat.roiname, 0,  ...
                     target_info.E2_base, target_info.E1_base, calibrat.frames_per_reward_range, 0, ...
-                    task_settings.prefix_win, 1, task_settings.f0_win, 1, task_settings.dff_win, folder.simPathcont, ...
+                    task_settings.prefix_win, 1, task_settings.f0_win, 1, task_settings.dff_win, 
+
+folder.simPathcont, ...
                     0, task_settings.calibration.f0_init_slide, calibrat.E2mE1_prctile, fb_settings);
                 close('all')
                 target_rev_info = load(target_rev_path);
@@ -275,7 +289,9 @@ for aa=1:length(animal)
                 task_rev_settings.calibration.f0_init_slide = task_rev_settings.f0_init_slide;
                 task_rev_settings.back2BaseFrameThresh = task_rev_settings.back2BaseFramesThresh;
                 save(fullfile(folder.simPathcont,'task_rev.mat'), 'task_rev_settings');
-                [sim_saved_path_cursor] = sim_bmi_vE1strict_fb(data.bmiAct, task_rev_settings, target_rev_info, folder.simPathcont);
+                [sim_saved_path_cursor] = sim_bmi_vE1strict_fb(data.bmiAct, task_rev_settings, target_rev_info, 
+
+folder.simPathcont);
                 close('all')
             else
                 isimco = 1;
@@ -295,8 +311,12 @@ for aa=1:length(animal)
             % measure with the simulated cursor of opposite E2
             aux.CO(dd) = length_cursor/data.frame;
             aux.COPer(dd) = length_cursor/(length_rev_cursor+length_cursor);
-            aux.COHits(dd) = nansum(data.selfHits)/(nansum(data.selfHits)+length(simDataCursor.valid_hit_idxs));
-            aux.COGain(dd) = aux.COHits(dd)/(nansum(baseData.hits_valid)/(nansum(baseData.hits_valid) + task_rev_settings.num_valid_hits ));
+            aux.COHits(dd) = nansum(data.selfHits)/(nansum(data.selfHits)+length
+
+(simDataCursor.valid_hit_idxs));
+            aux.COGain(dd) = aux.COHits(dd)/(nansum(baseData.hits_valid)/(nansum(baseData.hits_valid) + 
+
+task_rev_settings.num_valid_hits ));
             if toplot
                 h = figure();
                 plot(1.5:41.5, aux_hpmb_curve)
@@ -330,7 +350,9 @@ for aa=1:length(animal)
                 end
                 im_path2 = fullfile(dirplot,'base_exp_cursor.png'); 
                 saveas(h2, im_path2);
-                im_path3 = fullfile(dirpathanalysis, 'plots', strcat(typeDays{tt}, animal(aa).name, '_', num2str(dd), '.png')); 
+                im_path3 = fullfile(dirpathanalysis, 'plots', strcat(typeDays{tt}, animal(aa).name, '_', 
+
+num2str(dd), '.png')); 
                 saveas(h2, im_path3);
                 close('all')
                     
