@@ -134,6 +134,8 @@ ML.ss.COHits = nan(totalSessions,6); % Gain of hits from E2 -> E1
 %hits per min curve
 ML.ss.HPMcurve = nan(totalSessions,6, 39); %hits per minute
 
+%% 
+
 %% Obtain measures
 session = zeros(1,6); %number of sessions per each experiment
 for aa=1:length(animal)
