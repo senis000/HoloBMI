@@ -132,6 +132,13 @@ ML.ss.COHits = nan(totalSessions,6); % Gain of hits from E2 -> E1
 %hits per min curve
 ML.ss.HPMcurve = nan(totalSessions,6, 39); %hits per minute
 
+%% Measures only by learners
+
+ML.oo.re = nan(length(animal),9);
+ML.oo.CO = nan(totalSessions,9); % % of occupancy
+ML.oo.COGain = nan(totalSessions,9); % gain in occupancy from E1-E2
+ML.oo.COHits = nan(totalSessions,9); % Gain of hits from E2 -> E1
+
 %% Obtain measures
 session = zeros(1,6); %number of sessions per each experiment
 for aa=1:length(animal)
@@ -324,6 +331,11 @@ for aa=1:length(animal)
 
             %hits per min curve
             ML.ss.HPMcurve(session(tt),tt,:) = aux.hpm_curve(dd,:); %hits per minute
+            
+            if typedays strcmp( 'holoBMI', )
+                % measure of CO for holobmi
+                ML.oo.re(aa,dd) =
+            end
         end
         ML.aa.TH(aa,tt) = nanmean(aux.TH); %total hits 
         ML.aa.THbase(aa,tt) = nanmean(aux.THbase); %total hits in baseline
