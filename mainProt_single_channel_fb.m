@@ -453,20 +453,17 @@ HoloAcqnvsPrairie_v2(path_data, expt_str, mask, expectedLengthExperiment)
 %   Name it "voltageRec")
 %--------------------------------------------------------------------------
 %}
-
-
 %%
 %(Image-Block Ripping Utility) Convert holostim file with bruker converter 
 % load the VoltageRec to check the results of holoStim
 min_duration = 40; %stims can't occur within this number of samples of voltageRec
 plot_win = 1000; 
 plotHoloStimTimeLock(holoActivity, voltageRec, min_duration, plot_win)
-%
-
 %ToDo: allow us to select the idxs of neurons to plot
 %ToDo: for plotting, do sliding window deltaf/
 %ToDo: a version that just plots each individual neuron, we type 'Y' or 'N'
 %to make it a candidate
+
 
 %%
 %--------------------------------------------------------------------------
