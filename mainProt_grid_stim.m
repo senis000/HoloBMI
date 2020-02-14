@@ -340,11 +340,13 @@ spiral_size_conversion = 1/49;
 %a coefficient needed to accurately load desired ROI size
 %Empirically measured
 initSpiralSize_um = 16; 
-initSpiralSize = spiral_size_conversion*initSpiralSize_um/micronsPerPixel.x;
+initSpiralSize = spiral_size_conversion*initSpiralSize_um;
+
+stim_duration       = 20;  %(ms)
 
 init_markpoints = struct(...
     'UncagingLaserPower', 0.4, ...
-    'Duration', 100, ...
+    'Duration', stim_duration, ...
     'SpiralSize', initSpiralSize, ...
     'SpiralRevolutions', 10); 
 %Darcy recommends 5-10 spirals
@@ -385,18 +387,18 @@ for i = 1:num_reps
         %Remove invalid idxs
         sel_from_rand_order(sel_from_rand_order > num_grid_pts) = []; 
         grid_idxs = rand_order(sel_from_rand_order); 
-        stim_sequence = [stim_sequence ctr_idx grid_idxs]
+        stim_sequence = [stim_sequence ctr_idx grid_idxs];
     end
 end
-
+num_stims = length(stim_sequence)
 %Confirmation:
 h= figure;
 hist(stim_sequence, 1:num_grid_pts)
-title(['num stims per grid point, ctr: ' num2str(ctr_idx)])
+title(['num stims per grid point, ctr idx: ' num2str(ctr_idx)])
 disp('center point:')
 
 %% XML: Sequential Single Cell Stim
-xml_seq_path = fullfile(savePath, 'grid_stim.xml'); 
+
 %{
 Params Summary:
 -num_sequences
@@ -411,10 +413,11 @@ Params Summary:
 
 %}
 %INPUT:
-time_between_stims = 10000; %(ms)
+time_between_stims  = 10000; %(ms)
+expectedDuration = (stim_duration + time_between_stims)*num_stims/(60*1000) %min 
 
-
-
+%%
+% xml_seq_path = fullfile(savePath, 'grid_stim.xml'); 
 power_conversion = 0.004; %0.2 -> 50, 0.4->100
 
 seq_stim_params.UncagingLaser = "Monaco"; 
@@ -423,39 +426,38 @@ seq_stim_params.Iter = 1; %how many times to go through and stim each cell.
 seq_stim_params.IterDelay = 1000; %Time (ms) between iterations
 %
 InitialDelay = time_between_stims; %(ms) time bw stim delivery
-seq_stim_params.InitialDelayVector = InitialDelay*ones(1,numberNeurons);
+seq_stim_params.InitialDelayVector = InitialDelay*ones(1,num_stims);
 %
 power = 40;
 power_converted = power*power_conversion;
-seq_stim_params.PowerVector = power_converted*ones(1,numberNeurons);
+seq_stim_params.PowerVector = power_converted*ones(1,num_stims);
 %2
-Duration = 30;
-seq_stim_params.DurationVector = Duration*ones(1,numberNeurons);
+Duration = stim_duration;
+seq_stim_params.DurationVector = Duration*ones(1,num_stims);
 % 
 numSpirals = 10;
-seq_stim_params.SpiralVector = numSpirals*ones(1,numberNeurons);
+seq_stim_params.SpiralVector = numSpirals*ones(1,num_stims);
 %
 Repetitions = 1;
-seq_stim_params.RepetitionsVector = Repetitions*ones(1,numberNeurons);
+seq_stim_params.RepetitionsVector = Repetitions*ones(1,num_stims);
 %Darcy sometimes recommends increasing 'Repetitions' and decreasing
 %Duration.  This changes the distribution of the spirals in time over the
 %cell.
 %
 InterPointDelay =  0.12;
-seq_stim_params.InterPointDelayVector = InterPointDelay*ones(1,numberNeurons); 
+seq_stim_params.InterPointDelayVector = InterPointDelay*ones(1,num_stims); 
 
 % seq_stim_params
+%--------------------------------------------------------------------------
 createXmlFile_sequential_single_cell(xml_seq_path, seq_stim_params, stim_sequence);
-
+%--------------------------------------------------------------------------
 % Update prairie view repetitions based on num neurons to stim
 stim_time_per_neuron = InitialDelay/1000+InterPointDelay;
-num_reps_seq_stim = ceil(numberNeurons*stim_time_per_neuron*frameRate);
-len_seq_stim = numberNeurons*stim_time_per_neuron/60;
+num_reps_seq_stim = ceil(expectedDuration*60*frameRate);
 
 disp(['Number of Repetitions in PrairieView: ' num2str(num_reps_seq_stim)])
-disp(['Stim time per neuron (s): ' num2str(stim_time_per_neuron)]); 
-disp(['Num neurons: ' num2str(numberNeurons)]); 
-disp(['Length (min): ' num2str(len_seq_stim)])
+disp('Update PrairieView to have at least this many reps'); 
+disp(['Length (min): ' num2str(expectedDuration)])
 
 % if position of stim cells looks different, "smaller/bigger" check the
 % pixel size
