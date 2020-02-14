@@ -1,5 +1,15 @@
 
 %%
+%--------------------------------------------------------------------------
+%BEFORE ANIMAL IN BOX:
+%DO:
+% Hook up BNCs: 
+% 1) BMI solenoid, AI5
+% 2) Monaco Trig, AI6
+% 3) Frame Trig, AI7
+% 4) Holo Trig PFI1
+
+%%
 % %Load example roi_data information for reference: 
 % roi_data_path = fullfile('Z:\Vivek\holoBMI_2round\191119\NVI20\D15', 'roi_data.mat'); 
 % d = load(roi_data_path)
@@ -12,8 +22,9 @@ cd G:\VivekNuria\Code\HoloBMI
 %DEFINE PATH_DATA: 
 
 % define Animal, day and folder where to save
-animal = 'NVI17'; day = 'D19';
-folder = 'E:\holobmi_E\191123';
+%Animals: NVI20, NVI21
+animal = 'NVI20'; day = 'D0';
+folder = 'E:\holobmi_E\200214';
 savePath = fullfile(folder, animal,  day);
 if ~exist(savePath, 'dir')
     mkdir(savePath);
@@ -60,18 +71,208 @@ num_chan = length(chan_data);
 onacid_bool = false;
 
 %%
-%1) define grid in pixel space
-% micronsPerPixel.x = .7266
-% micronsPerPixel.y = .7266
+%--------------------------------------------------------------------------
+%DO:
+%find FOV
+%-disable the motor control!!!!
+% REMEMBER TO TURN OFF PHASE OFFSET
+% TURN OFF THE MANIPULATOR 
+% TURN OFF AUTOSCALE
+%-ACTIVATE RED+GREEN channels
+%-collect 1000 frame video
+%--------------------------------------------------------------------------
+%DO:
+%-convert with Image-Block Ripping Utility
+%-drag into ImageJ
+%-split into red and green channels
+%--Image>Stacks>Tools>Make Substack
+%-take average frame of the two channels separately:
+%--Image>Stacks>Z Project 
+%--save the images into 'redgreen' folder in 'savePath'
 
-dim = 512
+%%
+%Option 1: load images from prairie directly
+option1_bool = 0; 
+if option1_bool
+    pl = actxserver('PrairieLink.Application');
+    pl.Connect();
+    disp('Connecting to prairie')
+    pause(2);    
+    green_im = pl.GetImage_2(2, px, py);
+    red_im = pl.GetImage_2(1, px, py);
+    pl.Disconnect();
+    disp('Disconnected from prairie')
+else
+    red_path      = fullfile(redgreen_dir, 'red.tif'); 
+    exist(red_path)
+    green_path    = fullfile(redgreen_dir, 'green.tif'); 
+%     green_path    = fullfile(redgreen_dir, 'green_mean.tif'); 
+    exist(green_path)    
+    green_im    = imread(green_path); 
+    red_im      = imread(red_path); 
+end
 
+%%
+im_summary = green_im;
+im_sc_struct = struct(...
+    'im', [], ...
+    'minmax_perc', [], ...
+    'minmax', [], ...
+    'min', [], ...
+    'min_perc', [], ...
+    'max', [], ...
+    'max_perc', []); 
+num_im_sc = 0;
+
+%Use green channel to draw ROIs
+%Scale the image, in order to help see ROIs better.
+%If no modification to original image needed, just run code, in 
+% 'scale_im_interactive' set min_perc = 0, max_perc = 100
+[im_sc_struct, num_im_sc] = scale_im_interactive(im_summary, im_sc_struct, num_im_sc);
+close all;
+
+%%
+%--------------------------------------------------------------------------
+%DO:
+%-Input index to 'im_sc_struct'
+%--------------------------------------------------------------------------
+%Can input a different index to choose as the Image for choosing ROI
+%Defaults to the last image in 'im_sc_struct'
+im_bg = im_sc_struct(end).im; 
+h = figure;
+imagesc(im_bg); 
+axis square
+colormap('gray'); 
+title('selected background image for identifying ROI'); 
+%PLOT_IMAGES data:
+%'plot_images' contains a set of images so user can tell if ROI selection is
+%appropriate.
+plot_images = struct('im', [], 'label', ''); 
+plot_images(1).im = im_summary; 
+plot_images(1).label = 'green mean';
+plot_images(2).im = im_bg; 
+plot_images(2).label = 'scaled';
+
+%%
+%% INIT ROI_DATA
+%--------------------------------------------------------------------------
+%DO:
+%-Confirm parameters for automatically identifying ROI
+%-Run this cell
+%-if template matching sucks, can set 'auto_init' to 0
+%--------------------------------------------------------------------------
+auto_init = 0;  %initializes roi_data using automatic cell detection: 
+% Parameters for auto cell detection:
+% Following were for zoom=2 on bruker soma:
+% template_diam = 25; %diamter of difference of Gaussians in pixels
+% thres = 0.5; %cell detection threshold as correlation coefficient
+% cell_diam = 7; %CELL_DIAM is diameter used for dilation.
+% finemode = 1; %imTemplateMatch will be used instead of normxcorr2. It will be slower.
+% temmode = 0;  % 0 is for full circle (soma) 1 is for donuts (membrane)
+template_diam = 15; %diamter of difference of Gaussians in pixels
+thres = 0.6; %cell detection threshold as correlation coefficient
+cell_diam = 14; %CELL_DIAM is diameter used for dilation.
+finemode = 1; %imTemplateMatch will be used instead of normxcorr2. It will be slower.
+temmode = 1;  % 0 is for full circle (soma) 1 is for donuts (membrane)
+if auto_init
+    %FIND ROI AUTOMATICALLY 
+    [mask_intermediate, ~] = imFindCellsTM (im_bg, template_diam, thres, cell_diam, finemode, temmode);
+    init_roi_mask = bwlabel(mask_intermediate);
+    findCenter (init_roi_mask, im_bg);
+    roi_data = label_mask2roi_data_single_channel(im_bg, init_roi_mask, chan_data);
+else
+    roi_data = init_roi_data(im_bg, num_chan, chan_data);
+end
+%%
+%Visualize: 
+screen_size = get(0,'ScreenSize');
+h = figure('Position', [screen_size(3)/2 1 screen_size(3)/2 screen_size(4)]);
+hold on;
+imagesc(roi_data.im_roi); %colormap('gray');  
+axis square;
+title('ROI footprint overlay in blue'); 
+% scatter(roi_data.x, roi_data.y, pi*roi_data.r.^2, 'r'); 
+h = figure('Position', [screen_size(3)/2 1 screen_size(3)/2 screen_size(4)]);
+% hold on;
+imagesc(roi_data.roi_mask); %colormap('gray');  
+axis square;
+title('ROI Mask'); 
+% scatter(roi_data.x, roi_data.y, pi*roi_data.r.^2, 'r'); 
+%TESTS
+% roi_data = label_mask2roi_data_single_channel(im_bg, init_roi_mask, chan_data);
+% [roi_ctr] = roi_bin_cell2center_radius(roi_data.roi_bin_cell);
+%% Add ROI if needed
+%--------------------------------------------------------------------------
+%DO:
+%-Run cell to manually draw additional ROI
+%--------------------------------------------------------------------------
+disp('Adding ROIs to image!'); 
+[roi_data] = draw_roi_g_chan(plot_images, roi_data);
+close all
+%To Do: make it save the ROI data with each addition, so if it crashes you
+%don't lose all the drawings.
+
+%% Delete ROI if needed
+%--------------------------------------------------------------------------
+%DO:
+
+%-If auto detected ROI suck, delete ROI
+%--------------------------------------------------------------------------
+close all;
+%Delete ROI if needed: 
+disp('Deleting ROIs from image!');
+[roi_data] = delete_roi_2chan(plot_images, roi_data);
+close all;
+
+%% SEE ROI if needed
+see_roi_data = 1; 
+if see_roi_data
+    %HoloMask
+    holoMask = roi_data.roi_mask; 
+    screen_size = get(0,'ScreenSize');
+    h = figure('Position', [screen_size(3)/2 1 screen_size(3)/2 screen_size(4)]);    
+    imagesc(holoMask)
+    axis square; 
+    title(['holoMask num roi: ' num2str(roi_data.num_rois)]); 
+    
+    %im_roi:
+    screen_size = get(0,'ScreenSize');
+    h = figure('Position', [screen_size(3)/2 1 screen_size(3)/2 screen_size(4)]);
+    % hold on;
+    imagesc(roi_data.im_roi); %colormap('gray');  
+    axis square;
+    title(['ROI footprint overlay in blue.  Num ROI: ' num2str(roi_data.num_rois)]);
+end
+
+%% Save roi_data
+roi_data_file = fullfile(savePath, 'roi_data.mat'); 
+roi_mask = roi_data.roi_mask;
+save(roi_data_file, 'roi_mask', 'plot_images', 'im_sc_struct', 'roi_data'); 
+
+
+
+%%
+%--------------------------------------------------------------------------
+%STIM RELATED CODE HERE
+%--------------------------------------------------------------------------
+
+%Define target location of stim
+%Default to center of image: 
+%Can manually select x, y based on roi_data
 target.x = dim/2
 target.y = dim/2
 target.r = 10  %not super necessary for stim grid points.  needed for mark points generation
 
+%%
+%1) define grid in pixel space
+% micronsPerPixel.x = .7266
+% micronsPerPixel.y = .7266
+%USER INPUT: 
+dim = 512
 x_extent_pixels = [-dim/8 dim/8]
 y_extent_pixels = [-dim/8 dim/8]
+
+
 x_extent_centered = target.x + x_extent_pixels
 x_extent_centered(x_extent_centered < 1) = 1;
 x_extent_centered(x_extent_centered > dim) = dim;
@@ -149,7 +350,7 @@ init_markpoints = struct(...
 %Darcy recommends 5-10 spirals
 
 markpoints_data = repmat(init_markpoints, [num_grid_pts 1]); 
-createGplFile_v2(savePath, markpoints_data, x_mesh_flat, y_mesh_flat, posz, roi_data.r, px, zoom);
+createGplFile_v2(savePath, markpoints_data, x_mesh_flat, y_mesh_flat, posz, NaN, px, zoom);
 
 % If we want each grid point to be a different radius stim: 
 % use_fixed_size_bool = 0;

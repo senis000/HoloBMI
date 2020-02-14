@@ -1,4 +1,5 @@
 %mainProt_stim_res
+%I DIDNT FINISH THIS, See mainProt_grid_stim.m
 %Feb 13, 2020
 %measure the power out of the imaging and stim laser
 %Tools > maintenance > galvo center
