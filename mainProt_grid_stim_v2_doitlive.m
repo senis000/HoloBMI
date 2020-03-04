@@ -281,30 +281,27 @@ y_extent_centered = target.y + y_extent_pixels;
 y_extent_centered(y_extent_centered < 1) = 1;
 y_extent_centered(y_extent_centered > dim) = dim;
 
-step_microns = 20
+step_microns = 10
 x_step = round(step_microns/micronsPerPixel.x);
 y_step = round(step_microns/micronsPerPixel.y);
 %
 x_step_vec = x_step:x_step:x_extent_pixels(2);
 y_step_vec = y_step:y_step:y_extent_pixels(2);
 %
-x_grid = target.x + [sort(-x_step_vec) 0 x_step_vec]; 
-remove_x = find(...
-    x_grid < x_extent_centered(1) | ...
-    x_grid > x_extent_centered(2))
-x_grid(remove_x) = []
 
-y_grid = target.y + [sort(-y_step_vec) 0 y_step_vec]; 
+remove_x = find(...
+    (target.x+x_step_vec) < x_extent_centered(1) | ...
+    (target.x+x_step_vec) > x_extent_centered(2))
+x_step_vec(remove_x) = [];
+
 remove_y = find(...
-    y_grid < y_extent_centered(1) | ...
-    y_grid > y_extent_centered(2))
-y_grid(remove_y) = []
-%Sort is just used for ease of plotting the results
-%
-[x_mesh, y_mesh] = meshgrid(x_grid, y_grid);
-%
-x_mesh_flat = x_mesh(:); 
-y_mesh_flat = y_mesh(:); 
+    (target.y+y_step_vec) < y_extent_centered(1) | ...
+    (target.y+y_step_vec) > y_extent_centered(2))
+y_step_vec(remove_y) = [];
+
+x_mesh_flat = target.x + [0 -x_step_vec zeros(size(y_step_vec))]; 
+y_mesh_flat = target.y + [0 zeros(size(x_step_vec)) -y_step_vec];
+ 
 ctr_idx = find(x_mesh_flat == target.x & y_mesh_flat == target.y); 
 num_grid_pts = length(x_mesh_flat) 
 
@@ -342,7 +339,7 @@ spiral_size_conversion = 1/49;
 initSpiralSize_um = 14; 
 initSpiralSize = spiral_size_conversion*initSpiralSize_um;
 
-stim_duration       = 30;  %(ms)
+stim_duration       = 5;  %(ms)
 
 init_markpoints = struct(...
     'UncagingLaserPower', 0.4, ...
@@ -446,7 +443,7 @@ seq_stim_params.IterDelay = 1000; %Time (ms) between iterations
 InitialDelay = time_between_stims; %(ms) time bw stim delivery
 seq_stim_params.InitialDelayVector = InitialDelay*ones(1,num_stims);
 %
-power = 40;
+power = 20;
 power_converted = power*power_conversion;
 seq_stim_params.PowerVector = power_converted*ones(1,num_stims);
 %2

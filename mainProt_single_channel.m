@@ -45,6 +45,8 @@ duration of stim
 %adjust spout so mouse can lick
 %put objective
 %--------------------------------------------------------------------------
+%% CLEAR ALL
+clear all
 
 %% DEFINE PATHS
 %--------------------------------------------------------------------------
@@ -66,9 +68,9 @@ cd(home_dir)
 env_dir = 'G:\VivekNuria\utils'
 
 % define Animal, day and folder where to save
-animal = 'NVI22'; day = 'D28';
-% folder = 'E:\holobmi_E\191213';
-folder = 'H:\holobmi_H\191213';
+animal = 'NVI22'; day = 'D30';
+% folder = 'E:\holobmi_E\191214';
+folder = 'H:\holobmi_H\191215';
 savePath = fullfile(folder, animal,  day);
 if ~exist(savePath, 'dir')
     mkdir(savePath);
@@ -106,7 +108,7 @@ chan_data = struct(...
 num_chan = length(chan_data); 
 onacid_bool = false;
 
-
+%z: 162.90
 %%
 %{
 %--------------------------------------------------------------------------
@@ -140,7 +142,7 @@ Option2:
 %-Run 'scale_im_interactive' : choose percentiles for scaling image
 %--------------------------------------------------------------------------
 
-option1_bool = 1; 
+option1_bool = 0; 
 if option1_bool
     pl = actxserver('PrairieLink.Application');
     pl.Connect();
@@ -150,7 +152,7 @@ if option1_bool
     pl.Disconnect();
 else
     im_summary_path    = ...
-        fullfile('G:\vivek190822_NY35_good_stim_tests\NY35\D1_test', 'green_std.tif'); 
+        fullfile('H:\holobmi_H\191215\NVI22\D30\im\roi_draw', 'AVG_roi_draw-000.tif'); 
     % fullfile('E:\vivek\190822\NY35\D1_test', 'chan_mean.tif'); 
     exist(im_summary_path)
     im_summary = imread(im_summary_path); 
@@ -227,27 +229,27 @@ else
     roi_data = init_roi_data(im_bg, num_chan, chan_data);
 end
 
-%%
-%Visualize: 
-screen_size = get(0,'ScreenSize');
-h = figure('Position', [screen_size(3)/2 1 screen_size(3)/2 screen_size(4)]);
-hold on;
-imagesc(roi_data.im_roi); %colormap('gray');  
-axis square;
-title('ROI footprint overlay in blue'); 
-% scatter(roi_data.x, roi_data.y, pi*roi_data.r.^2, 'r'); 
-
-%
-h = figure('Position', [screen_size(3)/2 1 screen_size(3)/2 screen_size(4)]);
+% %%
+% %Visualize: 
+% screen_size = get(0,'ScreenSize');
+% h = figure('Position', [screen_size(3)/2 1 screen_size(3)/2 screen_size(4)]);
 % hold on;
-imagesc(roi_data.roi_mask); %colormap('gray');  
-axis square;
-title('ROI Mask'); 
-% scatter(roi_data.x, roi_data.y, pi*roi_data.r.^2, 'r'); 
-
-%TESTS
-% roi_data = label_mask2roi_data_single_channel(im_bg, init_roi_mask, chan_data);
-% [roi_ctr] = roi_bin_cell2center_radius(roi_data.roi_bin_cell);
+% imagesc(roi_data.im_roi); %colormap('gray');  
+% axis square;
+% title('ROI footprint overlay in blue'); 
+% % scatter(roi_data.x, roi_data.y, pi*roi_data.r.^2, 'r'); 
+% 
+% %
+% h = figure('Position', [screen_size(3)/2 1 screen_size(3)/2 screen_size(4)]);
+% % hold on;
+% imagesc(roi_data.roi_mask); %colormap('gray');  
+% axis square;
+% title('ROI Mask'); 
+% % scatter(roi_data.x, roi_data.y, pi*roi_data.r.^2, 'r'); 
+% 
+% %TESTS
+% % roi_data = label_mask2roi_data_single_channel(im_bg, init_roi_mask, chan_data);
+% % [roi_ctr] = roi_bin_cell2center_radius(roi_data.roi_bin_cell);
 
 %% Delete ROI if needed
 %--------------------------------------------------------------------------
@@ -301,6 +303,9 @@ save(roi_data_file, 'roi_mask', 'plot_images', 'im_sc_struct', 'roi_data');
 % load(filetosave)
 % h = figure;
 % imshow(holoMask)
+%%
+% roi_data_file = fullfile(savePath, 'roi_data.mat'); 
+% load(roi_data_file)
 
 %% prepare SEQUENTIAL HOLO STIM of individual neurons
 %Load environment to prairie
@@ -458,7 +463,10 @@ plotHoloStimTimeLock(holoActivity, voltageRec, min_duration, plot_win)
 % then re-run once you've chosen your 4.)
 %--------------------------------------------------------------------------
 % E2_candidate =unique([23 42 35 36 14 4 28 26 38]); %unique also sorts 47 38 19 34 9 45 
-E2_candidate = [8 28 15 22] ; %[]
+% E2_candidate = 1:roi_data.num_rois%[8 28 15 22] ; %[]
+E2_candidate    = [66 64 34 30]
+E1_base         = [59 42 89 90]; 
+% E2_base = E2_candidate
 % E2_base = sort([21    36   127   196], 'ascend')
 
 %% Holo stim of Ensemble neurons
@@ -643,16 +651,21 @@ plotNeuronsBaseline(baseActivity, CComp, YrA, totalneurons)
 % plotNeuronsBaseline(baseActivity, CComp, YrA, 20)
 %TODO:  
 %ToDo: for plotting, do sliding window deltaf/f
+
+%%
+% base_file = fullfile('H:\holobmi_H\191214\NVI20\D29', 
 %%
 %--------------------------------------------------------------------------
 %D0:
 %1) Choose E1_base
 %--------------------------------------------------------------------------
 %
+visual_rois = [2 12 4 8 ]
+%%
 %Manually enter and confirm the BMI neurons:
 % E2_candidate = unique([9 15 23 29]); %unique also sorts
 % 27 24 28 36]); %unique also sorts 9 6 4 37 
-E1_base = sort([27 21 29 30 ], 'ascend') % 16 9 17
+% E1_base = sort([10    21    56     6], 'ascend') % 16 9 17
 ensembleNeurons = [E1_base, E2_base];
 plotNeuronsEnsemble(baseActivity, ensembleNeurons, [ones(1,length(E1_base)) 2*ones(1,length(E2_base))])
 select_roi_data(roi_data, [E2_base, unique(E1_base)]); 
@@ -676,6 +689,8 @@ E3_base = unique([36 42 22 26]); %unique also sorts  50 12 15 8 67 53
 % E1_base = [1 2 3 4]; 
 % E2_base = [5 6 7 8]; 
 
+%%
+% base_file = fullfile('H:\holobmi_H\191214\NVI20\D29', 'BaselineOnline191214T213601.mat')
 %% Calibrate Target with Baseline simulation
 %--------------------------------------------------------------------------
 %D0: (nothing)
@@ -727,16 +742,13 @@ close all
     prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, savePath, ...
     cursor_zscore_bool, f0_init_slide, E2mE1_prctile);
 
-%ToDo: return the filename
-% run the simulation of baseline
-%To Do: Show the percent correct of the pretrain period, based on the
-%calibration. 
+%NURIA NOTE: accept calibration only if T value is between 0.2 and 0.5.  
 
 %--------------------------------------------------------------------------
 %D0:
 %Note down: 
 % - T value
-% T: 0.3738
+% T: 0.4335
 % num_valid_hits: 7//7
 % num_hits:141//211
 %--------------------------------------------------------------------------
@@ -949,7 +961,7 @@ baselineCalibrationFile = target_info_path;
 %%
 
 close all
-imshow(im_bg)
+% imshow(im_bg)
 %  baseValSeed = ones(length(E1_base)+length(E2_base), 1)+nan
 vectorHolo = [];
 vectorVTA= []; 
@@ -1204,9 +1216,11 @@ end
 %%
 %NOTES: 15min baseline 
 %{
-i forgot to give the spout until right before baseline.
- he's touching the spout a LOT during the baseline.  
-maybe this will calibrate to have large thresholds...
+this imaging in nvi20 is unbelievably amazing
+and must be analyzed
 
+To Do: 
+have check points in the mainprot code so if matlab closes we just load all
+relevant data from saved files
 %}
 
