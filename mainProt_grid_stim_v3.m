@@ -24,7 +24,7 @@ cd G:\VivekNuria\Code\HoloBMI
 % define Animal, day and folder where to save
 %Animals: NVI20, NVI21
 animal = 'NVI20'; day = 'D0';
-folder = 'E:\holobmi_E\200214';
+folder = 'E:\holobmi_E\200304';
 savePath = fullfile(folder, animal,  day);
 if ~exist(savePath, 'dir')
     mkdir(savePath);
@@ -73,7 +73,8 @@ onacid_bool = false;
 %%
 %--------------------------------------------------------------------------
 %DO:
-%find FOV
+%find FOV (put the target cell in the middle)
+%
 %-disable the motor control!!!!
 % REMEMBER TO TURN OFF PHASE OFFSET
 % TURN OFF THE MANIPULATOR 
@@ -249,19 +250,209 @@ roi_data_file = fullfile(savePath, 'roi_data.mat');
 roi_mask = roi_data.roi_mask;
 save(roi_data_file, 'roi_mask', 'plot_images', 'im_sc_struct', 'roi_data'); 
 
+%%
+%Choose the target roi: 
+% First show the ROI: 
+h = figure; imagesc(roi_data.roi_mask); axis square; colorbar
 
+%% Choose the roi: 
+target_idxs = 1; 
+[target_roi_data, target_idx] = select_roi_data(roi_data, target_idx)
 
 %%
 %--------------------------------------------------------------------------
 %STIM RELATED CODE HERE
 %--------------------------------------------------------------------------
-
 %Define target location of stim
 %Default to center of image: 
 %Can manually select x, y based on roi_data
-target.x = 258 %dim/2
-target.y = 266 %dim/2
+target.x = target_roi_data.x %dim/2
+target.y = target_roi_data.y %dim/2
 target.r = 10  %not super necessary for stim grid points.  needed for mark points generation
+
+%--------------------------------------------------------------------------
+%BOT:
+bot_target_path = fullfile(savePath, 'BOT_target.cfg'); 
+createBot_v2(bot_target_path, target.x, target.y, target.r)
+
+%--------------------------------------------------------------------------
+%GPL:
+spiral_size_conversion = 1/49; 
+%a coefficient needed to accurately load desired ROI size
+%Empirically measured
+initSpiralSize_um   = 14; 
+initSpiralSize = spiral_size_conversion*initSpiralSize_um;
+stim_duration       = 5;  %(ms)
+init_markpoints     = struct(...
+    'UncagingLaserPower', 0.4, ...
+    'Duration', stim_duration, ...
+    'SpiralSize', initSpiralSize, ...
+    'SpiralRevolutions', 10); 
+%Darcy recommends 5-10 spirals
+markpoints_data = repmat(init_markpoints, [1 1]); 
+createGplFile_v2(savePath, markpoints_data, target.x, target.y, posz, NaN, px, zoom, 'target_');
+
+%--------------------------------------------------------------------------
+%XML: 
+num_stims    = 1;
+stim_sequence = ones(1,num_stims); 
+
+xml_seq_path        = fullfile(savePath, 'target_stim.xml'); 
+time_between_stims  = 5000; %(ms)
+power_conversion = 0.004; %0.2 -> 50, 0.4->100
+seq_stim_params.UncagingLaser = "Monaco"; 
+seq_stim_params.AllPointsAtOnce = "False"
+seq_stim_params.Iter = 1; %how many times to go through and stim each cell.
+seq_stim_params.IterDelay = 1000; %Time (ms) between iterations
+InitialDelay = time_between_stims; %(ms) time bw stim delivery
+seq_stim_params.InitialDelayVector = InitialDelay*ones(1,num_stims);
+%
+power = 30;
+power_converted = power*power_conversion;
+seq_stim_params.PowerVector = power_converted*ones(1,num_stims);
+%2
+Duration = stim_duration;
+seq_stim_params.DurationVector = Duration*ones(1,num_stims);
+% 
+numSpirals = 10;
+seq_stim_params.SpiralVector = numSpirals*ones(1,num_stims);
+%
+Repetitions = 1;
+seq_stim_params.RepetitionsVector = Repetitions*ones(1,num_stims);
+%Darcy sometimes recommends increasing 'Repetitions' and decreasing
+%Duration.  This changes the distribution of the spirals in time over the
+%cell.
+%
+InterPointDelay =  0.12;
+seq_stim_params.InterPointDelayVector = InterPointDelay*ones(1,num_stims); 
+% seq_stim_params
+%--------------------------------------------------------------------------
+createXmlFile_sequential_single_cell(xml_seq_path, seq_stim_params, stim_sequence);
+
+%%
+%Stim each ROI two times, with 5 sec separation: 
+%--------------------------------------------------------------------------
+%Create BOT: 
+bot_roi_path = fullfile(savePath, 'BOT_roi.cfg'); 
+createBot_v2(bot_roi_path, roi_data.x, roi_data.y, roi_data.r)
+
+%--------------------------------------------------------------------------
+%GPL:
+spiral_size_conversion = 1/49; 
+%a coefficient needed to accurately load desired ROI size
+%Empirically measured
+initSpiralSize_um   = 14; 
+initSpiralSize = spiral_size_conversion*initSpiralSize_um;
+stim_duration       = 5;  %(ms)
+init_markpoints     = struct(...
+    'UncagingLaserPower', 0.4, ...
+    'Duration', stim_duration, ...
+    'SpiralSize', initSpiralSize, ...
+    'SpiralRevolutions', 10); 
+%Darcy recommends 5-10 spirals
+markpoints_data = repmat(init_markpoints, [1 1]); 
+roi_gpl_prefix = 'roi_'; 
+createGplFile_v2(savePath, markpoints_data, roi_data.x, roi_data.y, posz, NaN, px, zoom, roi_gpl_prefix);
+
+%--------------------------------------------------------------------------
+%XML: 
+numberNeurons           = roi_data.num_rois
+roi_stim_sequence       = repmat(1:roi_data.num_rois, [1 3]); %repeat a stim of each ROI three times
+num_stims               = length(stim_sequence);
+
+xml_seq_path        = fullfile(savePath, 'roi_stim.xml'); 
+time_between_stims  = 5000; %(ms)
+power_conversion = 0.004; %0.2 -> 50, 0.4->100
+seq_stim_params.UncagingLaser = "Monaco"; 
+seq_stim_params.AllPointsAtOnce = "False"
+seq_stim_params.Iter = 1; %how many times to go through and stim each cell.
+seq_stim_params.IterDelay = 1000; %Time (ms) between iterations
+InitialDelay = time_between_stims; %(ms) time bw stim delivery
+seq_stim_params.InitialDelayVector = InitialDelay*ones(1,num_stims);
+%
+power = 30;
+power_converted = power*power_conversion;
+seq_stim_params.PowerVector = power_converted*ones(1,num_stims);
+%2
+Duration = stim_duration;
+seq_stim_params.DurationVector = Duration*ones(1,num_stims);
+% 
+numSpirals = 10;
+seq_stim_params.SpiralVector = numSpirals*ones(1,num_stims);
+%
+Repetitions = 1;
+seq_stim_params.RepetitionsVector = Repetitions*ones(1,num_stims);
+%Darcy sometimes recommends increasing 'Repetitions' and decreasing
+%Duration.  This changes the distribution of the spirals in time over the
+%cell.
+%
+InterPointDelay =  0.12;
+seq_stim_params.InterPointDelayVector = InterPointDelay*ones(1,num_stims); 
+% seq_stim_params
+%--------------------------------------------------------------------------
+createXmlFile_sequential_single_cell(xml_seq_path, seq_stim_params, stim_sequence);
+
+% Update prairie view repetitions based on num neurons to stim
+stim_time_per_neuron = InitialDelay/1000+InterPointDelay;
+num_reps_seq_stim = ceil(numberNeurons*stim_time_per_neuron*frameRate);
+len_seq_stim = numberNeurons*stim_time_per_neuron/60;
+
+disp(['Number of Repetitions in PrairieView: ' num2str(num_reps_seq_stim)])
+disp(['Stim time per neuron (s): ' num2str(stim_time_per_neuron)]); 
+disp(['Num neurons: ' num2str(numberNeurons)]); 
+disp(['Length (min): ' num2str(len_seq_stim)])
+
+
+%--------------------------------------------------------------------------
+%% Run HOLO STIM to check stim-able neurons
+%This stims one neuron at a time.
+%--------------------------------------------------------------------------
+%DO: 
+%--------------------------------------------------------------------------
+%DO: 
+% upload .gpl in MarkPoints (Top half)
+% upload .xml in MarkPoints (Bot half)
+% update T-series repetitions in Prairie View with above number
+% Make sure Voltage Recording has all channels enabled
+% Make sure you turn on the laser power and pmt's
+% while running paint the neurons
+% TODO: automate uploading
+%1) Do live scan check
+%--------------------------------------------------------------------------
+
+clear s
+expt_str = 'holostim_seq'; %previously 'holostim' 
+mask = roi_data.roi_mask;
+expectedLengthExperiment = ceil(num_reps_seq_stim*1.5); 
+HoloAcqnvsPrairie_v2(path_data, expt_str, mask, expectedLengthExperiment)
+% HoloAcqnvsPrairie(folder, animal, day, holoMask)
+%TODO: make this closed loop, and wait for the neurons to be inactive
+%before stimming them.
+%{
+%--------------------------------------------------------------------------
+%DO: 
+%Image-block ripping utility: Convert the holostim acqn (2 files)
+%Load holostim_seqX.mat
+%Load voltage recording for plotting.  
+%   Use 'Import Data' in matlab
+%   Import csv to matlab: output type is Numeric Matrix.  
+%   Name it "voltageRec")
+%--------------------------------------------------------------------------
+%}
+
+%%
+%(Image-Block Ripping Utility) Convert holostim file with bruker converter 
+% load the VoltageRec to check the results of holoStim (voltageRec)
+%TO DO: FIX THIS: 
+% min_duration = 40; %stims can't occur within this number of samples of voltageRec
+% plot_win = 1000; 
+% plotHoloStimTimeLock(holoActivity, voltageRec, min_duration, plot_win)
+%
+%ToDo: allow us to select the idxs of neurons to plot
+%ToDo: for plotting, do sliding window deltaf/
+%ToDo: a version that just plots each individual neuron, we type 'Y' or 'N'
+%
+%to make it a candidate
 
 %%
 %1) define grid in pixel space
@@ -269,61 +460,42 @@ target.r = 10  %not super necessary for stim grid points.  needed for mark point
 % micronsPerPixel.y = .7266
 %USER INPUT: 
 dim = 512
-x_extent_pixels = [-dim dim]/4
-y_extent_pixels = [-dim dim]/4
+fine_grid = 0
 
-step_microns = 20
-x_step = round(step_microns/micronsPerPixel.x);
-y_step = round(step_microns/micronsPerPixel.y);
+if fine_grid
+    x_extent_microns = [-20 20]; 
+    x_extent = round(x_extent_microns/micronsPerPixel.x)
+    y_extent_microns = [-20 20]; 
+    y_extent = round(y_extent_microns/micronsPerPixel.y)
+    
+    step_microns = 5
+    x_step = round(step_microns/micronsPerPixel.x);
+    y_step = round(step_microns/micronsPerPixel.y);    
+    
+else
+    
+    x_extent_microns = [-60 60]; 
+    x_extent = round(x_extent_microns/micronsPerPixel.x)
+    y_extent_microns = [-60 60]; 
+    y_extent = round(y_extent_microns/micronsPerPixel.y)
+    
+    step_microns = 10
+    x_step = round(step_microns/micronsPerPixel.x);
+    y_step = round(step_microns/micronsPerPixel.y);    
+    
+end
+[x_mesh_flat, y_mesh_flat, ctr_idx, num_grid_pts, x_mesh, y_mesh] = ...
+    gen_square_grid(target, dim, x_extent, y_extent, x_step, y_step);
+num_grid_pts
 
+% [x_mesh_flat, y_mesh_flat, ctr_idx, num_grid_pts] = ...
+%     gen_L_grid(target, dim, x_extent, y_extent, x_step, y_step);
 
+% %Directly set extent in pixel space: 
+% x_extent = [-dim dim]/4
+% y_extent = [-dim dim]/4
 
-x_extent_centered = target.x + x_extent_pixels
-x_extent_centered(x_extent_centered < 1) = 1;
-x_extent_centered(x_extent_centered > dim) = dim;
-
-y_extent_centered = target.y + y_extent_pixels;
-y_extent_centered(y_extent_centered < 1) = 1;
-y_extent_centered(y_extent_centered > dim) = dim;
-%
-x_step_vec = x_step:x_step:x_extent_pixels(2);
-y_step_vec = y_step:y_step:y_extent_pixels(2);
-%
-x_grid = target.x + [sort(-x_step_vec) 0 x_step_vec]; 
-remove_x = find(...
-    x_grid < x_extent_centered(1) | ...
-    x_grid > x_extent_centered(2))
-x_grid(remove_x) = []
-
-y_grid = target.y + [sort(-y_step_vec) 0 y_step_vec]; 
-remove_y = find(...
-    y_grid < y_extent_centered(1) | ...
-    y_grid > y_extent_centered(2))
-y_grid(remove_y) = []
-%Sort is just used for ease of plotting the results
-%
-[x_mesh, y_mesh] = meshgrid(x_grid, y_grid);
-%
-x_mesh_flat = x_mesh(:); 
-y_mesh_flat = y_mesh(:); 
-ctr_idx = find(x_mesh_flat == target.x & y_mesh_flat == target.y); 
-num_grid_pts = length(x_mesh_flat) 
-
-
-%PLOTTING:
-% h = figure;
-% plot(x_grid, '.-')
-
-% h = figure; 
-% imagesc(X_mesh)
-% colorbar
-% axis square
-% h = figure; 
-% imagesc(Y_mesh)
-% colorbar
-% axis square
-
-h = figure;
+h = figure; imagesc(im_bg); colormap('gray'); axis square; 
 hold on
 scatter(x_mesh_flat, y_mesh_flat, 'x'); 
 scatter(x_mesh_flat(ctr_idx), y_mesh_flat(ctr_idx), 'r', 'x'); 
@@ -343,7 +515,7 @@ spiral_size_conversion = 1/49;
 initSpiralSize_um = 14; 
 initSpiralSize = spiral_size_conversion*initSpiralSize_um;
 
-stim_duration       = 30;  %(ms)
+stim_duration       = 5;  %(ms)
 
 init_markpoints = struct(...
     'UncagingLaserPower', 0.4, ...
@@ -374,27 +546,27 @@ createGplFile_v2(savePath, markpoints_data, x_mesh_flat, y_mesh_flat, posz, NaN,
 %3) Make a sequence of stimulations: 
 %Every 'num_grid_stim_per_target_stim', stim the target point.   
 num_reps = 2; %how many times should we stim each grid point
-num_grid_stim_per_target_stim = 10;
+num_grid_stim_per_target_stim = 20;
 
 num_stims_expected = num_reps*(num_grid_pts + ceil(num_grid_pts/num_grid_stim_per_target_stim))
 
-rand_order = randperm(num_grid_pts); 
-stim_sequence = [ctr_idx ctr_idx]
+rand_order = repmat(randperm(num_grid_pts), [1 num_reps]); 
+stim_sequence = [ctr_idx]
 
-for i = 1:ceil(num_grid_pts/num_grid_stim_per_target_stim)
-    sel_from_rand_order = ...
-        (1:num_grid_stim_per_target_stim)+(i-1)*num_grid_stim_per_target_stim;   
-    sel_from_rand_order(sel_from_rand_order > num_grid_pts) = []; 
-    grid_idxs = rand_order(sel_from_rand_order); 
-    for j = 1:length(grid_idxs)
-        stim_sequence = [stim_sequence grid_idxs(j) grid_idxs(j)];
+for rep_i = 1:num_reps
+    for i = 1:ceil(num_grid_pts/num_grid_stim_per_target_stim)
+        sel_from_rand_order = ...
+            (1:num_grid_stim_per_target_stim)+(i-1)*num_grid_stim_per_target_stim;   
+        sel_from_rand_order(sel_from_rand_order > num_grid_pts) = []; 
+        grid_idxs = rand_order(sel_from_rand_order); 
+        for j = 1:length(grid_idxs)
+            stim_sequence = [stim_sequence grid_idxs(j)];
+        end
+        stim_sequence = [stim_sequence ctr_idx];
     end
-    stim_sequence = [stim_sequence ctr_idx ctr_idx];
 end
-
 % h = figure;
 % plot(stim_sequence)
-
 %
 %Old way of generating the sequence: 
 % for i = 1:num_reps
@@ -409,12 +581,13 @@ end
 %     end
 % end
 num_stims = length(stim_sequence)
+expected_duration = num_stims*(time_between_stims/1000)/60
 %Confirmation:
 h= figure;
 hist(stim_sequence, 1:num_grid_pts)
 title(['num stims per grid point, ctr idx: ' num2str(ctr_idx)])
 disp('center point:')
-
+ctr_idx
 
 %% XML: Sequential Single Cell Stim
 
@@ -432,6 +605,7 @@ Params Summary:
 
 %}
 %INPUT:
+
 time_between_stims  = 10000; %(ms)
 expectedDuration = (stim_duration + time_between_stims)*num_stims/(60*1000) %min 
 
@@ -447,7 +621,7 @@ seq_stim_params.IterDelay = 1000; %Time (ms) between iterations
 InitialDelay = time_between_stims; %(ms) time bw stim delivery
 seq_stim_params.InitialDelayVector = InitialDelay*ones(1,num_stims);
 %
-power = 40;
+power = 20;
 power_converted = power*power_conversion;
 seq_stim_params.PowerVector = power_converted*ones(1,num_stims);
 %2
@@ -472,6 +646,8 @@ createXmlFile_sequential_single_cell(xml_seq_path, seq_stim_params, stim_sequenc
 %--------------------------------------------------------------------------
 % Update prairie view repetitions based on num neurons to stim
 stim_time_per_neuron = InitialDelay/1000+InterPointDelay;
+len_seq_stim = numberNeurons*stim_time_per_neuron/60;
+
 num_reps_seq_stim = ceil(expectedDuration*60*frameRate);
 
 disp(['Number of Repetitions in PrairieView: ' num2str(num_reps_seq_stim)])
@@ -492,9 +668,8 @@ disp(['Length (min): ' num2str(expectedDuration)])
 %--------------------------------------------------------------------------
 
 %%
-%ToDO: stim analysis of the results
-
-%%
-%For fast check
-%Just up and right, 
-%
+clear s
+expt_str = 'gridstim'; %previously 'holostim' 
+mask = roi_data.roi_mask;
+expectedLengthExperiment = ceil(num_reps_seq_stim*1.5); 
+HoloAcqnvsPrairie_v2(path_data, expt_str, mask, expectedLengthExperiment)
