@@ -31,6 +31,7 @@ power 0.4 is a 100 in the gui
     for i_stim = 1:length(stim_sequence)
         n = stim_sequence(i_stim); %which neuron to stim
         %TODO change from pixelspace to motorspace
+        
         fprintf(fileID, formatSpec1, p.RepetitionsVector(n), p.UncagingLaser, p.PowerVector(n));
         content1 = [p.InitialDelayVector(n), p.InterPointDelayVector(n), p.DurationVector(n), p.SpiralVector(n)]; 
         content2 = [n, n];        

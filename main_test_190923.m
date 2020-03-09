@@ -1,4 +1,5 @@
 
+%main_test_190923
 %%
 s = daq.createSession('ni');
 addDigitalChannel(s,'dev5','Port0/Line0:2','OutputOnly');
