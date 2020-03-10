@@ -28,7 +28,7 @@ cd G:\VivekNuria\Code\HoloBMI
 % define Animal, day and folder where to save
 %Animals: NVI20, NVI21
 animal = 'NVI20'; day = 'D0';
-folder = 'E:\holobmi_E\200309' %'E:\holobmi_E\200305';
+folder = 'E:\holobmi_E\200309p2' %'E:\holobmi_E\200305';
 savePath = fullfile(folder, animal,  day);
 if ~exist(savePath, 'dir')
     mkdir(savePath);
@@ -623,7 +623,7 @@ Params Summary:
 
 %}
 %INPUT:
-stim_duration       = 30; 
+stim_duration       = 50; 
 time_between_stims  = 8000; %(ms)
 expectedDuration    = (stim_duration + time_between_stims)*num_stims/(60*1000) %min 
 
@@ -856,7 +856,7 @@ Params Summary:
 
 %}
 %INPUT:
-stim_duration       = 30; 
+stim_duration       = 50; 
 time_between_stims  = 8000; %(ms)
 expectedDuration    = (stim_duration + time_between_stims)*num_stims/(60*1000) %min 
 
