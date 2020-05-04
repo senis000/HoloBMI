@@ -686,6 +686,8 @@ disp(['Length (min): ' num2str(expectedDuration)])
 %--------------------------------------------------------------------------
 %Save the matlab workspace data!
 
+save(fullfile(savePath, 'coarse_grid_data.mat')); 
+
 %%
 % clear s
 % expt_str = 'gridstim'; %previously 'holostim' 
@@ -792,7 +794,7 @@ createGplFile_v2(savePath, markpoints_data, x_mesh_flat, y_mesh_flat, posz, NaN,
 %     markpoints_data(roi_i).SpiralSize = spiral_size; %double(ceil(10*spiral_size)/10);
 % end
 
-%%
+%
 %--------------------------------------------------------------------------
 %3) Make a sequence of stimulations: 
 %Every 'num_grid_stim_per_target_stim', stim the target point.   
@@ -905,6 +907,7 @@ disp(['Number of Repetitions in PrairieView: ' num2str(num_reps_seq_stim)])
 disp('Update PrairieView to have at least this many reps'); 
 disp(['Length (min): ' num2str(expectedDuration)])
 
+save(fullfile(savePath, 'fine_grid_data.mat')); 
 % if position of stim cells looks different, "smaller/bigger" check the
 % pixel size
 %--------------------------------------------------------------------------
