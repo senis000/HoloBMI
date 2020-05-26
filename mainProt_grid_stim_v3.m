@@ -691,6 +691,8 @@ save(fullfile(savePath, 'coarse_grid.mat'));
 %--------------------------------------------------------------------------
 %Save the matlab workspace data!
 
+save(fullfile(savePath, 'coarse_grid_data.mat')); 
+
 %%
 % clear s
 % expt_str = 'gridstim'; %previously 'holostim' 
@@ -797,7 +799,7 @@ createGplFile_v2(savePath, markpoints_data, x_mesh_flat, y_mesh_flat, posz, NaN,
 %     markpoints_data(roi_i).SpiralSize = spiral_size; %double(ceil(10*spiral_size)/10);
 % end
 
-%%
+%
 %--------------------------------------------------------------------------
 %3) Make a sequence of stimulations: 
 %Every 'num_grid_stim_per_target_stim', stim the target point.   
