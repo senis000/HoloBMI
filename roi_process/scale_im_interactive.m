@@ -25,7 +25,7 @@ while(~scale_complete_bool)
     title(['min prc: ' num2str(min_perc) '; max prc: ' num2str(max_perc)]); 
     
     %----------------------------------------------------------------------
-    in = input('Want to Keep Scaling? y/n:   ', 's');
+    in = input('Want to Store this Scaling? y/n:   ', 's');
     in = lower(in);
     if(isempty(in) || strcmp(in, 'y'))    
         %Check you don't already have it: 
@@ -50,7 +50,7 @@ while(~scale_complete_bool)
         end
     end
     
-    in = input('Want to Add More Scalings? y/n:   ', 's');
+    in = input('Want to Continue More Scalings? y/n:   ', 's');
     in = lower(in);    
     if(strcmp(in, 'n'))
         scale_complete_bool = 1;
