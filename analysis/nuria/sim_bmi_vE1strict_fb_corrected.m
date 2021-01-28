@@ -205,8 +205,8 @@ reward_prob_per_frame   = sum(hits_valid)/length(n_analyze);
 
 %%
 %Summary results:
-disp('T'); 
-T
+% disp('T'); 
+% T
 
 % cursor_obs = n_analyze*decoder; 
 % c1 = find(cursor_obs >= T); 

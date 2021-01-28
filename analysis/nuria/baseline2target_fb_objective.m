@@ -140,7 +140,7 @@ mkdir(plotPath);
 %1) Select Temporal: BMI E data from baseline 
 
 load(n_f_file); 
-size(baseActivity)
+size(baseActivity);
 f_base = baseActivity; 
 %n_f_file - contains matrix, neural fluorescence from baseline file, num_samples X num_neurons_baseline 
 f_base(:,isnan(f_base(1,:))) = [];
@@ -181,7 +181,7 @@ if onacid_bool
     strcMask = obtainStrcMask(AComp_BMI, px, py);
     save(fullfile(save_dir, 'strcMask.mat'), 'strcMask', 'E_base_sel', 'E_id');
 else
-    AComp_BMI = []
+    AComp_BMI = [];
     load(Acomp_file, 'roi_mask'); 
     holoMask = roi_mask; 
     EnsembleMask = zeros(size(holoMask));
@@ -283,7 +283,7 @@ if(plot_f0_bool)
         plot(f_postf0(:,n_i)); 
         plot(f0_mean(:,n_i), 'LineWidth', 5); 
         plot(f0(:,n_i), 'LineWidth', 5); 
-        legend({'fraw', 'f0mean', 'f0win'})
+        legend({'fraw', 'f0mean', 'f0win'});
 %         h = figure; hold on; 
 %         plot(f0(:,n_i)); 
 %         plot(f0_mean(:,n_i)); 
@@ -298,7 +298,7 @@ if(plot_f0_bool)
         h = figure; hold on;
         plot(f_postf0(:,n_i)); 
         plot(f0_mean(:,n_i), 'LineWidth', 5); 
-        legend({'fraw', 'f0mean'})
+        legend({'fraw', 'f0mean'});
 %         h = figure; hold on; 
 %         plot(f0(:,n_i)); 
 %         plot(f0_mean(:,n_i)); 
@@ -380,24 +380,24 @@ analyze_mean = nanmean(n_analyze); %takes mean along dim 1.  n_analyze is num_sa
 if(plot_cov_bool)
     h = figure;
     imagesc(analyze_cov); 
-    colorbar
-    axis square
-    xlabel('roi')
-    ylabel('roi')
+    colorbar;
+    axis square;
+    xlabel('roi');
+    ylabel('roi');
     colormap;
     caxis([-0.2 0.5]); 
     title('neural cov'); 
-    saveas(h, fullfile(plotPath, 'cov_mat_baseline.png'))
+    saveas(h, fullfile(plotPath, 'cov_mat_baseline.png'));
 
     [u,s,v] = svd(analyze_cov); 
     s_cumsum = cumsum(diag(s))/sum(diag(s)); 
     h = figure;
     plot(s_cumsum, '.-', 'MarkerSize', 20); 
-    axis square
+    axis square;
     xlabel('PC'); 
     ylabel('Frac Var Explained'); 
     title('DFF Smooth PCA Covariance');
-    saveas(h, fullfile(plotPath, 'cov_pca_baseline.png'))
+    saveas(h, fullfile(plotPath, 'cov_pca_baseline.png'));
 end
 
 %%
@@ -512,14 +512,12 @@ while(~task_complete)
     reward_prob_per_frame   = sum(hits_valid)/length(n_analyze);    
     %----------------------------------------------------------------------
     
-    
-    reward_prob_per_frame
     reward_per_frame_vec = [reward_per_frame_vec reward_prob_per_frame]; 
    
     %Update T:
     if((reward_prob_per_frame >= reward_per_frame_range(1)) && (reward_prob_per_frame <= reward_per_frame_range(2)))
         task_complete = 1;
-        disp('target calibration complete!');
+%         disp('target calibration complete!');
     elseif(reward_prob_per_frame > reward_per_frame_range(2))
         %Task too easy, make T harder:
         T = T+T_delta; 
@@ -528,14 +526,14 @@ while(~task_complete)
         T = T-T_delta; 
         %If we swept the full range of T, lower E2_coeff, reset T:
         if(T<T_min)
-            disp('T through full range, lower E2_coeff, reset T:'); 
+%             disp('T through full range, lower E2_coeff, reset T:'); 
             T=T0; 
             E2_coeff = E2_coeff - E2_coeff_delta;
             E2_subord_thresh = E2_subord_mean+E2_subord_std*E2_coeff; 
         end
         %If we swept the full range of E2, increase E1_coeff, reset E2:
         if(E2_coeff < E2_coeff_min)
-            disp('E2 coeff through full range, increase E1_coeff, reset E2_coeff:'); 
+%             disp('E2 coeff through full range, increase E1_coeff, reset E2_coeff:'); 
             E2_coeff = E2_coeff0;
             E1_coeff = E1_coeff + E1_coeff_delta;
             E1_thresh = E1_mean + E1_coeff*E1_std; %E1_mean_max; %E1_mean;
@@ -547,7 +545,7 @@ while(~task_complete)
     iter = iter+1;
     if(iter == max_iter)
         task_complete = 1;
-        disp('Max Iter reached, check reward rate / baseline data'); 
+%         disp('Max Iter reached, check reward rate / baseline data'); 
     end
 end
 
@@ -571,36 +569,36 @@ saveas(h, fullfile(plotPath, 'target_val_over_calibration.png'));
 
 %%
 %Summary results of cal: 
-disp('T'); 
-T
+% disp('T'); 
+% T
 
 % cursor_obs = n_analyze*decoder; 
 % c1 = find(cursor_obs >= T); 
-disp('num E2-E1 >= T'); 
-num_c1 = length(c1)
+% disp('num E2-E1 >= T'); 
+num_c1 = length(c1);
 
 % E1_mean_analyze = mean(E1_analyze,2)
 % c2 = find(E1_mean_analyze <= E1_thresh);
-disp('E1 <= b'); 
-num_c2 = length(c2)
+% disp('E1 <= b'); 
+num_c2 = length(c2);
 
 % E2_mean_analyze = mean(E2_analyze,2); 
 % [E2_dom_samples, E2_dom_sel] = max(E2_analyze, [], 2);
 % E2_subord_mean_analyze = (E2_sum_analyze - E2_dom_samples)/(num_E2-1);
 % %For each idx, subtract the 
 % c3 = find(E2_subord_mean_analyze >= E2_subord_thresh(E2_dom_sel)); 
-disp('E2 subord >= c'); 
-num_c3 = length(c3)
+% disp('E2 subord >= c'); 
+num_c3 = length(c3);
 
 num_cursor_hits = length(c1); 
-disp('num cursor target hits (wo E1<thr, E2sub>thr :'); 
-num_cursor_hits
+% disp('num cursor target hits (wo E1<thr, E2sub>thr :'); 
+% num_cursor_hits
 
-disp('num baseline hits WITHOUT B2BASE:'); 
-num_hits_no_b2base = length(hit_idxs_no_b2base)
+% disp('num baseline hits WITHOUT B2BASE:'); 
+num_hits_no_b2base = length(hit_idxs_no_b2base);
 
-disp('num valid hits (WITH B2BASE):'); 
-num_valid_hits = length(valid_hit_idxs)
+% disp('num valid hits (WITH B2BASE):'); 
+num_valid_hits = length(valid_hit_idxs);
 
 % b2base_thresh = 0.5*T;
 % hits_valid = ones(length(hit_times),1); 
@@ -679,26 +677,28 @@ scatter(c1, ones(length(c1),1)*max_cursor + cursor_offset, 15, 'r'); %plot(curso
 scatter(c2, ones(length(c2),1)*max_cursor + 2*cursor_offset, 15, 'g'); %plot(cursor_obs-cursor_offset, 'k'); 
 scatter(c3, ones(length(c3),1)*max_cursor + 3*cursor_offset, 15, 'b'); %plot(cursor_obs-cursor_offset, 'k'); 
 plot(cursor_obs); 
-hline(T); 
+yline(T); 
 plot(E1_mean_analyze-cursor_amp); 
 plot(E2_subord_mean_analyze-2*cursor_amp); 
 xlabel('frame'); 
 title(['hits with b2base: ' num2str(num_valid_hits)]); 
 legend({'c1', 'c2 - E1 cond', 'c3 - E2 cond', 'cursor', 'E1 mean', 'E2 subord mean'}); 
-vline(valid_hit_idxs); 
+for vh=valid_hit_idxs'
+    xline(vh);
+end
 saveas(h, fullfile(plotPath, 'cursor_hit_ts.png')); 
 
 %%
 offset = 0; 
-[h, offset_vec] = plot_cursor_E1_E2_activity(cursor_obs, E1_mean_analyze, E2_mean_analyze, n_analyze, E_id, E_color, offset)
-hold on; hline(T); 
+[h, offset_vec] = plot_cursor_E1_E2_activity(cursor_obs, E1_mean_analyze, E2_mean_analyze, n_analyze, E_id, E_color, offset);
+hold on; yline(T); 
 saveas(h, fullfile(plotPath, 'cursor_E1_E2_ts.png')); 
 %%
 cursor_obs = n_analyze*decoder; 
 h = figure;
 hold on; 
 hist(cursor_obs, 50); 
-vline(T); 
+xline(T); 
 xlabel('Cursor'); 
 ylabel('Number of Observations'); 
 title(['E2-E1 thr on E2-E1 hist, num valid hits: ' num2str(num_valid_hits) ...
@@ -758,7 +758,7 @@ for i=1:num_neurons
     errbar(1:length(y_plot), y_plot-offset,y_sem, 'Color', E_color{(E_id(i))}); 
 end
 % vline((psth_win(2)-psth_win(1))/2+1); 
-xlabel('frame')
+xlabel('frame');
 title('PSTH of Baseline Activity Locked to Target Hit'); 
 
 saveas(h, fullfile(plotPath, 'PSTH_locked_to_hit_baseline.png')); 
@@ -788,9 +788,9 @@ target_info_path = save_path;
 %Change variable names for BMI code:
 T1 = T; %Change to T1, as this is what BMI expects
 save(save_path, 'AComp_BMI', 'n_mean', 'n_std', 'decoder', 'E_id', 'E1_sel_idxs', 'E2_sel_idxs', 'E1_base', 'E2_base', 'T1', 'E1_thresh', 'E1_coeff', 'E1_std', 'E2_subord_thresh', 'E2_coeff', 'E2_subord_mean', 'E2_subord_std'); 
-
-disp('T'); 
-T
+% 
+% disp('T'); 
+% T
 end
 
 function [decoder, E1_proj, E2_proj, E1_norm, E2_norm] = ...
@@ -799,19 +799,19 @@ function [decoder, E1_proj, E2_proj, E1_norm, E2_norm] = ...
 E1_proj = zeros(num_neurons, 1); 
 E1_proj(E1_sel) = 1;
 E1_norm = sum(E1_sel); %can replace with vector norm.  
-disp('E1 proj'); 
+% disp('E1 proj'); 
 E1_proj = E1_proj/E1_norm;
-E1_proj
+% E1_proj
 
 E2_proj = zeros(num_neurons, 1); 
 E2_proj(E2_sel) = 1; 
 E2_norm = sum(E2_sel); 
-disp('E2 proj')
+% disp('E2 proj')
 E2_proj = E2_proj/E2_norm;
-E2_proj
+% E2_proj
 
-disp('decoder:')
-decoder = E2_proj - E1_proj
+% disp('decoder:')
+decoder = E2_proj - E1_proj;
 end
 
 function [fb_cal] = cursor2audio_fb(E2mE1_error, E1_error, E2_error, fb_settings)
