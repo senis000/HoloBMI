@@ -388,7 +388,7 @@ function BMIAcqnvsPrairienoTrialsHoloCL_debug_enable_v4(folder, animal, day, ...
                         baseBuffer_full = 1; 
                         baseval = baseValSeed; 
                         disp('baseBuffer seeded!'); 
-                    else
+                    else 
                         if single_bool
                             baseval = single(ones(numberNeurons,1)).*unitVals/baseFrames;
                         else
