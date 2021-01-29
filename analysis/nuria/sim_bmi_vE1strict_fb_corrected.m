@@ -1,4 +1,5 @@
-function [result_save_path, num_valid_hits, valid_hit_idxs] = sim_bmi_vE1strict_fb_corrected(n_data, task_settings, target_info, save_dir)
+function [result_save_path, num_valid_hits, valid_hit_idxs, occupacy_cursor] = ...
+    sim_bmi_vE1strict_fb_corrected(n_data, task_settings, target_info, save_dir, original_cursor)
 
 %%
 % n_data = bmi_data.data.bmiAct; 
@@ -8,6 +9,10 @@ function [result_save_path, num_valid_hits, valid_hit_idxs] = sim_bmi_vE1strict_
 %%
 %Input data / parameters: 
 %n: num_neurons X num_samples
+
+if nargin < 5
+    original_cursor = nan;
+end
 
 %%
 plot_raw_bool = 1; 
@@ -181,6 +186,21 @@ c2 = find(E1_mean_analyze <= E1_thresh);
 c3 = find(E2_subord_mean_analyze >= E2_subord_thresh(E2_dom_sel)); 
 hit_idxs_no_b2base = intersect(intersect(c1, c2), c3);
 %Remove hits that fall in a back2base
+
+% if we have an original cursor calculate occupacy from it, else takes 
+% the simulated cursor
+if ~ ismissing(original_cursor)
+    c1c = find(original_cursor >= T); 
+    %2) E1 < mu
+    c2c = find(E1_mean_analyze <= E1_thresh);
+    %3) E2_subord > mu (anded with previous constraint)
+    %For each idx, subtract the 
+    c3c = find(E2_subord_mean_analyze >= E2_subord_thresh(E2_dom_sel)); 
+    hit_cursor_b2base = intersect(intersect(c1c, c2c), c3c);
+    occupacy_cursor = length(hit_cursor_b2base);
+else
+    occupacy_cursor = length(hit_idxs_no_b2base);
+end
 
 %----------------------------------------------------------------------
 %Remove hits that fall in a back2base

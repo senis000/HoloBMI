@@ -10,9 +10,21 @@ folder_sim = 'C:\Users\Nuria\Documents\DATA\holoBMI\curated_data\simulations_tar
 var_n_data = {};
 var_target_info = {};
 var_baseline = {};
-did_it_worked = zeros(size(rows), 'logical');
-difference_hits = zeros(size(rows), 'double');
-number_hits_t2 = zeros(size(rows), 'single');
+NVI12 = nan(size(rows));
+NVI13 = nan(size(rows));
+NVI16 = nan(size(rows));
+NVI17 = nan(size(rows));
+NVI20 = nan(size(rows));
+NVI22 = nan(size(rows));
+did_it_worked = table(rows, NVI12, NVI13, NVI16, NVI17, NVI20, NVI22);
+difference_hits = table(rows, NVI12, NVI13, NVI16, NVI17, NVI20, NVI22);
+number_hits_t1 = table(rows, NVI12, NVI13, NVI16, NVI17, NVI20, NVI22);
+number_hits_t2 = table(rows, NVI12, NVI13, NVI16, NVI17, NVI20, NVI22);
+cursor_occupancy = table(rows, NVI12, NVI13, NVI16, NVI17, NVI20, NVI22);
+cursor_occupancy_t2 = table(rows, NVI12, NVI13, NVI16, NVI17, NVI20, NVI22);
+cursor_occupancy_baseline = table(rows, NVI12, NVI13, NVI16, NVI17, NVI20, NVI22);
+cursor_occupancy_t2_baseline = table(rows, NVI12, NVI13, NVI16, NVI17, NVI20, NVI22);
+
 % variables for simulation
 
 sec_per_reward_range = [120 85]; 
@@ -74,10 +86,10 @@ for row=1:number_rows
             folder_to_save_t2 = fullfile(folder_sim, int2str(rows(row)), animal, day);
             folder_to_save_t2_cal = fullfile(folder_sim, int2str(rows(row)), animal, day, 'calibration');
             if ~ exist(folder_to_save)
-                mkdir(folder_to_save)
+                mkdir(folder_to_save);
             end
             if ~ exist(folder_to_save_t2_cal)
-                mkdir(folder_to_save_t2_cal)
+                mkdir(folder_to_save_t2_cal);
             end
             load(fullfile(folder_raw, file_data), 'data');
             try
@@ -90,36 +102,57 @@ for row=1:number_rows
             number_hits = data.selfTargetVTACounter;
             location_hits = find(data.selfVTA)';
             clear data;
+            %% obtain back2base of baseline
+            n_f_file = fullfile(folder_raw, file_baseline);
+            [num_hits_no_b2base_t1] = obtain_back2base_baseline(n_f_file, target_info.E1_base, ...
+                target_info.E2_base, prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, ...
+                f0_init_slide, target_info.T1, target_info.E1_thresh, target_info.E2_subord_thresh);
+            cursor_occupancy_baseline(row, animal{1}) = {num_hits_no_b2base_t1};
             %% simulate BMI
-            [~, num_simulated_hits, valid_hit_idxs] = ...
+            [~, num_simulated_hits, valid_hit_idxs, occupancy_cursor] = ...
                 sim_bmi_vE1strict_fb_corrected(n_data, ...
                 task_settings, target_info, folder_to_save);
             if number_hits == num_simulated_hits
-                did_it_worked(row) = true;
-                difference_hits(row) = sum(location_hits - valid_hit_idxs);
+                did_it_worked(row, animal{1}) = {1};
+                difference_hits(row, animal{1}) = {sum(location_hits - valid_hit_idxs)};
+            else
+                did_it_worked(row, animal{1}) = {0};
             end
+            number_hits_t1(row, animal{1}) = {number_hits};
+            cursor_occupancy(row, animal{1}) = {occupancy_cursor};
             close all
             %% simulation otherway around
             % obtain with baseline the calibration 
-            n_f_file = fullfile(folder_raw, file_baseline);
             A_file = fullfile(folder_raw, 'roi_data.mat');
             onacid_bool = 0;
             E1_base = target_info.E2_base;
             E2_base = target_info.E1_base;
-            [target_info_t2_path, ~, ~] = ...
+            [target_info_t2_path, ~, ~, num_hits_no_b2base_t2] = ...
                 baseline2target_fb_objective(n_f_file, A_file, onacid_bool,  ...
                 E1_base, E2_base, frames_per_reward_range, target_on_cov_bool, ...
                 prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, folder_to_save_t2_cal, ...
                 cursor_zscore_bool, f0_init_slide, E2mE1_prctile, fb_settings);
             target_info_t2 = load(target_info_t2_path); 
             close all
-            [~, num_simulated_t2_hits, ~] = ...
+            [~, num_simulated_t2_hits, ~, occupancy_cursor_t2] = ...
                 sim_bmi_vE1strict_fb_corrected(n_data, ...
                 task_settings, target_info_t2, folder_to_save_t2);
-            number_hits_t2(row) = num_simulated_t2_hits;
+            number_hits_t2(row, animal{1}) = {num_simulated_t2_hits};
+            cursor_occupancy_t2(row, animal{1}) = {occupancy_cursor_t2};
+            cursor_occupancy_t2_baseline(row, animal{1}) = {num_hits_no_b2base_t2};
             close all
         end
     end
     
     
+end
+
+parquetwrite('C:\Users\Nuria\Documents\DATA\holoBMI\curated_data\sim_worked.parquet', did_it_worked)
+parquetwrite('C:\Users\Nuria\Documents\DATA\holoBMI\curated_data\cursor_occupancy.parquet', cursor_occupancy)
+parquetwrite('C:\Users\Nuria\Documents\DATA\holoBMI\curated_data\cursor_occupancy_t2.parquet', cursor_occupancy_t2)
+parquetwrite('C:\Users\Nuria\Documents\DATA\holoBMI\curated_data\hits_t2.parquet', number_hits_t2)
+parquetwrite('C:\Users\Nuria\Documents\DATA\holoBMI\curated_data\hits.parquet', number_hits_t1)
+parquetwrite('C:\Users\Nuria\Documents\DATA\holoBMI\curated_data\cursor_occupancy_baseline.parquet', cursor_occupancy_baseline)
+parquetwrite('C:\Users\Nuria\Documents\DATA\holoBMI\curated_data\cursor_occupancy_t2_baseline.parquet', cursor_occupancy_t2_baseline)
+
 end

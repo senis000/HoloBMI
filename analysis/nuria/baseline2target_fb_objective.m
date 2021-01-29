@@ -1,4 +1,4 @@
-function [target_info_path, target_cal_ALL_path, fb_cal] = baseline2target_fb_objective(n_f_file, Acomp_file, onacid_bool,  ...
+function [target_info_path, target_cal_ALL_path, fb_cal, num_hits_no_b2base] = baseline2target_fb_objective(n_f_file, Acomp_file, onacid_bool,  ...
     E1_base, E2_base, frames_per_reward_range, target_on_cov_bool, ...
     prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, save_dir, ...
     cursor_zscore_bool, f0_init_slide, E2mE1_prctile, fb_settings)
@@ -140,7 +140,6 @@ mkdir(plotPath);
 %1) Select Temporal: BMI E data from baseline 
 
 load(n_f_file); 
-size(baseActivity);
 f_base = baseActivity; 
 %n_f_file - contains matrix, neural fluorescence from baseline file, num_samples X num_neurons_baseline 
 f_base(:,isnan(f_base(1,:))) = [];
