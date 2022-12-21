@@ -199,6 +199,7 @@ else
     strcMask = obtainStrcMaskfromMask(EnsembleMask);
     save(fullfile(save_dir, 'strcMask.mat'), 'strcMask', 'E_base_sel', 'E_id'); 
 end
+close all
 
 %%
 %4) Decoder information
@@ -271,7 +272,7 @@ if(plot_raw_bool)
     im_path = fullfile(plotPath, 'baseline_fraw.png'); 
     saveas(h, im_path); 
 end
-
+close all
 %%
 %Compare f0win to f0mean:
 if(plot_f0_bool)
@@ -310,7 +311,7 @@ if(plot_f0_bool)
 end
 %Note: a more sophisticated method would calculate f0 based on low-pass
 %filtered calcium.  our f0 estimate is biased by ca transients.
-
+close all
 %%
 %Second, smooth f:
 if(dff_win_bool)
@@ -333,7 +334,7 @@ if(plot_smooth_bool && dff_win_bool)
     ylabel('F'); 
     title('F vs smoothed F'); 
 end
-
+close all
 %%
 %Third, compute dff and dff_z:
 dff = (f_smooth-f0)./f0;
@@ -363,7 +364,7 @@ if(plot_dff_bool)
     im_path = fullfile(plotPath, 'dffz.png'); 
     saveas(h, im_path); 
 end
-
+close all
 
 %%
 if cursor_zscore_bool
@@ -398,7 +399,7 @@ if(plot_cov_bool)
     title('DFF Smooth PCA Covariance');
     saveas(h, fullfile(plotPath, 'cov_pca_baseline.png'));
 end
-
+close all
 %%
 %Cursor Cov:
 
@@ -555,7 +556,7 @@ xlabel('alg iteration');
 ylabel('target'); 
 title('Target Value over Calibration'); 
 saveas(h, fullfile(plotPath, 'target_val_over_calibration.png')); 
-
+close all
 % h = figure;
 % hold on; 
 % plot(reward_per_frame_vec, '.-', 'MarkerSize', 7); 
@@ -669,7 +670,7 @@ hist(fb_obs, num_fb_bins);
 xlabel('audio freq'); 
 ylabel('baseline counts'); 
 saveas(h, fullfile(plotPath, 'base_freq_hist.png')); 
-
+close all
 %%
 h =figure; hold on;
 scatter(c1, ones(length(c1),1)*max_cursor + cursor_offset, 15, 'r'); %plot(cursor_obs-cursor_offset, 'k'); 
@@ -686,12 +687,13 @@ for vh=valid_hit_idxs'
     xline(vh);
 end
 saveas(h, fullfile(plotPath, 'cursor_hit_ts.png')); 
-
+close all
 %%
 offset = 0; 
 [h, offset_vec] = plot_cursor_E1_E2_activity(cursor_obs, E1_mean_analyze, E2_mean_analyze, n_analyze, E_id, E_color, offset);
 hold on; yline(T); 
 saveas(h, fullfile(plotPath, 'cursor_E1_E2_ts.png')); 
+close all
 %%
 cursor_obs = n_analyze*decoder; 
 h = figure;
@@ -704,7 +706,7 @@ title(['E2-E1 thr on E2-E1 hist, num valid hits: ' num2str(num_valid_hits) ...
     ' num hits no b2base: ' num2str(num_hits_no_b2base) ...
     ' num cursor hits: ' num2str(num_cursor_hits)]); 
 saveas(h, fullfile(plotPath, 'cursor_dist_T.png')); 
-
+close all
 %%
 %Correlate E2mE1 with the fb_obs:
 h = figure;
@@ -712,7 +714,7 @@ scatter(cursor_obs, fb_obs);
 xlabel('E2mE1 cursor'); 
 ylabel('fb obs (Hz)'); 
 saveas(h, fullfile(plotPath, 'cursor_vs_fb_scatter.png')); 
-
+close all
 % %%
 % %Plot the hit times: 
 % [h, offset_vec] = plot_E_activity(n_analyze, E_id, E_color);
@@ -761,7 +763,7 @@ xlabel('frame');
 title('PSTH of Baseline Activity Locked to Target Hit'); 
 
 saveas(h, fullfile(plotPath, 'PSTH_locked_to_hit_baseline.png')); 
-
+close all
 % %%
 % h = figure; hold on;
 % for i =1:size(psth_mat,3)
@@ -787,6 +789,7 @@ target_info_path = save_path;
 %Change variable names for BMI code:
 T1 = T; %Change to T1, as this is what BMI expects
 save(save_path, 'AComp_BMI', 'n_mean', 'n_std', 'decoder', 'E_id', 'E1_sel_idxs', 'E2_sel_idxs', 'E1_base', 'E2_base', 'T1', 'E1_thresh', 'E1_coeff', 'E1_std', 'E2_subord_thresh', 'E2_coeff', 'E2_subord_mean', 'E2_subord_std'); 
+close all
 % 
 % disp('T'); 
 % T

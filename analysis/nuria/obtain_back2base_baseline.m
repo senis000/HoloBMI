@@ -1,4 +1,4 @@
-function [num_hits_no_b2base] = obtain_back2base_baseline(n_f_file, ...
+function [num_hits_no_b2base, len_base] = obtain_back2base_baseline(n_f_file, ...
     E1_base, E2_base, prefix_win, f0_win_bool, f0_win, dff_win_bool, dff_win, f0_init_slide, T, E1_thresh, ...
     E2_subord_thresh)
 
@@ -10,6 +10,7 @@ f_base = baseActivity;
 %n_f_file - contains matrix, neural fluorescence from baseline file, num_samples X num_neurons_baseline 
 f_base(:,isnan(f_base(1,:))) = [];
 f_base = f_base.'; %num_samples X num_neurons
+len_base = size(f_base,1);
 
 %Throw out prefix frames:
 E1_raw = f_base((prefix_win+1):end,E1_base); 

@@ -1,4 +1,4 @@
-function [fb_settings] = define_fb_audio_settings()
+            function [fb_settings] = define_fb_audio_settings()
 
 fb_settings.target_low_freq        = 1; 
 %Set the target cursor value to be the low frequency

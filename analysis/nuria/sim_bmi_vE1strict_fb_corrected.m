@@ -287,6 +287,8 @@ if(plot_raw_bool)
     saveas(h, im_path); 
 end
 
+close all
+
 %%
 %smooth f plot:
 
@@ -299,6 +301,7 @@ if(plot_smooth_bool && dff_win_bool)
     ylabel('F'); 
     title('F vs smoothed F'); 
 end
+close all
 
 %%
 %dff:
@@ -321,7 +324,7 @@ if(plot_dff_bool)
     im_path = fullfile(plotPath, 'dffz.png'); 
     saveas(h, im_path); 
 end
-
+close all
 %%
 if(plot_cov_bool)
     h = figure;
@@ -345,7 +348,7 @@ if(plot_cov_bool)
     title('DFF Smooth PCA Covariance');
     saveas(h, fullfile(plotPath, 'cov_pca_baseline.png'))
 end
-
+close all
 %%
 h =figure; hold on;
 scatter(c1, ones(length(c1),1)*max_cursor + cursor_offset, 15, 'r'); %plot(cursor_obs-cursor_offset, 'k'); 
@@ -364,13 +367,13 @@ if ~isempty(valid_hit_idxs)
     end
 end
 saveas(h, fullfile(plotPath, 'cursor_hit_ts.png')); 
-
+close all
 %%
 offset = 0; 
 [h, offset_vec] = plot_cursor_E1_E2_activity(cursor_obs, E1_mean_analyze, E2_mean_analyze, n_analyze, E_id, E_color, offset);
 hold on; yline(T); 
 saveas(h, fullfile(plotPath, 'cursor_E1_E2_ts.png')); 
-
+close all
 %%
 h = figure;
 hold on; 
@@ -382,7 +385,7 @@ title(['E2-E1 thr on E2-E1 hist, num valid hits: ' num2str(num_valid_hits) ...
     ' num hits no b2base: ' num2str(num_hits_no_b2base) ...
     ' num cursor hits: ' num2str(num_cursor_hits)]); 
 saveas(h, fullfile(plotPath, 'cursor_dist_T.png')); 
-
+close all
 %%
 %Plot PSTH of neural activity locked to target hit: 
 psth_win = [-30 30]*3; 
@@ -404,3 +407,5 @@ xlabel('frame');
 title('PSTH of Baseline Activity Locked to Target Hit'); 
 
 saveas(h, fullfile(plotPath, 'PSTH_locked_to_hit_baseline.png')); 
+close all
+end
