@@ -215,7 +215,9 @@ function [h_cell] = plot_n_0(E_id, t, n, label, event_struct, save_dir, save_boo
             if(event_struct(event_i).valid)
                 plot_name = [label '_' event_struct(event_i).label]; 
                 [h, offset_vec] = plot_E_activity_mult_trace(t_cell, n_cell, E_id, E_color);
-                vline(event_struct(event_i).data); 
+                if length(event_struct(event_i).data)>0
+                    vline(event_struct(event_i).data); 
+                end
                 set(gca,'TickDir','out');
                 xlabel('time (min)'); 
                 title([label event_struct(event_i).label]);
@@ -237,12 +239,15 @@ function [h_cell] = plot_n_0(E_id, t, n, label, event_struct, save_dir, save_boo
     [h, offset_vec] = plot_E_activity_mult_trace(t_cell, n_cell, E_id, E_color);    
     num_event_types = length(event_struct); 
 
-    v_h = []
-    event_label_cell = {}
+    v_h = [];
+    event_label_cell = {};
     for event_i = 1:num_event_types
         if(event_struct(event_i).valid)
-            h_i = vline(event_struct(event_i).data, event_struct(event_i).line); 
-            v_h = [v_h h_i(1)]; 
+            size(event_struct(event_i).data)
+            if length(event_struct(event_i).data)>0
+                h_i = vline(event_struct(event_i).data, event_struct(event_i).line); 
+                v_h = [v_h h_i(1)]; 
+            end
             event_label_cell{event_i} = event_struct(event_i).label; 
         end        
     end

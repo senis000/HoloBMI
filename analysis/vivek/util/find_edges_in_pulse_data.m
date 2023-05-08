@@ -1,5 +1,6 @@
 function [edges] = find_edges_in_pulse_data(data, edge_thresh_coeff)
-
+%rising idx: the idx before the rise happens
+%falling idx: the idx before the fall happens
 [data_norm, data_min, data_max, data_range] = range_norm(data, 0, 100);
 edge_thresh = edge_thresh_coeff; 
 data_peaky = data; 

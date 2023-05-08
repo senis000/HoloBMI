@@ -224,7 +224,7 @@ for i = 1:length(base)
         base_bmiAct2cursor(f_preprocessed, f0_i, f_i, movingAverageFrames, cursor_zscore_bool, bData_i, cursor_i);
     % function [est] = base_bmiAct2cursor(baseVector, bmiAct, movingAverageFrames, cursor_zscore_bool, bData, cursor)    
 %     disp('number of errors in cursor recon:'); 
-disp('number of errors in cursor recon:'); 
+    disp('number of errors in cursor recon:'); 
     sum(base_est(i).cursor - base_est(i).data_valid.cursor > 1e-3)      
 end
 
@@ -378,7 +378,7 @@ end
 pretrain_event = event_struct; 
 
 %%
-win_zoom    = [0 5]; 
+win_zoom    = [5 10]; 
 save_dir    = plot_dir; 
 save_bool   = 0; 
 plot_big    = 0; 
@@ -418,6 +418,122 @@ save_dir    = plot_dir;
 save_bool   = 0; 
 plot_big    = 0; 
 plot_block_neural(block_str, block_data, event_struct, frame_rate, win_zoom, save_dir, save_bool, plot_big)
+
+%--------------------------------------------------------------------------
+%%
+%MANUALLY Make pretty plots of example data: 
+
+save_bool = 0
+win_zoom = [10 15]; 
+%good examples: [10 15]
+
+%Idxs to plot: 
+% n_valid = find(~isnan(n_pad.pretrain(1,:)));
+% start_offset_idx = n_valid(1);
+start_offset_idx = 0; 
+start_idx = start_offset_idx+win_zoom(1)*frame_rate*60; 
+stop_idx = start_idx+(win_zoom(2)-win_zoom(1))*frame_rate*60;
+idx_zoom = [start_idx stop_idx]; 
+
+%
+%Collect the neural data to plot
+for i = 1:num_BMI
+    n_cell{i} = pretrain_est.dff_z(i,start_idx:stop_idx);
+    t_cell{i} = linspace(win_zoom(1), win_zoom(2), length(n_cell{i})); 
+end
+
+num_neurons = length(n_cell); 
+offset = 0;
+offset_vec = [offset]; 
+h = figure; hold on;
+for i=1:num_neurons
+    data_i = n_cell{i}; 
+    data_i = data_i(:); 
+    
+    t_i = t_cell{i}; 
+    %First trace: 
+    y_plot = data_i(:,1);
+    first_trace_offset = min(y_plot); 
+    y_plot = y_plot-first_trace_offset;
+    y_amp = max(y_plot); 
+    if(i>1)
+        offset = offset + y_amp;
+        offset_vec = [offset_vec offset]; 
+    end
+    y_plot = y_plot-offset;
+    plot(t_i, y_plot, 'Color', E_color{E_id(i)}); 
+end
+
+evt_line = pretrain_event(2).line;
+evt_data = pretrain_event(2).data;
+evt_data_plot = evt_data(evt_data>= win_zoom(1) & evt_data <= win_zoom(2));
+vline(evt_data_plot, evt_line);
+set(gca,'TickDir','out');
+%SAVE: 
+if save_bool
+    export_fig(h, fullfile(plot_dir, '5min_stim_example.png')); 
+    export_fig(h, fullfile(plot_dir, '5min_stim_example.eps')); 
+end
+
+%%
+%MANUALLY Make pretty plots of example data: 
+
+
+save_bool = 1
+win_zoom = [4.0 5.5]; 
+%good examples: [11.5 13]
+
+%Idxs to plot: 
+% n_valid = find(~isnan(n_pad.pretrain(1,:)));
+% start_offset_idx = n_valid(1);
+start_offset_idx = 0; 
+start_idx = start_offset_idx+win_zoom(1)*frame_rate*60; 
+stop_idx = start_idx+(win_zoom(2)-win_zoom(1))*frame_rate*60;
+idx_zoom = [start_idx stop_idx]; 
+
+%
+%Collect the neural data to plot
+
+for i = 1:num_BMI
+    n_cell{i} = pretrain_est.dff_z(i,start_idx:stop_idx);
+    t_cell{i} = linspace(win_zoom(1), win_zoom(2), length(n_cell{i})); 
+end
+
+num_neurons = length(n_cell); 
+n_plot = [1 5]; 
+offset = 0;
+offset_vec = [offset]; 
+h = figure; hold on;
+for i=1:num_neurons
+    if sum(n_plot==i) > 0
+        data_i = n_cell{i}; 
+        data_i = data_i(:); 
+
+        t_i = t_cell{i}; 
+        %First trace: 
+        y_plot = data_i(:,1);
+        first_trace_offset = min(y_plot); 
+        y_plot = y_plot-first_trace_offset;
+        y_amp = max(y_plot); 
+        if(i>1)
+            offset = offset + y_amp;
+            offset_vec = [offset_vec offset]; 
+        end
+        y_plot = y_plot-offset;
+        plot(t_i, y_plot, 'Color', E_color{E_id(i)}); 
+    end
+end
+
+evt_line = pretrain_event(2).line;
+evt_data = pretrain_event(2).data;
+evt_data_plot = evt_data(evt_data>= win_zoom(1) & evt_data <= win_zoom(2));
+vline(evt_data_plot, evt_line);
+set(gca,'TickDir','out');
+%SAVE: 
+if save_bool
+    export_fig(h, fullfile(plot_dir, 'single_neuron_stim_example.png')); 
+    export_fig(h, fullfile(plot_dir, 'single_neuron_stim_example.eps')); 
+end
 
 %%
 %1) 
@@ -540,7 +656,7 @@ xlim([0 1]);
 xlabel('cursor value: E2-E1'); 
 ylabel('frac time entered'); 
 set(gca,'TickDir','out');
-export_fig(h, fullfile(plot_dir, 'base_pretrain_bmi_hist_zoom.eps')); 
+% export_fig(h, fullfile(plot_dir, 'base_pretrain_bmi_hist_zoom.eps')); 
 %TODO: get hist code I used when doing fernandoBMI analysis
 
 %%

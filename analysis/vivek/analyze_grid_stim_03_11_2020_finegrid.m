@@ -1,10 +1,26 @@
 
 %%
+%code directory: 
+code_home = 'D:\Dropbox\Code\holobmi_git\HoloBMI'
+cd(code_home)
+addpath(genpath(cd))
+%%
 %file to load: 
 clear all
 date_str    = '200311'
 file_analyze = 'fine_gridstim-004' %'stim-005'
-
+%TODO: select the files to load
+%fine_gridstim-000
+%fine_gridstim-001
+%fine_gridstim-002
+%fine_gridstim-003
+%fine_gridstim-004
+%
+%coarse_gridstim-000
+%coarse_gridstim-001
+%coarse_gridstim-002
+%coarse_gridstim-003
+%coarse_gridstim-004
 
 %tif_dir     = ['D:\DATA\grid_stim\' date_str '\NVI20\D0\im\' file_analyze] %coarse_grid-000'
 tif_dir     = 'D:\DATA\grid_stim\200311\NVI20\D0\im\fine_gridstim-004'
@@ -36,6 +52,10 @@ load(load_path)
 
 exist(im_bg_path)
 im_bg = imread(im_bg_path); 
+
+%%
+h = figure;
+imshow(im_bg)
 
 im_sc_struct = struct(...
     'im', [], ...
@@ -80,7 +100,7 @@ axis square
 %Reminder, mapping from x,y to image space: 
 %x = column, y = row
 
-save_bool = 1
+save_bool = 0
 if save_bool
     tic
     disp('saving...')
@@ -108,7 +128,6 @@ for grid_idx = 1:num_grid_pts
     grid_mask_i = circle_mask(dim, grid_row, grid_col, r); 
     %This could be implemented way more efficiently.... by applying shift
     %operator in fourier domain on the circle iamge...
-    
     grid_mask(grid_mask_i > 0) = grid_idx; 
 %     [mask] =  circle_mask(dim, ctr_row, ctr_col, r)
 end
@@ -159,6 +178,7 @@ axis square
 % target_roi_data = label_mask2roi_data_single_channel(im_bg, target_mask, chan_data);
 
 %%
+%Number and Order of Grid Stims
 save_bool = 1
 
 num_stims = length(stim_sequence)
@@ -220,7 +240,7 @@ disp('loaded voltageRec!');
 frame_chan = 1+1+1;
 stim_chan = 1+6+1; 
 
-plot_bool = 0
+plot_bool = 1
 if plot_bool
     h = figure;
     plot(voltageRec(:, frame_chan)); 
@@ -272,6 +292,19 @@ end
 %I visually verified that the target cell responds to the stimulation in
 %imagej
 
+%%
+%Sanity: verify the timing of the pulses: 
+%stim_edge.rise(1)
+%stim_edge.fall(1)
+%frame_edge.rise(2)
+%frame_edge.fall(2)
+% h =figure;
+% plot(7900:8100, stim_pulse(7900:8100), '.-', 'MarkerSize', 5)
+% h = figure;
+% plot(20:50, frame_pulse(20:50))
+%%
+%how many frame pulses were counted and how many frames were in movie? 
+%could this be the source of the delay? 
 
 %%
 %Load the movie: 
@@ -292,6 +325,7 @@ toc
 
 %%
 %calculate dff: sliding window f0
+%some standard parameters: 2 minute sliding window F0, F0 percentile = 10
 f0_win = 2*60*30; 
 f0_perc = 10; 
 ts = target_f_ts.'; 
@@ -311,12 +345,15 @@ ylabel('signal');
 title('f and dff, black line = stim of target roi')
 set(h, 'Position', screensize); 
 
+lastGoodFrame = 12
+
 target_stim_frame = stim_frame(find(stim_sequence == ctr_idx))-1;
 vline(target_stim_frame, 'k')
 
 legend('f norm','dff norm');
 
-save_bool = 1
+
+save_bool = 0
 if save_bool
     plot_name = 'f_dff_target_stim'
     tic
@@ -374,8 +411,9 @@ xlabel('time (s)');
 ylabel('dff'); 
 title('dff locked to stim at target (stim at t=0)')
 vline(0)
+% vline(-8/30)
 
-save_bool = 1
+save_bool = 0
 if save_bool
     plot_name = 'psth_dff_target_roi'
     tic

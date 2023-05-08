@@ -20,6 +20,7 @@ mkdir(save_dir);
 
 %Code paths to add: 
 addpath('D:\Dropbox\Code\export_fig\export_fig_3.3.20'); 
+addpath(genpath('D:\Dropbox\Code\holobmi_git\HoloBMI'))
 
 %
 screensize = get(0, 'ScreenSize')
@@ -76,7 +77,7 @@ axis square
 %Reminder, mapping from x,y to image space: 
 %x = column, y = row
 
-save_bool = 1
+save_bool = 0
 if save_bool
     tic
     disp('saving...')
@@ -155,7 +156,7 @@ axis square
 % target_roi_data = label_mask2roi_data_single_channel(im_bg, target_mask, chan_data);
 
 %%
-save_bool = 1
+save_bool = 0
 
 num_stims = length(stim_sequence)
 num_target_stims = length(find(stim_sequence == ctr_idx))

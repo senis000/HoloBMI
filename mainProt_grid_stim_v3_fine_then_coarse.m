@@ -344,7 +344,7 @@ seq_stim_params.InterPointDelayVector = InterPointDelay*ones(1,num_stims);
 createXmlFile_sequential_single_cell(xml_seq_path, seq_stim_params, stim_sequence);
 
 %%
-%Stim each ROI two times, with 5 sec separation: 
+%Stim each ROI k times, with 5 sec separation: 
 %--------------------------------------------------------------------------
 %Create BOT: 
 bot_roi_path = fullfile(savePath, 'BOT_roi.cfg'); 
